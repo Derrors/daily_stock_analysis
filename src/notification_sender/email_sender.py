@@ -112,7 +112,11 @@ class EmailSender:
 
     @staticmethod
     def _close_server(server: Optional[smtplib.SMTP]) -> None:
-        """Best-effort SMTP cleanup to avoid leaving sockets open on header/build errors."""
+        """Best-effort SMTP cleanup to avoid leaving sockets open on header/build errors.
+
+        Exceptions from quit()/close() are intentionally silenced — connection may already
+        be in a broken state, and there is nothing useful to do at this point.
+        """
         if server is None:
             return
         try:

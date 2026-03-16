@@ -258,6 +258,30 @@ class TestEmailSender(unittest.TestCase):
         )
         server.quit.assert_called_once()
 
+    @mock.patch("smtplib.SMTP_SSL")
+    def test_send_image_email_encodes_non_ascii_sender_name(self, mock_smtp_ssl):
+        cfg = _config(
+            email_sender="a@qq.com",
+            email_password="p",
+            email_receivers=["b@qq.com"],
+            email_sender_name="daily_stock_analysis股票分析助手",
+        )
+        sender = EmailSender(cfg)
+
+        result = sender._send_email_with_inline_image(b"PNG_BYTES", receivers=["b@qq.com"])
+
+        self.assertTrue(result)
+        server = mock_smtp_ssl.return_value
+        server.send_message.assert_called_once()
+        msg = server.send_message.call_args[0][0]
+        realname, addr = parseaddr(msg["From"])
+        self.assertEqual(addr, "a@qq.com")
+        self.assertEqual(
+            str(make_header(decode_header(realname))),
+            "daily_stock_analysis股票分析助手",
+        )
+        server.quit.assert_called_once()
+
 
 class TestAstrbotSender(unittest.TestCase):
     """Unit tests for AstrbotSender."""
