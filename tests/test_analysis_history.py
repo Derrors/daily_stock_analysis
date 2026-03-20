@@ -343,6 +343,46 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertEqual(report.details.belong_boards, [{"name": "白酒", "type": "行业"}])
         self.assertEqual(report.details.sector_rankings["top"][0]["name"], "白酒")
 
+    def test_history_detail_preserves_unavailable_board_rankings_state(self) -> None:
+        """Failed board ranking blocks should remain unavailable in detail response."""
+        if get_history_detail is None:
+            self.skipTest("fastapi is not installed in this test environment")
+
+        query_id = "query_fundamental_failed_boards_001"
+        saved = self.db.save_analysis_history(
+            result=self._build_result(),
+            query_id=query_id,
+            report_type="simple",
+            news_content="新闻摘要",
+            context_snapshot=None,
+            save_snapshot=False,
+        )
+        self.assertEqual(saved, 1)
+
+        fallback_fundamental = {
+            "belong_boards": [{"name": "白酒", "type": "行业"}],
+            "boards": {
+                "status": "failed",
+                "data": {},
+            },
+        }
+        saved_snapshot = self.db.save_fundamental_snapshot(
+            query_id=query_id,
+            code="600519",
+            payload=fallback_fundamental,
+        )
+        self.assertEqual(saved_snapshot, 1)
+
+        with self.db.get_session() as session:
+            row = session.query(AnalysisHistory).filter(AnalysisHistory.query_id == query_id).first()
+            if row is None:
+                self.fail("未找到保存的历史记录")
+            record_id = row.id
+
+        report = get_history_detail(str(record_id), db_manager=self.db)
+        self.assertEqual(report.details.belong_boards, [{"name": "白酒", "type": "行业"}])
+        self.assertIsNone(report.details.sector_rankings)
+
     def test_history_detail_returns_null_fundamental_fields_when_snapshot_absent(self) -> None:
         """Detail API should keep new fields nullable when no context/fundamental snapshot exists."""
         if get_history_detail is None:

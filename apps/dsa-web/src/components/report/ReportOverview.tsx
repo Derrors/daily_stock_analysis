@@ -15,7 +15,7 @@ interface ReportOverviewProps {
   isHistory?: boolean;
 }
 
-type BoardStatus = 'leading' | 'lagging' | 'neutral';
+type BoardStatus = 'leading' | 'lagging';
 
 type BoardSignal = {
   status: BoardStatus;
@@ -111,20 +111,14 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
     if (status === 'leading') {
       return text.leadingBoard;
     }
-    if (status === 'lagging') {
-      return text.laggingBoard;
-    }
-    return text.neutralBoard;
+    return text.laggingBoard;
   };
 
   const getBoardStatusClassName = (status: BoardStatus): string => {
     if (status === 'leading') {
       return 'bg-success/10 text-success';
     }
-    if (status === 'lagging') {
-      return 'bg-danger/10 text-danger';
-    }
-    return 'bg-muted/40 text-secondary-text';
+    return 'bg-danger/10 text-danger';
   };
 
   return (
@@ -223,7 +217,7 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
               <div className="space-y-2.5">
                 {relatedBoards.map((board, index) => {
                   const boardName = normalizeBoardName(board.name);
-                  const signal = boardSignals.get(boardName) || { status: 'neutral' as const };
+                  const signal = boardSignals.get(boardName);
                   return (
                     <div
                       key={`${boardName}-${board.code || index}`}
@@ -237,12 +231,14 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
                           {board.type}
                         </span>
                       )}
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${getBoardStatusClassName(signal.status)}`}
-                      >
-                        {getBoardStatusLabel(signal.status)}
-                      </span>
-                      {signal.changePct !== undefined && signal.changePct !== null && (
+                      {signal && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${getBoardStatusClassName(signal.status)}`}
+                        >
+                          {getBoardStatusLabel(signal.status)}
+                        </span>
+                      )}
+                      {signal && signal.changePct !== undefined && signal.changePct !== null && (
                         <span
                           className="text-xs font-mono"
                           style={getPriceChangeStyle(signal.changePct)}

@@ -178,7 +178,11 @@ def extract_board_detail_fields(
         return {"belong_boards": [], "sector_rankings": None}
 
     boards_block = fundamental_ctx.get("boards")
-    sector_rankings = boards_block.get("data") if isinstance(boards_block, dict) else None
+    sector_rankings = None
+    if isinstance(boards_block, dict):
+        boards_status = boards_block.get("status")
+        if boards_status in {"ok", "partial"} or boards_status is None:
+            sector_rankings = boards_block.get("data")
     return {
         "belong_boards": _normalize_belong_boards(fundamental_ctx.get("belong_boards")),
         "sector_rankings": _normalize_sector_rankings(sector_rankings),
