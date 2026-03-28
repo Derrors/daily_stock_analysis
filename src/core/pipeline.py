@@ -1018,7 +1018,7 @@ class StockAnalysisPipeline:
         """
         Resolve the trading date used by checkpoint/resume checks.
         """
-        market = get_market_for_stock(code)
+        market = get_market_for_stock(normalize_stock_code(code))
         return get_effective_trading_date(market, current_time=current_time)
 
     @staticmethod
