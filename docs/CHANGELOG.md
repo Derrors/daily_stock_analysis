@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### 修复
 
 - 🗓️ **断点续传与 `--dry-run` 改按市场时区和交易日历判断可复用数据**（fixes #880）— 股票数据存在性检查不再直接使用服务器自然日，而是按 A 股 / 港股 / 美股各自市场时区解析“最新可复用交易日”；周末、节假日、跨时区以及盘中 / 盘后场景会统一复用最近已完成交易日，避免误判导致重复抓取或错误跳过。  
-  - 变更文件：`src/core/pipeline.py`、`src/core/trading_calendar.py`、`tests/test_pipeline_fetch_error.py`、`tests/test_pipeline_prefetch_dry_run.py`、`tests/test_trading_calendar.py`，以及用户文档 `README.md`、`docs/full-guide.md`、`docs/CHANGELOG.md`。
+  - 变更文件：`src/core/pipeline.py`、`src/core/trading_calendar.py`、`tests/test_pipeline_fetch_error.py`、`tests/test_pipeline_prefetch_dry_run.py`、`tests/test_trading_calendar.py`，以及用户文档 `README.md`、`docs/README_EN.md`、`docs/README_CHT.md`、`docs/full-guide.md`、`docs/full-guide_EN.md`、`docs/CHANGELOG.md`。
   - 覆盖验证：`python -m py_compile src/core/pipeline.py tests/test_pipeline_fetch_error.py tests/test_pipeline_prefetch_dry_run.py tests/test_trading_calendar.py`；`python -m pytest tests/test_pipeline_fetch_error.py tests/test_pipeline_prefetch_dry_run.py tests/test_trading_calendar.py`。
 
 ## [3.11.0] - 2026-03-27
