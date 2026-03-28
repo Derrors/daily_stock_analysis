@@ -190,6 +190,23 @@ def test_sanitize_llm_log_preview_redacts_quoted_json_credential_fields():
     assert "hunter2" not in preview
 
 
+@pytest.mark.parametrize(
+    ("raw_preview", "expected_preview"),
+    [
+        ('{"password":"don\'t-share"}', '{"password":"[REDACTED]"}'),
+        ('{"password":"abc\\"def"}', '{"password":"[REDACTED]"}'),
+    ],
+)
+def test_sanitize_llm_log_preview_redacts_json_credential_values_with_embedded_quotes(
+    raw_preview, expected_preview
+):
+    preview = _sanitize_llm_log_preview(raw_preview)
+
+    assert preview == expected_preview
+    assert "don't-share" not in preview
+    assert 'abc\\"def' not in preview
+
+
 def test_sanitize_llm_log_preview_redacts_single_quoted_credential_fields():
     preview = _sanitize_llm_log_preview("{'api_key':'sk-live-123456','password':'hunter2'}")
 

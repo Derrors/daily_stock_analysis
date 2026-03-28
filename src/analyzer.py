@@ -62,7 +62,7 @@ _LLM_SENSITIVE_PATTERNS = (
     ),
     (
         re.compile(
-            r'(?i)(["\'])(api[_-]?key|access[_-]?token|refresh[_-]?token|token|secret|password|passwd|session[_-]?id)\1\s*:\s*(["\'])[^"\']*\3'
+            r'(?i)(["\'])(api[_-]?key|access[_-]?token|refresh[_-]?token|token|secret|password|passwd|session[_-]?id)\1\s*:\s*(["\'])(?:\\.|(?!\3).)*\3'
         ),
         r"\1\2\1:\3[REDACTED]\3",
     ),
