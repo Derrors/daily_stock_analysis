@@ -188,6 +188,7 @@ const BacktestPage: React.FC = () => {
   const [isLoadingPerf, setIsLoadingPerf] = useState(false);
   const effectiveWindowDays = evalDays ? parseInt(evalDays, 10) : overallPerf?.evalWindowDays;
   const isNextDayValidation = effectiveWindowDays === 1;
+  const showNextDayActualColumns = isNextDayValidation;
 
   // Fetch results
   const fetchResults = useCallback(async (
@@ -503,8 +504,12 @@ const BacktestPage: React.FC = () => {
                       <th className="backtest-table-head-cell">Stock</th>
                       <th className="backtest-table-head-cell">Analysis Date</th>
                       <th className="backtest-table-head-cell">AI Prediction</th>
-                      <th className="backtest-table-head-cell">Actual</th>
-                      <th className="backtest-table-head-cell">Accuracy</th>
+                      <th className="backtest-table-head-cell">
+                        {showNextDayActualColumns ? 'Actual' : 'Window Return'}
+                      </th>
+                      <th className="backtest-table-head-cell">
+                        {showNextDayActualColumns ? 'Accuracy' : 'Direction Match'}
+                      </th>
                       <th className="backtest-table-head-cell">Outcome</th>
                       <th className="backtest-table-head-cell">Status</th>
                     </tr>

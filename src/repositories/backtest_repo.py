@@ -97,6 +97,7 @@ class BacktestRepository:
         *,
         code: Optional[str],
         eval_window_days: Optional[int] = None,
+        engine_version: Optional[str] = None,
         analysis_date_from: Optional[date] = None,
         analysis_date_to: Optional[date] = None,
         days: Optional[int],
@@ -107,6 +108,7 @@ class BacktestRepository:
             conditions = self._build_result_conditions(
                 code=code,
                 eval_window_days=eval_window_days,
+                engine_version=engine_version,
                 analysis_date_from=analysis_date_from,
                 analysis_date_to=analysis_date_to,
                 days=days,
@@ -140,24 +142,30 @@ class BacktestRepository:
         *,
         code: Optional[str],
         eval_window_days: Optional[int] = None,
+        engine_version: Optional[str] = None,
         analysis_date_from: Optional[date] = None,
         analysis_date_to: Optional[date] = None,
         days: Optional[int] = None,
+        limit: Optional[int] = None,
     ) -> List[BacktestResult]:
         with self.db.get_session() as session:
             conditions = self._build_result_conditions(
                 code=code,
                 eval_window_days=eval_window_days,
+                engine_version=engine_version,
                 analysis_date_from=analysis_date_from,
                 analysis_date_to=analysis_date_to,
                 days=days,
             )
             where_clause = and_(*conditions) if conditions else True
-            rows = session.execute(
+            query = (
                 select(BacktestResult)
                 .where(where_clause)
                 .order_by(desc(BacktestResult.analysis_date), desc(BacktestResult.evaluated_at))
-            ).scalars().all()
+            )
+            if limit is not None:
+                query = query.limit(limit)
+            rows = session.execute(query).scalars().all()
             return list(rows)
 
     def upsert_summary(self, summary: BacktestSummary) -> None:
@@ -262,6 +270,7 @@ class BacktestRepository:
         *,
         code: Optional[str],
         eval_window_days: Optional[int],
+        engine_version: Optional[str],
         analysis_date_from: Optional[date],
         analysis_date_to: Optional[date],
         days: Optional[int],
@@ -271,6 +280,8 @@ class BacktestRepository:
             conditions.append(BacktestResult.code == code)
         if eval_window_days is not None:
             conditions.append(BacktestResult.eval_window_days == eval_window_days)
+        if engine_version:
+            conditions.append(BacktestResult.engine_version == engine_version)
         if analysis_date_from is not None:
             conditions.append(BacktestResult.analysis_date >= analysis_date_from)
         if analysis_date_to is not None:

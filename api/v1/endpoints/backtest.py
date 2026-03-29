@@ -151,6 +151,11 @@ def get_overall_performance(
                 detail={"error": "not_found", "message": "未找到整体回测汇总"},
             )
         return PerformanceMetrics(**summary)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid_params", "message": str(exc)},
+        )
     except HTTPException:
         raise
     except Exception as exc:
@@ -194,6 +199,11 @@ def get_stock_performance(
                 detail={"error": "not_found", "message": f"未找到 {code} 的回测汇总"},
             )
         return PerformanceMetrics(**summary)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid_params", "message": str(exc)},
+        )
     except HTTPException:
         raise
     except Exception as exc:

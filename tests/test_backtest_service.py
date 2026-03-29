@@ -10,6 +10,7 @@ import os
 import tempfile
 import unittest
 from datetime import date, datetime
+from unittest.mock import patch
 
 from src.config import Config
 from src.core.backtest_engine import OVERALL_SENTINEL_CODE
@@ -317,6 +318,94 @@ class BacktestServiceTestCase(unittest.TestCase):
         self.assertEqual(summary["win_count"], 0)
         self.assertEqual(summary["loss_count"], 1)
         self.assertAlmostEqual(summary["direction_accuracy_pct"], 0.0)
+
+    def test_get_summary_date_range_filters_to_single_window_and_engine(self) -> None:
+        service = BacktestService(self.db)
+        service.run_backtest(code="600519", force=False, eval_window_days=3, min_age_days=0, limit=10)
+
+        with self.db.get_session() as session:
+            base_result = session.query(BacktestResult).filter(
+                BacktestResult.code == "600519",
+                BacktestResult.eval_window_days == 3,
+                BacktestResult.engine_version == "v1",
+            ).one()
+            session.add_all([
+                BacktestResult(
+                    analysis_history_id=base_result.analysis_history_id,
+                    code=base_result.code,
+                    analysis_date=base_result.analysis_date,
+                    eval_window_days=1,
+                    engine_version="v1",
+                    eval_status="completed",
+                    evaluated_at=datetime(2024, 1, 5, 0, 0, 0),
+                    operation_advice="买入",
+                    position_recommendation="long",
+                    start_price=100.0,
+                    end_close=96.0,
+                    stock_return_pct=-4.0,
+                    direction_expected="up",
+                    direction_correct=False,
+                    outcome="loss",
+                    simulated_return_pct=-4.0,
+                ),
+                BacktestResult(
+                    analysis_history_id=base_result.analysis_history_id,
+                    code=base_result.code,
+                    analysis_date=base_result.analysis_date,
+                    eval_window_days=3,
+                    engine_version="v2",
+                    eval_status="completed",
+                    evaluated_at=datetime(2024, 1, 6, 0, 0, 0),
+                    operation_advice="买入",
+                    position_recommendation="long",
+                    start_price=100.0,
+                    end_close=96.0,
+                    stock_return_pct=-4.0,
+                    direction_expected="up",
+                    direction_correct=False,
+                    outcome="loss",
+                    simulated_return_pct=-4.0,
+                ),
+            ])
+            session.commit()
+
+        rows = service.repo.list_results(
+            code="600519",
+            eval_window_days=3,
+            engine_version="v1",
+            analysis_date_from=date(2024, 1, 1),
+            analysis_date_to=date(2024, 1, 1),
+        )
+        self.assertEqual(len(rows), 1)
+
+        summary = service.get_summary(
+            scope="stock",
+            code="600519",
+            analysis_date_from=date(2024, 1, 1),
+            analysis_date_to=date(2024, 1, 1),
+        )
+        self.assertIsNotNone(summary)
+        assert summary is not None
+        self.assertEqual(summary["eval_window_days"], 3)
+        self.assertEqual(summary["engine_version"], "v1")
+        self.assertEqual(summary["total_evaluations"], 1)
+        self.assertEqual(summary["completed_count"], 1)
+        self.assertEqual(summary["win_count"], 1)
+        self.assertEqual(summary["loss_count"], 0)
+        self.assertAlmostEqual(summary["direction_accuracy_pct"], 100.0)
+
+    def test_get_summary_date_range_rejects_excessive_row_counts(self) -> None:
+        service = BacktestService(self.db)
+        service.run_backtest(code="600519", force=False, eval_window_days=3, min_age_days=0, limit=10)
+
+        with patch.object(BacktestService, "MAX_DYNAMIC_SUMMARY_ROWS", 0):
+            with self.assertRaisesRegex(ValueError, "Date-filtered summary matches too many rows"):
+                service.get_summary(
+                    scope="stock",
+                    code="600519",
+                    analysis_date_from=date(2024, 1, 1),
+                    analysis_date_to=date(2024, 1, 1),
+                )
 
     def test_multi_stock_summaries(self) -> None:
         """Verify separate summaries for multiple stocks + correct overall aggregate."""

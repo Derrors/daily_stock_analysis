@@ -103,6 +103,8 @@ describe('BacktestPage', () => {
     expect(screen.getByText('贵州茅台')).toBeInTheDocument();
     expect(screen.getByText('震荡偏多')).toBeInTheDocument();
     expect(screen.getByText('UP')).toBeInTheDocument();
+    expect(screen.getByText('Window Return')).toBeInTheDocument();
+    expect(screen.getByText('Direction Match')).toBeInTheDocument();
     expect(screen.getAllByLabelText('yes').length).toBeGreaterThan(0);
   });
 
@@ -198,6 +200,8 @@ describe('BacktestPage', () => {
       });
     });
 
+    expect(screen.getByText('Actual')).toBeInTheDocument();
+    expect(screen.getByText('Accuracy')).toBeInTheDocument();
     expect(screen.getByText('Next-day validation mode compares AI predictions with the next trading day close.')).toBeInTheDocument();
   });
 });

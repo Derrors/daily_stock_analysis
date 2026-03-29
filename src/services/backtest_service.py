@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 class BacktestService:
     """Service layer to run and query backtests."""
 
+    MAX_DYNAMIC_SUMMARY_ROWS = 2000
+
     def __init__(self, db_manager: Optional[DatabaseManager] = None):
         self.db = db_manager or DatabaseManager.get_instance()
         self.repo = BacktestRepository(self.db)
@@ -245,20 +247,31 @@ class BacktestService:
     ) -> Optional[Dict[str, Any]]:
         config = get_config()
         engine_version = str(getattr(config, "backtest_engine_version", "v1"))
+        resolved_eval_window_days = (
+            int(eval_window_days)
+            if eval_window_days is not None
+            else int(getattr(config, "backtest_eval_window_days", 10))
+        )
         lookup_code = OVERALL_SENTINEL_CODE if scope == "overall" else code
 
         if analysis_date_from is not None or analysis_date_to is not None:
             rows = self.repo.list_results(
                 code=code,
-                eval_window_days=eval_window_days,
+                eval_window_days=resolved_eval_window_days,
+                engine_version=engine_version,
                 analysis_date_from=analysis_date_from,
                 analysis_date_to=analysis_date_to,
+                limit=self.MAX_DYNAMIC_SUMMARY_ROWS + 1,
             )
+            if len(rows) > self.MAX_DYNAMIC_SUMMARY_ROWS:
+                raise ValueError(
+                    "Date-filtered summary matches too many rows; narrow the analysis date range or stock code."
+                )
             return self._build_dynamic_summary(
                 rows=rows,
                 scope=scope,
                 code=lookup_code,
-                eval_window_days=eval_window_days,
+                eval_window_days=resolved_eval_window_days,
                 engine_version=engine_version,
             )
 
@@ -520,15 +533,34 @@ class BacktestService:
         eval_window_days: Optional[int],
         engine_version: str,
     ) -> Dict[str, Any]:
+        filtered_rows = [row for row in rows if getattr(row, "engine_version", None) == engine_version]
         if eval_window_days is not None:
             summary_window_days = int(eval_window_days)
-        elif rows:
-            summary_window_days = int(rows[0].eval_window_days)
         else:
-            summary_window_days = int(getattr(get_config(), "backtest_eval_window_days", 10))
+            window_values = sorted({
+                int(row.eval_window_days)
+                for row in filtered_rows
+                if getattr(row, "eval_window_days", None) is not None
+            })
+            if len(window_values) > 1:
+                logger.warning(
+                    "Multiple eval_window_days values found for dynamic summary; using %s for engine_version=%s, scope=%s, code=%s",
+                    window_values[0],
+                    engine_version,
+                    scope,
+                    code,
+                )
+            if window_values:
+                summary_window_days = window_values[0]
+            else:
+                summary_window_days = int(getattr(get_config(), "backtest_eval_window_days", 10))
+
+        filtered_rows = [
+            row for row in filtered_rows if getattr(row, "eval_window_days", None) == summary_window_days
+        ]
 
         summary = BacktestEngine.compute_summary(
-            results=rows,
+            results=filtered_rows,
             scope=scope,
             code=code,
             eval_window_days=summary_window_days,
