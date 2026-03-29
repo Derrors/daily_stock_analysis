@@ -113,6 +113,7 @@ const KNOWN_MODEL_PREFIXES = new Set([
   'gemini',
   'vertex_ai',
   'deepseek',
+  'minimax',
   'ollama',
   'cohere',
   'huggingface',

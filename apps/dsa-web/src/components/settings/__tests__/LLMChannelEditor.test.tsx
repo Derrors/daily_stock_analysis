@@ -35,4 +35,24 @@ describe('LLMChannelEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: '显示内容' }));
     expect(input).toHaveAttribute('type', 'text');
   });
+
+  it('keeps minimax-prefixed models in runtime selections', () => {
+    render(
+      <LLMChannelEditor
+        items={[
+          { key: 'LLM_CHANNELS', value: 'openai' },
+          { key: 'LLM_OPENAI_PROTOCOL', value: 'openai' },
+          { key: 'LLM_OPENAI_BASE_URL', value: 'https://api.example.com/v1' },
+          { key: 'LLM_OPENAI_ENABLED', value: 'true' },
+          { key: 'LLM_OPENAI_API_KEY', value: 'secret-key' },
+          { key: 'LLM_OPENAI_MODELS', value: 'minimax/MiniMax-M1' },
+        ]}
+        configVersion="v1"
+        maskToken="******"
+        onSaved={() => {}}
+      />
+    );
+
+    expect(screen.getByText('minimax/MiniMax-M1')).toBeInTheDocument();
+  });
 });
