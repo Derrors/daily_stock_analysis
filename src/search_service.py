@@ -204,6 +204,52 @@ class BaseSearchProvider(ABC):
     def _do_search(self, query: str, api_key: str, max_results: int, days: int = 7) -> SearchResponse:
         """执行搜索（子类实现）"""
         pass
+
+    def _execute_search(
+        self,
+        query: str,
+        *,
+        max_results: int = 5,
+        days: int = 7,
+        api_key: Optional[str] = None,
+        **search_kwargs: Any,
+    ) -> SearchResponse:
+        """Run the shared search flow with an optional preselected API key."""
+        api_key = api_key or self._get_next_key()
+        if not api_key:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self._name,
+                success=False,
+                error_message=f"{self._name} 未配置 API Key"
+            )
+
+        start_time = time.time()
+        try:
+            response = self._do_search(query, api_key, max_results, days=days, **search_kwargs)
+            response.search_time = time.time() - start_time
+
+            if response.success:
+                self._record_success(api_key)
+                logger.info(f"[{self._name}] 搜索 '{query}' 成功，返回 {len(response.results)} 条结果，耗时 {response.search_time:.2f}s")
+            else:
+                self._record_error(api_key)
+
+            return response
+
+        except Exception as e:
+            self._record_error(api_key)
+            elapsed = time.time() - start_time
+            logger.error(f"[{self._name}] 搜索 '{query}' 失败: {e}")
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self._name,
+                success=False,
+                error_message=str(e),
+                search_time=elapsed
+            )
     
     def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
         """
@@ -217,41 +263,7 @@ class BaseSearchProvider(ABC):
         Returns:
             SearchResponse 对象
         """
-        api_key = self._get_next_key()
-        if not api_key:
-            return SearchResponse(
-                query=query,
-                results=[],
-                provider=self._name,
-                success=False,
-                error_message=f"{self._name} 未配置 API Key"
-            )
-        
-        start_time = time.time()
-        try:
-            response = self._do_search(query, api_key, max_results, days=days)
-            response.search_time = time.time() - start_time
-            
-            if response.success:
-                self._record_success(api_key)
-                logger.info(f"[{self._name}] 搜索 '{query}' 成功，返回 {len(response.results)} 条结果，耗时 {response.search_time:.2f}s")
-            else:
-                self._record_error(api_key)
-            
-            return response
-            
-        except Exception as e:
-            self._record_error(api_key)
-            elapsed = time.time() - start_time
-            logger.error(f"[{self._name}] 搜索 '{query}' 失败: {e}")
-            return SearchResponse(
-                query=query,
-                results=[],
-                provider=self._name,
-                success=False,
-                error_message=str(e),
-                search_time=elapsed
-            )
+        return self._execute_search(query, max_results=max_results, days=days)
 
 
 class TavilySearchProvider(BaseSearchProvider):
@@ -1201,54 +1213,13 @@ class BraveSearchProvider(BaseSearchProvider):
         if search_lang is None and country is None:
             return super().search(query, max_results=max_results, days=days)
 
-        api_key = self._get_next_key()
-        if not api_key:
-            return SearchResponse(
-                query=query,
-                results=[],
-                provider=self._name,
-                success=False,
-                error_message=f"{self._name} 未配置 API Key"
-            )
-
-        start_time = time.time()
-        try:
-            response = self._do_search(
-                query,
-                api_key,
-                max_results,
-                days=days,
-                search_lang=search_lang,
-                country=country,
-            )
-            response.search_time = time.time() - start_time
-
-            if response.success:
-                self._record_success(api_key)
-                logger.info(
-                    "[%s] 搜索 '%s' 成功，返回 %s 条结果，耗时 %.2fs",
-                    self._name,
-                    query,
-                    len(response.results),
-                    response.search_time,
-                )
-            else:
-                self._record_error(api_key)
-
-            return response
-
-        except Exception as e:
-            self._record_error(api_key)
-            elapsed = time.time() - start_time
-            logger.error(f"[{self._name}] 搜索 '{query}' 失败: {e}")
-            return SearchResponse(
-                query=query,
-                results=[],
-                provider=self._name,
-                success=False,
-                error_message=str(e),
-                search_time=elapsed
-            )
+        return self._execute_search(
+            query,
+            max_results=max_results,
+            days=days,
+            search_lang=search_lang,
+            country=country,
+        )
 
     def _parse_error(self, response) -> str:
         """解析错误响应"""
@@ -2261,6 +2232,29 @@ class SearchService:
             error_message=response.error_message,
             search_time=response.search_time,
         )
+
+    @staticmethod
+    def _limit_search_response(
+        response: SearchResponse,
+        *,
+        max_results: int,
+    ) -> SearchResponse:
+        """Trim response results without changing the rest of the metadata."""
+        if not response.success or not response.results:
+            return response
+
+        limited_results = response.results[:max_results]
+        if len(limited_results) == len(response.results):
+            return response
+
+        return SearchResponse(
+            query=response.query,
+            results=limited_results,
+            provider=response.provider,
+            success=response.success,
+            error_message=response.error_message,
+            search_time=response.search_time,
+        )
     
     def search_stock_news(
         self,
@@ -2356,7 +2350,7 @@ class SearchService:
             filtered_response = self._filter_news_response(
                 response,
                 search_days=search_days,
-                max_results=max_results,
+                max_results=provider_max_results,
                 log_scope=f"{stock_code}:{provider.name}:stock_news",
             )
             had_provider_success = had_provider_success or bool(response.success)
@@ -2366,34 +2360,39 @@ class SearchService:
                     filtered_response,
                     prefer_chinese=prefer_chinese,
                 )
+                limited_response = self._limit_search_response(
+                    prioritized_response,
+                    max_results=max_results,
+                )
+                visible_preferred_count = min(preferred_count, len(limited_response.results))
 
                 if not prefer_chinese:
                     logger.info(f"使用 {provider.name} 搜索成功")
-                    self._put_cache(cache_key, prioritized_response)
-                    return prioritized_response
+                    self._put_cache(cache_key, limited_response)
+                    return limited_response
 
                 if fallback_response is None:
-                    fallback_response = prioritized_response
+                    fallback_response = limited_response
 
-                if preferred_count > 0:
+                if visible_preferred_count > 0:
                     logger.info(
                         "%s 搜索成功，识别到 %s/%s 条中文新闻",
                         provider.name,
-                        preferred_count,
-                        len(prioritized_response.results),
+                        visible_preferred_count,
+                        len(limited_response.results),
                     )
                     if self._is_better_preferred_news_response(
-                        prioritized_response,
-                        candidate_preferred_count=preferred_count,
+                        limited_response,
+                        candidate_preferred_count=visible_preferred_count,
                         best_response=best_preferred_response,
                         best_preferred_count=best_preferred_count,
                     ):
-                        best_preferred_response = prioritized_response
-                        best_preferred_count = preferred_count
+                        best_preferred_response = limited_response
+                        best_preferred_count = visible_preferred_count
 
-                    if preferred_count == len(prioritized_response.results) and preferred_count >= max_results:
-                        self._put_cache(cache_key, prioritized_response)
-                        return prioritized_response
+                    if visible_preferred_count >= max_results:
+                        self._put_cache(cache_key, limited_response)
+                        return limited_response
                 else:
                     logger.info(
                         "%s 搜索成功但结果仍以英文为主，继续尝试下一引擎",

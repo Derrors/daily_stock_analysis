@@ -217,6 +217,40 @@ class SearchNewsFreshnessTestCase(unittest.TestCase):
             ["中文快讯", "English headline", "Second English headline"],
         )
 
+    def test_search_stock_news_prioritizes_chinese_before_truncating_results(self) -> None:
+        """Chinese candidates beyond the first raw slot should still win after reprioritization."""
+        fresh = datetime.now().date().isoformat()
+        service = SearchService(
+            bocha_keys=["dummy_key"],
+            searxng_public_instances_enabled=False,
+            news_max_age_days=3,
+            news_strategy_profile="short",
+        )
+
+        p1 = SimpleNamespace(
+            is_available=True,
+            name="P1",
+            search=MagicMock(
+                return_value=_response(
+                    [
+                        _result("English headline", fresh),
+                        _result("中文快讯", fresh),
+                    ]
+                )
+            ),
+        )
+        p2 = SimpleNamespace(
+            is_available=True,
+            name="P2",
+            search=MagicMock(return_value=_response([_result("后续中文资讯", fresh)])),
+        )
+        service._providers = [p1, p2]
+
+        resp = service.search_stock_news("600519", "贵州茅台", max_results=1)
+        self.assertEqual([r.title for r in resp.results], ["中文快讯"])
+        p1.search.assert_called_once()
+        p2.search.assert_not_called()
+
     def test_search_stock_news_keeps_english_provider_order_for_us_stock(self) -> None:
         """English stock searches should keep the first successful provider result."""
         fresh = datetime.now().date().isoformat()
