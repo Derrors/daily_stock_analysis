@@ -54,7 +54,8 @@ describe('LLMChannelEditor', () => {
       />
     );
 
-    expect(screen.getByText(/高级模型路由 YAML/i)).toBeInTheDocument();
+    expect(screen.getByText(/检测到已配置高级模型路由 YAML/i)).toBeInTheDocument();
+    expect(screen.getByText(/运行时主模型 \/ 备选模型 \/ Vision \/ Temperature 仍由下方通用字段决定/i)).toBeInTheDocument();
     expect(screen.queryByText(/LiteLLM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/LITELLM_CONFIG/i)).not.toBeInTheDocument();
   });

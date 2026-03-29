@@ -968,8 +968,9 @@ class SystemConfigService:
                         "key": "LITELLM_MODEL",
                         "code": "missing_runtime_source",
                         "message": (
-                            "A primary model is selected, but there is no enabled channel "
-                            "or matching API key available for it"
+                            "A primary model is selected, but no usable runtime source was found. "
+                            "Enable at least one channel with available models, or provide the "
+                            "matching provider API key so the model can be resolved."
                         ),
                         "severity": "error",
                         "expected": "enabled channel model or matching legacy API key",
@@ -990,8 +991,9 @@ class SystemConfigService:
                         "key": "AGENT_LITELLM_MODEL",
                         "code": "missing_runtime_source",
                         "message": (
-                            "An Agent primary model is selected, but there is no enabled channel "
-                            "or matching API key available for it"
+                            "An Agent primary model is selected, but no usable runtime source was found. "
+                            "Enable at least one channel with available models, or provide the "
+                            "matching provider API key so the model can be resolved."
                         ),
                         "severity": "error",
                         "expected": "enabled channel model or matching legacy API key",

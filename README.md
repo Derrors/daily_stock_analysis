@@ -273,7 +273,7 @@ LITELLM_MODEL=openai/deepseek-chat
 
 保存后也可以在 Web 设置页继续编辑同一组字段；不会要求额外配置文件。
 
-如果同时启用了高级模型路由 YAML（`LITELLM_CONFIG`），YAML 仍然是运行时主模型 / 备选模型 / Vision 的唯一来源；渠道编辑器只保存渠道条目，不会覆盖 YAML 的运行时选择。
+如果同时启用了高级模型路由 YAML（`LITELLM_CONFIG`），YAML 主要用于定义可用模型和路由规则（`model_list`）；运行时主模型 / 备选模型 / Vision / Temperature 仍由 `LITELLM_MODEL`、`LITELLM_FALLBACK_MODELS`、`VISION_MODEL`、`LLM_TEMPERATURE` 等字段决定。渠道编辑器只保存渠道条目，不会覆盖这些运行时字段的选择。
 
 > Docker 部署、定时任务配置请参考 [完整指南](docs/full-guide.md)
 > 桌面客户端打包请参考 [桌面端打包说明](docs/desktop-package.md)

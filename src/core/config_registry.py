@@ -128,7 +128,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     # ------------------------------------------------------------------
     "LITELLM_CONFIG": {
         "title": "Advanced Model Routing Config",
-        "description": "Path to an advanced model routing YAML file (expert use). Takes priority over channels and legacy keys.",
+        "description": "Path to an advanced model routing YAML file (expert use). When valid/parseable and yields a model_list, it takes priority over channels and legacy keys; otherwise channels/legacy are used as fallback.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
