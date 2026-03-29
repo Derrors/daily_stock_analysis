@@ -339,6 +339,8 @@ def test_sanitize_llm_log_preview_redacts_provider_prefixed_api_key_json_fields(
         ('{"privatekey":"abc123"}', '{"privatekey":"[REDACTED]"}'),
         ('{"clientprivatekey":"abc123"}', '{"clientprivatekey":"[REDACTED]"}'),
         ('{"clientsecretkey":"abc123"}', '{"clientsecretkey":"[REDACTED]"}'),
+        ('{"PRIVATEKEY":"abc123"}', '{"PRIVATEKEY":"[REDACTED]"}'),
+        ('{"CLIENTSECRETKEY":"abc123"}', '{"CLIENTSECRETKEY":"[REDACTED]"}'),
         ('{"accessToken":"abc123"}', '{"accessToken":"[REDACTED]"}'),
         ("clientSecret=abc123", "clientSecret=[REDACTED]"),
         ("privateKey=abc123", "privateKey=[REDACTED]"),
@@ -346,6 +348,8 @@ def test_sanitize_llm_log_preview_redacts_provider_prefixed_api_key_json_fields(
         ("privatekey=abc123", "privatekey=[REDACTED]"),
         ("clientprivatekey=abc123", "clientprivatekey=[REDACTED]"),
         ("clientsecretkey=abc123", "clientsecretkey=[REDACTED]"),
+        ("PRIVATEKEY=abc123", "PRIVATEKEY=[REDACTED]"),
+        ("CLIENTSECRETKEY=abc123", "CLIENTSECRETKEY=[REDACTED]"),
         ("accessToken=abc123", "accessToken=[REDACTED]"),
     ],
 )

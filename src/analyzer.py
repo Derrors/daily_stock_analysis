@@ -70,7 +70,7 @@ _LLM_SENSITIVE_ASSIGNMENT_VALUE_PATTERN = (
     r"[^\s]+(?:\s+(?!(?:[\w.-]+|\"[^\"]+\"|'[^']+')\s*[:=])\S+)*"
 )
 _LLM_SENSITIVE_FIELD_NAME_PATTERN = (
-    r"(?:api[_-]?keys?|token|secret|password|passwd|session[_-]?id|[\w.-]+(?:api[_-]?keys?|token|secret|password|passwd|session[_-]?id|[_-]key|(?-i:keys?)|(?-i:Keys?)))"
+    r"(?:api[_-]?keys?|token|secret|password|passwd|session[_-]?id|[\w.-]+(?:api[_-]?keys?|token|secret|password|passwd|session[_-]?id|[_-]key|(?-i:keys?)|(?-i:Keys?)|(?-i:KEYS?)))"
 )
 
 
