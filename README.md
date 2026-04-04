@@ -207,7 +207,7 @@
 | `BIAS_THRESHOLD` | 乖离率阈值（%），默认 5.0，超过提示不追高；强势趋势股自动放宽 | 可选 |
 | `AGENT_MODE` | 开启 Agent 策略问股模式（内部统一命名为 skill，`true`/`false`，默认 false） | 可选 |
 | `AGENT_LITELLM_MODEL` | Agent 主模型（可选）；留空继承主模型，无前缀会按 `openai/<model>` 解析 | 可选 |
-| `AGENT_SKILLS` | 激活的策略技能 id（逗号分隔），`all` 启用全部策略技能；留空时使用主默认策略 skill（内置默认是 `bull_trend`），详见 `.env.example` | 可选 |
+| `AGENT_SKILLS` | 激活的策略技能 id（逗号分隔），`all` 启用全部策略技能；留空时使用主默认策略 skill（内置默认是 `bull_trend`）。仅影响 Agent 问股/深度研究时的策略集合，不会自动接管普通分析链路，详见 `.env.example` | 可选 |
 | `AGENT_MAX_STEPS` | Agent 最大推理步数（默认 10） | 可选 |
 | `AGENT_SKILL_DIR` | 自定义策略技能目录（默认沿用内置 `strategies/` 兼容路径） | 可选 |
 | `TRADING_DAY_CHECK_ENABLED` | 交易日检查（默认 `true`）：非交易日跳过执行；设为 `false` 或使用 `--force-run` 强制执行 | 可选 |
@@ -416,7 +416,7 @@ LITELLM_MODEL=openai/deepseek-chat
 - **后台执行**：切换页面不中断分析，完成时 Dock 问股图标显示角标
 - **Bot 命令**：`/ask` 技能分析（支持多股对比）、`/chat` 自由对话、`/history` 会话历史、`/strategies` 策略/技能列表、`/research` 深度研究
 - **自定义策略（Skill）**：在 `strategies/` 目录下新建 YAML 文件或在自定义 skill 目录中放入 `SKILL.md` bundle，即可添加新的交易策略，无需写代码
-- **多 Agent 架构**（实验性）：设置 `AGENT_ARCH=multi` 启用 Technical → Intel → Risk → Specialist → Decision 多 Agent 级联编排，通过 `AGENT_ORCHESTRATOR_MODE` 控制深度（quick/standard/full/specialist）。其中 `strategy` / `skill` 仍作为旧值兼容并会自动归一化到 `specialist`。超时或中间阶段 JSON 解析失败时，系统会优先保留已完成阶段结果并降级生成最小可用仪表盘，避免整份报告直接退回默认占位。详见 [完整配置指南](docs/full-guide.md)
+- **多 Agent 架构**（实验性，仅 Agent 问股/深度研究链路）：设置 `AGENT_ARCH=multi` 启用 Technical → Intel → Risk → Specialist → Decision 多 Agent 级联编排，通过 `AGENT_ORCHESTRATOR_MODE` 控制深度（quick/standard/full/specialist）。其中 `strategy` / `skill` 仍作为旧值兼容并会自动归一化到 `specialist`。超时或中间阶段 JSON 解析失败时，系统会优先保留已完成阶段结果并降级生成最小可用仪表盘，避免整份报告直接退回默认占位。普通分析默认仍走传统分析链路，不会仅因配置 `AGENT_SKILLS` 或 `AGENT_ARCH` 被自动切到多 Agent。详见 [完整配置指南](docs/full-guide.md)
 - **Intel 增强字段兼容说明**：`capital_flow_signal` 为新增扩展字段（`inflow/outflow/neutral/not_available`），用于描述 A 股资金流方向，未返回时不会影响后续阶段；下游解析建议以 `risk_alerts` 与 `positive_catalysts` 为主，新增字段可忽略，兼容历史客户端。
 
 > **注意**：配置了任意 AI API Key 后，Agent 对话功能自动可用，无需手动设置 `AGENT_MODE=true`。如需显式关闭可设置 `AGENT_MODE=false`。每次对话会产生 LLM API 调用费用。若你手动修改了 `.env` 中的主模型 / Agent 主模型 / 备选模型 / 模型渠道配置（如 `LITELLM_MODEL` / `AGENT_LITELLM_MODEL` / `LITELLM_FALLBACK_MODELS` / `LLM_CHANNELS`），需要重启服务或触发配置重载后，新进程才会按新模型生效。

@@ -161,7 +161,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `AGENT_MODE` | Enable Agent strategy chat mode (internally normalized as `skill`, `true`/`false`, default `false`) | Optional |
 | `AGENT_LITELLM_MODEL` | Optional Agent-only primary model; when empty it inherits the primary model, and bare names are normalized to `openai/<model>` | Optional |
 | `AGENT_MAX_STEPS` | Max reasoning steps for Agent mode (default `10`) | Optional |
-| `AGENT_SKILLS` | Comma-separated active strategy-skill ids. Leave empty to use the primary default strategy skill declared in metadata (built-in default: `bull_trend`); use `all` to activate every loaded strategy skill. | Optional |
+| `AGENT_SKILLS` | Comma-separated active strategy-skill ids. Leave empty to use the primary default strategy skill declared in metadata (built-in default: `bull_trend`); use `all` to activate every loaded strategy skill. This only affects Agent chat/deep-research runs and does not auto-switch the regular stock-analysis path. | Optional |
 | `AGENT_SKILL_DIR` | Custom strategy-skill directory (default built-in `strategies/` compatibility path) | Optional |
 
 **Stock Code Format**
@@ -458,7 +458,7 @@ Enable the FastAPI service for configuration management and triggering analysis 
 - 📝 **Configuration Management** - View/modify watchlist
 - 🚀 **Quick Analysis** - Trigger analysis via API
 - 📊 **Real-time Progress** - Analysis task status updates in real-time, supports parallel tasks
-- 🤖 **Agent Strategy Chat** - Use `/ask`, `/chat`, `/history`, `/strategies`, and `/research` for multi-turn Q&A, history, strategy listing, and deep research (enable with `AGENT_MODE=true`)
+- 🤖 **Agent Strategy Chat** - Use `/ask`, `/chat`, `/history`, `/strategies`, and `/research` for multi-turn Q&A, history, strategy listing, and deep research (enable with `AGENT_MODE=true`); multi-agent orchestration belongs to this deep-research/chat path rather than the default regular stock-analysis path
 - 🧩 **Intel compatibility** - `capital_flow_signal` is an additive Intel output field; clients that do not consume it can ignore it safely, while existing fields such as `risk_alerts` and `positive_catalysts` remain unchanged.
 - 📈 **Backtest Validation** - Evaluate historical analysis accuracy, query direction win rate and simulated returns
 

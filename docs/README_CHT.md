@@ -155,7 +155,7 @@
 | `AGENT_MODE` | 啟用 Agent 策略問股模式（內部統一命名為 skill，`true`/`false`，預設 `false`） | 可選 |
 | `AGENT_LITELLM_MODEL` | Agent 專用主模型（可選）；留空時繼承主模型，無 provider 前綴時按 `openai/<model>` 解析 | 可選 |
 | `AGENT_MAX_STEPS` | Agent 最大推理步數（預設 `10`） | 可選 |
-| `AGENT_SKILLS` | 逗號分隔的策略技能 id。留空時使用 metadata 宣告的主預設策略 skill（內建預設為 `bull_trend`）；使用 `all` 可啟用所有已載入策略技能。 | 可選 |
+| `AGENT_SKILLS` | 逗號分隔的策略技能 id。留空時使用 metadata 宣告的主預設策略 skill（內建預設為 `bull_trend`）；使用 `all` 可啟用所有已載入策略技能。這只影響 Agent 問股/深度研究時的策略集合，不會自動接管普通分析鏈路。 | 可選 |
 | `AGENT_SKILL_DIR` | 自訂策略技能目錄（預設沿用內建 `strategies/` 相容路徑） | 可選 |
 
 #### 3. 啟用 Actions
@@ -237,7 +237,7 @@
 - 📝 **配置管理** - 查看/修改自選股列表
 - 🚀 **快速分析** - 通過 API 接口觸發分析
 - 📊 **實時進度** - 分析任務狀態實時更新，支持多任務並行
-- 🤖 **Agent 策略對話** - 啟用 `AGENT_MODE=true` 後可使用 `/ask`、`/chat`、`/history`、`/strategies`、`/research` 進行問答、查歷史、查看策略與深度研究
+- 🤖 **Agent 策略對話** - 啟用 `AGENT_MODE=true` 後可使用 `/ask`、`/chat`、`/history`、`/strategies`、`/research` 進行問答、查歷史、查看策略與深度研究；多 Agent 編排屬於這條深度問股鏈路，而不是普通分析的預設模式
 - 📈 **回測驗證** - 評估歷史分析準確率，查詢方向勝率與模擬收益
 
 ### API 接口

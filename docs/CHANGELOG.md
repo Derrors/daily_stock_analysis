@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] SSE 任务流断开时 CancelledError 被静默吞掉问题 — 修复 SSE 流中断时异常未向上抛出导致故障无日志可查的问题，现在正确 re-raise CancelledError（fixes #967）
 - [修复] Agent SSE 流清理阶段静默吞掉后台执行器异常 — 流结束时后台任务异常现在正确记录并上报，避免错误无法感知（fixes #969）
 - [文档] FAQ 补充 Ollama `OllamaException / APIConnectionError` 连接失败排障条目（Q12c），覆盖服务未启动、URL 配置错误、模型前缀缺失、模型未下载、远程防火墙等 5 个检查点
+- [修复] 普通分析链路不再因配置 `AGENT_SKILLS` 被隐式切到 Agent / 多 Agent 模式；`AGENT_SKILLS` 现在仅影响 Agent 问股与深度研究时的策略集合选择，避免 schedule / API 普通分析被链路污染
 
 ## [3.12.0] - 2026-04-01
 

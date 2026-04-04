@@ -255,18 +255,11 @@ class StockAnalysisPipeline:
             except Exception as e:
                 logger.warning(f"{stock_name}({code}) 获取筹码分布失败: {e}")
 
-            # If agent mode is explicitly enabled, or specific agent skills are configured, use the Agent analysis pipeline.
-            # NOTE: use config.agent_mode (explicit opt-in) instead of
-            # config.is_agent_available() so that users who only configured an
-            # API Key for the traditional analysis path are not silently
-            # switched to Agent mode (which is slower and more expensive).
-            use_agent = getattr(self.config, 'agent_mode', False)
-            if not use_agent:
-                # Auto-enable agent mode when specific skills are configured (e.g., scheduled task with strategy)
-                configured_skills = getattr(self.config, 'agent_skills', [])
-                if configured_skills and configured_skills != ['all']:
-                    use_agent = True
-                    logger.info(f"{stock_name}({code}) Auto-enabled agent mode due to configured skills: {configured_skills}")
+            # Stock analysis must only enter the Agent pipeline via explicit
+            # opt-in. Strategy skill selection affects Agent executions after
+            # Agent mode is enabled, but must not silently hijack the regular
+            # analysis path.
+            use_agent = bool(getattr(self.config, 'agent_mode', False))
 
             # Step 2.5: 基本面能力聚合（统一入口，异常降级）
             # - 失败时返回 partial/failed，不影响既有技术面/新闻链路
