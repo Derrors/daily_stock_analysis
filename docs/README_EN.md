@@ -14,13 +14,13 @@
   <a href="https://hellogithub.com/repository/ZhuLinsen/daily_stock_analysis" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=6daa16e405ce46ed97b4a57706aeb29f&claim_uid=pfiJMqhR9uvDGlT&theme=neutral" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </p>
 
-**AI-powered stock analysis system for A-shares / Hong Kong / US stocks**
+**Agent-first stock-analysis backend core for A-shares / Hong Kong / US stocks**
 
-Analyze your watchlist daily → generate a decision dashboard → push to multiple channels (Telegram/Discord/Slack/Email/WeChat Work/Feishu)
+Run analysis → generate a decision dashboard → persist local reports or optional Feishu cloud docs → let your outer caller deliver results
 
-**Zero-cost deployment** · Runs on GitHub Actions · No server required
+**Zero-cost deployment** · Runs on GitHub Actions · API-first / skill-friendly
 
-[**Quick Start**](#-quick-start) · [**Key Features**](#-key-features) · [**Sample Output**](#-sample-output) · [**Full Guide**](./full-guide_EN.md) · [**FAQ**](./FAQ_EN.md) · [**Contributing**](./CONTRIBUTING_EN.md) · [**All Docs**](./INDEX_EN.md)
+[**Quick Start**](#-quick-start) · [**Key Features**](#-key-features) · [**Output Examples**](#-output-examples) · [**Full Guide**](./full-guide_EN.md) · [**FAQ**](./FAQ_EN.md) · [**Contributing**](./CONTRIBUTING_EN.md) · [**All Docs**](./INDEX_EN.md)
 
 English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 
@@ -46,8 +46,8 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | Review | Market Review | Daily overview, sectors, northbound capital flow |
 | Intel | Announcement + Capital Flow Intelligence | IntelAgent now also pulls listed-company announcements (SSE/SZSE/CNINFO) and A-share main-force capital flow, and exposes `capital_flow_signal` (`inflow/outflow/neutral/not_available`) for flow direction context |
 | Backtest | AI Backtest Validation | Auto-evaluate historical analysis accuracy, with a 1-day next-session validation view for AI prediction vs actual move and accuracy |
-| Agent Q&A | Strategy Chat | Multi-turn strategy chat with 11 built-in trading strategies (internally loaded as skills) (Web/API/Skill) |
-| Notifications | Multi-channel Push | Telegram, Discord, Slack, Email, WeChat Work, Feishu, etc. |
+| Agent Q&A | Strategy Chat | Multi-turn strategy chat with 11 built-in trading strategies (internally loaded as skills) (API/Skill) |
+| Output Boundary | Report-first | Local markdown reports and optional Feishu cloud docs; message delivery is handled outside this repo |
 | Automation | Scheduled Runs | GitHub Actions scheduled execution, no server required |
 
 > The Backtest page now includes a 1-day next-session validation view. You can filter by stock code and analysis date range to compare the original AI prediction with the next trading day close and inspect the filtered accuracy rate. This is based on historical analysis plus `eval_window_days=1` backtest data, not real trade execution logs.
@@ -164,8 +164,8 @@ Go to `Actions` tab → Click `I understand my workflows, go ahead and enable th
 
 The system will:
 - Run automatically at scheduled time (default: 18:00 Beijing Time)
-- Send analysis reports to all configured channels
-- Save reports locally
+- Generate decision-dashboard output and local reports
+- Leave channel delivery to your outer caller / automation layer
 
 > Resume fetch and `--dry-run` data-existence checks now resolve the "latest reusable trading day" from each market's local timezone and trading calendar. Weekends and holidays reuse the most recent trading day, intraday runs reuse the last completed trading day, and after market close the run skips only if the current trading day's data is already stored. See [Full Guide](./full-guide_EN.md) for the exact rules.
 
@@ -252,7 +252,7 @@ python main.py --market-review
 
 Notification delivery has been removed from the repository. Use the generated report text / local markdown files / optional Feishu cloud document as outputs, and let your outer caller deliver messages.
 
-## 🎨 Sample Output
+## 🎨 Output Examples
 
 ### Decision Dashboard Format
 
@@ -375,7 +375,7 @@ Enable the FastAPI service for configuration management and triggering analysis 
 - 📝 **Configuration Management** - View/modify watchlist
 - 🚀 **Quick Analysis** - Trigger analysis via API
 - 📊 **Real-time Progress** - Analysis task status updates in real-time, supports parallel tasks
-- 🤖 **Agent Strategy Chat** - Use the Web chat page or `/api/v1/agent/chat*` endpoints for multi-turn strategy Q&A, session history, and deep-research style follow-ups (enable with `AGENT_MODE=true`)
+- 🤖 **Agent Strategy Chat** - Use `/api/v1/agent/chat*` endpoints for multi-turn strategy Q&A, session history, and deep-research style follow-ups (enable with `AGENT_MODE=true`)
 - 🧩 **Intel compatibility** - `capital_flow_signal` is an additive Intel output field; clients that do not consume it can ignore it safely, while existing fields such as `risk_alerts` and `positive_catalysts` remain unchanged.
 - 📈 **Backtest Validation** - Evaluate historical analysis accuracy, query direction win rate and simulated returns
 

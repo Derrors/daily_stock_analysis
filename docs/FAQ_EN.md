@@ -91,11 +91,10 @@ This document compiles common issues encountered by users and their solutions.
 
 **Solution**:
 1. Ensure `.env` file is in project root directory
-2. **Docker deployment / WebUI Settings**:
-   - WebUI saves `STOCK_LIST`, `SCHEDULE_ENABLED`, `SCHEDULE_TIME`, `SCHEDULE_RUN_IMMEDIATELY`, and `RUN_IMMEDIATELY` back into the container's `.env`
-   - Saving from WebUI triggers a config reload for the current process, and runtime reads continue from the latest persisted `.env`; for example, scheduled runs keep hot-reading the saved `STOCK_LIST`
-   - If you also pass these keys explicitly as container process env vars (`docker run -e ...` or Compose `environment:`), those explicit process env overrides still win on later restarts; update or remove them if you want the WebUI-saved `.env` values to take over
-   - `SCHEDULE_*` and `RUN_IMMEDIATELY` are still **startup-time scheduling settings**: saving them does not immediately trigger an analysis run and does not hot-rebuild the scheduler inside the current process
+2. **Docker / API-service scenarios**:
+   - The built-in WebUI has been removed. If you rewrite the container's `.env` through a bind mount, external config management, or your own scripts, treat it like a normal config-file change
+   - If you also pass the same keys explicitly as container process env vars (`docker run -e ...` or Compose `environment:`), those explicit process env overrides still win on later restarts; update or remove them if you want the persisted `.env` values to take over
+   - `SCHEDULE_*` and `RUN_IMMEDIATELY` are still **startup-time scheduling settings**: changing them does not immediately trigger an analysis run and does not hot-rebuild the scheduler inside the current process
    - To make schedule changes take over the current container, restart it and make sure the process is started in schedule mode
 3. **Manual `.env` edits in Docker**: Restart the container after changes
    ```bash

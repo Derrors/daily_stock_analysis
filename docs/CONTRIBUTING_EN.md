@@ -101,9 +101,9 @@ When modifying a Chinese-language core document (e.g., `docs/full-guide.md`), yo
 
 ## 📋 Priority Areas for Contribution
 
-- 🔔 New notification channels (e.g., Slack, Matrix)
 - 🤖 New AI model integrations
 - 📊 New data source adapters
+- 🧩 Agent / skill / API capability improvements
 - 🐛 Bug fixes and performance improvements
 - 📖 Documentation improvements and translations
 

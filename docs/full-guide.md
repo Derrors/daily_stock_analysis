@@ -12,7 +12,7 @@ daily_stock_analysis/
 ├── src/                 # 核心业务逻辑
 │   ├── analyzer.py      # AI 分析器
 │   ├── config.py        # 配置管理
-│   ├── notification.py  # 消息推送
+│   ├── notification.py  # 报告生成 / 兼容发送空壳
 │   └── ...
 ├── data_provider/       # 多数据源适配器
 ├── api/                 # FastAPI 后端服务
@@ -33,7 +33,6 @@ daily_stock_analysis/
 - [数据源配置](#数据源配置)
 - [高级功能](#高级功能)
 - [回测功能](#回测功能)
-- [本地 WebUI 管理界面](#本地-webui-管理界面)
 
 ---
 
@@ -282,12 +281,12 @@ cp .env.example .env
 vim .env  # 填入 API Key 和配置
 
 # 3. 启动容器
-docker-compose -f ./docker/docker-compose.yml up -d server     # Web 服务模式（推荐，提供 API 与 WebUI）
+docker-compose -f ./docker/docker-compose.yml up -d server     # API 服务模式（推荐，提供 FastAPI 接口）
 docker-compose -f ./docker/docker-compose.yml up -d analyzer   # 定时任务模式
 docker-compose -f ./docker/docker-compose.yml up -d            # 同时启动两种模式
 
-# 4. 访问 WebUI
-# http://localhost:8000
+# 4. 访问 API
+# http://localhost:8000/docs
 
 # 5. 查看日志
 docker-compose -f ./docker/docker-compose.yml logs -f server
@@ -297,7 +296,7 @@ docker-compose -f ./docker/docker-compose.yml logs -f server
 
 | 命令 | 说明 | 端口 |
 |------|------|------|
-| `docker-compose -f ./docker/docker-compose.yml up -d server` | Web 服务模式，提供 API 与 WebUI | 8000 |
+| `docker-compose -f ./docker/docker-compose.yml up -d server` | API 服务模式，提供 FastAPI 接口 | 8000 |
 | `docker-compose -f ./docker/docker-compose.yml up -d analyzer` | 定时任务模式，每日自动执行 | - |
 | `docker-compose -f ./docker/docker-compose.yml up -d` | 同时启动两种模式 | 8000 |
 
@@ -457,7 +456,7 @@ python main.py --schedule --no-run-immediately
 
 > 说明：定时模式每次触发前都会重新读取当前保存的 `STOCK_LIST`。如果同时传入 `--stocks`，该参数不会锁定后续计划执行的股票列表；需要临时只跑指定股票时，请使用非定时的单次运行命令。
 >
-> 从 `python main.py --schedule`、`python main.py --serve --schedule` 或等价内置调度模式启动后，WebUI 保存新的 `SCHEDULE_TIME` 会在下一轮调度检查内自动重绑 daily job，无需重启进程；旧的执行时间不会继续保留。
+> 从 `python main.py --schedule`、`python main.py --serve --schedule` 或等价内置调度模式启动后，如果持久化 `.env` 或外部配置管理写入了新的 `SCHEDULE_TIME`，系统会在下一轮调度检查内自动重绑 daily job，无需重启进程；旧的执行时间不会继续保留。
 
 #### 环境变量方式
 
@@ -681,7 +680,7 @@ python main.py --debug
 
 ### 自动运行
 
-回测在每日分析流程完成后自动触发（非阻塞，失败不影响通知推送）。也可通过 API 手动触发。
+回测在每日分析流程完成后自动触发（非阻塞，失败不影响主分析结果落盘）。也可通过 API 手动触发。
 
 ### 评估指标
 
@@ -793,8 +792,8 @@ python main.py --serve-only --host 0.0.0.0 --port 8888
 
 ### 注意事项
 
-- 浏览器访问：`http://127.0.0.1:8000`（或您配置的端口）
-- 分析完成后自动推送通知到配置的渠道
+- 浏览器访问 API 文档：`http://127.0.0.1:8000/docs`（或您配置的端口）
+- 分析完成后会生成本地报告；外部渠道投递由调用方自行处理
 - 此功能在 GitHub Actions 环境中会自动禁用
 - 另见 [openclaw Skill 集成指南](openclaw-skill-integration.md)
 

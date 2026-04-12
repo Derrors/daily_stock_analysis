@@ -294,21 +294,21 @@ deploy:
       memory: 1G
 ```
 
-### 5. WebUI 打开后 UI 元素异常变大 / 布局错乱
+### 5. 历史镜像仍残留旧 WebUI 静态页怎么办？
 
-**症状**：能访问 8000 端口，但页面上的文字、按钮、卡片异常放大，没有正常布局。
+**现象**：升级后仍访问到旧的静态前端页面，或页面样式错乱，与当前仓库“仅提供 API 服务”的定位不一致。
 
-**根因**：`static/index.html` 存在，但 CSS/JS 资源文件缺失（`static/assets/` 为空或不存在），浏览器无法加载样式与脚本，导致裸 HTML 渲染。
+**根因**：本地或容器里仍残留旧版静态资源 / 旧镜像缓存，浏览器继续命中了历史前端产物。
 
 **解决方法**：
 
-- **Docker 部署**：执行以下命令重新构建镜像（确保前端已正确打包进镜像）：
+- **Docker 部署**：执行以下命令重新构建镜像并清理旧容器缓存：
   ```bash
   docker-compose -f ./docker/docker-compose.yml down
   docker-compose -f ./docker/docker-compose.yml build --no-cache
   docker-compose -f ./docker/docker-compose.yml up -d
   ```
-  构建完成后刷新浏览器缓存（`Ctrl+Shift+R`）再访问。
+  构建完成后刷新浏览器缓存（`Ctrl+Shift+R`）再访问 `http://localhost:8000/docs` 确认当前服务已回到 API 文档页。
 
 - **直接部署（pip + python）**：启动 API 服务：
   ```bash
@@ -391,7 +391,7 @@ git push -u origin main
 
 > 说明：通知发送能力已下线，GitHub Actions 不再向微信 / 飞书 / Telegram / 邮件等渠道主动推送。
 
-> *注：通知渠道至少配置一个，支持多渠道同时推送
+> *注：通知发送能力已下线；至少需要配置一组可用 AI 模型与 `STOCK_LIST`，如需消息投递请在仓库外部处理。
 
 #### 3. 验证 Workflow 文件
 

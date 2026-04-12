@@ -14,13 +14,13 @@
   <a href="https://hellogithub.com/repository/ZhuLinsen/daily_stock_analysis" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=6daa16e405ce46ed97b4a57706aeb29f&claim_uid=pfiJMqhR9uvDGlT&theme=neutral" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 </p>
 
-**基於 AI 大模型的 A股/港股/美股 智能分析系統**
+**面向 Agent / skill / API 的 A股/港股/美股股票分析後端內核**
 
-自動分析自選股 → 生成決策儀表盤 → 多渠道推送（Telegram/Discord/Slack/郵件/企業微信/飛書）
+執行分析 → 生成決策儀表盤 → 落本地報告或可選飛書雲文檔 → 由外部調用方自行投遞結果
 
-**零成本部署** · GitHub Actions 免費運行 · 無需伺服器
+**零成本部署** · GitHub Actions 免費運行 · API-first / skill-friendly
 
-[**功能特性**](#-功能特性) · [**快速開始**](#-快速開始) · [**推送效果**](#-推送效果) · [**完整指南**](./full-guide.md) · [**常見問題**](./FAQ.md) · [**更新日誌**](./CHANGELOG.md)
+[**功能特性**](#-功能特性) · [**快速開始**](#-快速開始) · [**輸出示例**](#-輸出示例) · [**完整指南**](./full-guide.md) · [**常見問題**](./FAQ.md) · [**更新日誌**](./CHANGELOG.md)
 
  繁體中文 | [English](README_EN.md) | [简体中文](../README.md)
 
@@ -45,8 +45,8 @@
 | 補全 | 智慧補全 (MVP) | **[測試階段]** 首頁搜尋框支援代碼 / 名稱 / 拼音 / 別名聯想；本地索引已覆蓋 A股、港股、美股，並可透過 Tushare 或 AkShare 重新生成 |
 | 復盤 | 大盤復盤 | 每日市場概覽、板塊漲跌、北向資金 |
 | 回測 | AI 回測驗證 | 自動評估歷史分析準確率，方向勝率、止盈止損命中率 |
-| **Agent 問股** | **策略對話** | **多輪策略問答，支援 11 種內建策略（Web/API/Skill）** |
-| 推送 | 多渠道通知 | Telegram、Discord、Slack、郵件、企業微信、飛書等 |
+| **Agent 問股** | **策略對話** | **多輪策略問答，支援 11 種內建策略（API/Skill）** |
+| 輸出邊界 | 報告優先 | 本地 Markdown 報告與可選飛書雲文檔承載；消息投遞由倉庫外調用方處理 |
 | 自動化 | 定時運行 | GitHub Actions 定時執行，無需伺服器 |
 
 ### 技術棧與數據來源
@@ -155,7 +155,7 @@
 
 > 📖 本地運行、Docker 部署詳細步驟請參考 [完整配置指南](./full-guide.md)
 
-## 📱 推送效果
+## 📱 輸出示例
 
 ### 決策儀表盤
 ```
@@ -216,7 +216,7 @@
 - 📝 **配置管理** - 查看/修改自選股列表
 - 🚀 **快速分析** - 通過 API 接口觸發分析
 - 📊 **實時進度** - 分析任務狀態實時更新，支持多任務並行
-- 🤖 **Agent 策略對話** - 啟用 `AGENT_MODE=true` 後，可透過 Web 問股頁或 `/api/v1/agent/chat*` 相關接口進行多輪問答、查看歷史會話與深度研究式追問
+- 🤖 **Agent 策略對話** - 啟用 `AGENT_MODE=true` 後，可透過 `/api/v1/agent/chat*` 相關接口進行多輪問答、查看歷史會話與深度研究式追問
 - 📈 **回測驗證** - 評估歷史分析準確率，查詢方向勝率與模擬收益
 
 ### API 接口

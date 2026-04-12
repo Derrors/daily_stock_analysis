@@ -93,13 +93,12 @@
 
 **解决方案**：
 1. 确保 `.env` 文件位于项目根目录
-2. **Docker 部署 / WebUI 系统设置**：
-   - WebUI 保存后的 `STOCK_LIST`、`SCHEDULE_ENABLED`、`SCHEDULE_TIME`、`SCHEDULE_RUN_IMMEDIATELY`、`RUN_IMMEDIATELY` 会写回容器内的 `.env`
-   - WebUI 保存后会触发当前进程的配置重载；运行中的读取路径会同步使用最新写回的 `.env`，例如定时任务会继续热读取保存后的 `STOCK_LIST`
-   - 如果容器启动命令里显式传入了这些同名环境变量（如 `docker run -e ...` 或 Compose `environment:`），后续重启时仍以显式进程环境变量为准；要让 WebUI 保存值接管，请同步更新或移除这些显式 override
-   - 其中 `SCHEDULE_*` 与 `RUN_IMMEDIATELY` 属于**启动期调度配置**，保存后不会立即触发一次分析，也不会热重建当前进程里的 scheduler
-   - 如需让调度开关立刻接管当前容器，请重启容器，并确保以 schedule 模式启动
-3. **Docker 手工改 `.env` 后**：修改后仍建议重启容器
+2. **Docker / API 服务场景**：
+   - 当前仓库已下线内置 WebUI；如果你通过挂载文件、外部配置管理或自定义脚本改写容器内 `.env`，建议把它视为一次普通配置文件变更
+   - 如果容器启动命令里显式传入了同名环境变量（如 `docker run -e ...` 或 Compose `environment:`），后续重启时仍以显式进程环境变量为准；要让持久化 `.env` 接管，请同步更新或移除这些显式 override
+   - 其中 `SCHEDULE_*` 与 `RUN_IMMEDIATELY` 属于**启动期调度配置**，修改后不会立即触发一次分析，也不会热重建当前进程里的 scheduler
+   - 如需让新的调度配置立刻生效，请重启相关容器，并确保以 schedule 模式启动
+3. **Docker 手工改 `.env` 后**：修改后建议重启容器
    ```bash
    docker-compose down && docker-compose up -d
    ```
@@ -137,7 +136,7 @@ PROXY_PORT=10809
 
 **Q: 如何同时使用多个模型（如 AIHubmix + DeepSeek + Gemini）？**
 
-使用渠道模式：设置 `LLM_CHANNELS=aihubmix,deepseek,gemini`，并配置各渠道的 `LLM_{NAME}_BASE_URL`、`LLM_{NAME}_API_KEY`、`LLM_{NAME}_MODELS`。也可在 Web 设置页 → AI 模型 → AI 模型接入 中可视化配置。
+使用渠道模式：设置 `LLM_CHANNELS=aihubmix,deepseek,gemini`，并配置各渠道的 `LLM_{NAME}_BASE_URL`、`LLM_{NAME}_API_KEY`、`LLM_{NAME}_MODELS`。当前推荐直接通过 `.env`、Docker 环境变量或部署系统中的配置管理来维护这组字段。
 
 ---
 

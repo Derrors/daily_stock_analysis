@@ -358,7 +358,7 @@ Add these Secrets:
 
 > Note: notification delivery has been removed. GitHub Actions no longer pushes messages to WeChat / Feishu / Telegram / email channels.
 
-> *Note: Configure at least one notification channel, multiple channels supported for simultaneous push
+> *Note: Notification delivery has been removed; configure at least one usable AI model plus `STOCK_LIST`. If you need channel delivery, handle it outside this repository.
 
 #### 3. Verify Workflow File
 

@@ -12,7 +12,7 @@ daily_stock_analysis/
 ├── src/                 # Core business logic
 │   ├── analyzer.py      # AI analyzer
 │   ├── config.py        # Configuration management
-│   ├── notification.py  # Message push notifications
+│   ├── notification.py  # Report generation / compatibility send stub
 │   └── ...
 ├── data_provider/       # Multi-source data adapters
 ├── api/                 # FastAPI backend service
@@ -33,7 +33,6 @@ daily_stock_analysis/
 - [Data Source Configuration](#data-source-configuration)
 - [Advanced Features](#advanced-features)
 - [Backtesting](#backtesting)
-- [Local WebUI Management Interface](#local-webui-management-interface)
 
 ---
 
@@ -249,12 +248,12 @@ cp .env.example .env
 vim .env  # Fill in API Keys and configuration
 
 # 3. Start container
-docker-compose -f ./docker/docker-compose.yml up -d server     # Web service mode (recommended, provides API & WebUI)
+docker-compose -f ./docker/docker-compose.yml up -d server     # API service mode (recommended, provides FastAPI endpoints)
 docker-compose -f ./docker/docker-compose.yml up -d analyzer   # Scheduled task mode
 docker-compose -f ./docker/docker-compose.yml up -d            # Start both modes
 
-# 4. Access WebUI
-# http://localhost:8000
+# 4. Access API docs
+# http://localhost:8000/docs
 
 # 5. View logs
 docker-compose -f ./docker/docker-compose.yml logs -f server
@@ -264,7 +263,7 @@ docker-compose -f ./docker/docker-compose.yml logs -f server
 
 | Command | Description | Port |
 |------|------|------|
-| `docker-compose -f ./docker/docker-compose.yml up -d server` | Web service mode, provides API & WebUI | 8000 |
+| `docker-compose -f ./docker/docker-compose.yml up -d server` | API service mode, provides FastAPI endpoints | 8000 |
 | `docker-compose -f ./docker/docker-compose.yml up -d analyzer` | Scheduled task mode, daily auto execution | - |
 | `docker-compose -f ./docker/docker-compose.yml up -d` | Start both modes simultaneously | 8000 |
 
@@ -393,7 +392,7 @@ crontab -e
 
 > Note: Scheduled mode reloads the saved `STOCK_LIST` before each run. If you also pass `--stocks`, it will not pin future scheduled executions to the startup snapshot; use a normal one-off run when you want to analyze a temporary stock list.
 >
-> When the built-in scheduler is started via `python main.py --schedule`, `python main.py --serve --schedule`, or an equivalent local mode, saving a new `SCHEDULE_TIME` from the WebUI will rebind the daily job on the next scheduler poll without restarting the process. The previous trigger time is removed instead of being kept alongside the new one.
+> When the built-in scheduler is started via `python main.py --schedule`, `python main.py --serve --schedule`, or an equivalent local mode, writing a new `SCHEDULE_TIME` through the persisted `.env` or external config management will rebind the daily job on the next scheduler poll without restarting the process. The previous trigger time is removed instead of being kept alongside the new one.
 
 ---
 
@@ -652,8 +651,8 @@ python main.py --serve-only --host 0.0.0.0 --port 8888
 
 ### Notes
 
-- Browser access: `http://127.0.0.1:8000` (or your configured port)
-- After analysis completion, notifications are automatically pushed to configured channels
+- Browser access to API docs: `http://127.0.0.1:8000/docs` (or your configured port)
+- After analysis completion, local reports are generated; external channel delivery should be handled by the caller
 - This feature is automatically disabled in GitHub Actions environment
 
 ---
