@@ -18,13 +18,11 @@ daily_stock_analysis/
 ├── api/                 # FastAPI 后端服务
 ├── docker/              # Docker 配置
 ├── docs/                # 项目文档
-└── .github/workflows/   # GitHub Actions
 ```
 
 ## 📑 目录
 
 - [项目结构](#项目结构)
-- [GitHub Actions 详细配置](#github-actions-详细配置)
 - [环境变量完整列表](#环境变量完整列表)
 - [Docker 部署](#docker-部署)
 - [本地运行详细配置](#本地运行详细配置)
@@ -33,82 +31,6 @@ daily_stock_analysis/
 - [数据源配置](#数据源配置)
 - [高级功能](#高级功能)
 - [回测功能](#回测功能)
-
----
-
-## GitHub Actions 详细配置
-
-### 1. Fork 本仓库
-
-点击右上角 `Fork` 按钮
-
-### 2. 配置 Secrets
-
-进入你 Fork 的仓库 → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-
-<div align="center">
-  <img src="../sources/secret_config.png" alt="GitHub Secrets 配置示意图" width="600">
-</div>
-
-#### AI 模型配置（二选一）
-
-| Secret 名称 | 说明 | 必填 |
-|------------|------|:----:|
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/) 获取免费 Key | ✅* |
-| `OPENAI_API_KEY` | OpenAI 兼容 API Key（支持 DeepSeek、通义千问等） | 可选 |
-| `OPENAI_BASE_URL` | OpenAI 兼容 API 地址（如 `https://api.deepseek.com/v1`） | 可选 |
-| `OPENAI_MODEL` | 模型名称（如 `gemini-3.1-pro-preview`、`deepseek-chat`、`gpt-5.2`） | 可选 |
-
-> *注：`GEMINI_API_KEY` 和 `OPENAI_API_KEY` 至少配置一个
-
-#### 结果输出边界
-
-> 通知发送能力已下线；仓库只负责结果生成、本地落盘与可选飞书云文档创建。
->
-> 如需把结果投递到外部渠道，请在调用方完成。
-
-#### 其他配置
-
-| Secret 名称 | 说明 | 必填 |
-|------------|------|:----:|
-| `STOCK_LIST` | 自选股代码，如 `600519,300750,002594` | ✅ |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) 搜索 API（新闻搜索） | 推荐 |
-| `BOCHA_API_KEYS` | [博查搜索](https://open.bocha.cn/) Web Search API（中文搜索优化，支持 AI 摘要，多个 key 用逗号分隔） | 可选 |
-| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API（隐私优先，美股优化，多个 key 用逗号分隔） | 可选 |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) 备用搜索 | 可选 |
-| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token（当前唯一保留的运行时行情数据源） | ✅ |
-| `ENABLE_CHIP_DISTRIBUTION` | 启用筹码分布（Actions 默认 false；需筹码数据时在 Variables 中设为 true；若当前 Tushare 能力或权限不支持，会直接明确报错） | 可选 |
-
-> 补充说明
-- `TUSHARE_TOKEN` 配置后，如当前账号不具备港股日线等接口权限，相关市场数据仍可能查询失败；当前运行时会直接按 Tushare 权限不足处理，不再回退到旧数据源。
-#### ✅ 最小配置示例
-
-如果你想快速开始，最少需要配置以下项：
-
-1. **AI 模型**：`AIHUBMIX_KEY`（[AIHubmix](https://aihubmix.com/?aff=CfMq)，一 Key 多模型）、`GEMINI_API_KEY` 或 `OPENAI_API_KEY`
-2. **股票列表**：`STOCK_LIST`（必填）
-3. **搜索 API**：`TAVILY_API_KEYS`（强烈推荐，用于新闻搜索）
-4. **输出方式**：默认使用本地 Markdown 报告；如需更长内容承载，可配置飞书云文档
-
-> 💡 配置完以上 4 项即可开始使用！
-
-### 3. 启用 Actions
-
-1. 进入你 Fork 的仓库
-2. 点击顶部的 `Actions` 标签
-3. 如果看到提示，点击 `I understand my workflows, go ahead and enable them`
-
-### 4. 手动测试
-
-1. 进入 `Actions` 标签
-2. 左侧选择 `每日股票分析` workflow
-3. 点击右侧的 `Run workflow` 按钮
-4. 选择运行模式
-5. 点击绿色的 `Run workflow` 确认
-
-### 5. 完成！
-
-默认每个工作日 **18:00（北京时间）** 自动执行。
 
 ---
 

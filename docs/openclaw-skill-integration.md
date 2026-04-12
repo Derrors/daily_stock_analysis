@@ -11,7 +11,7 @@
 
 1. **daily_stock_analysis 必须已运行**：执行 `python main.py --serve-only` 或通过 Docker 部署，使 API 长期可用
 2. **openclaw 需具备 HTTP 调用能力**：如 `system.run` 执行 curl，或内置 HTTP 工具（如 api-tester 等）
-3. **说明**：GitHub Actions 仅做定时任务，不长期暴露 API，需本地或 Docker 运行 DSA
+3. **说明**：建议通过本地或 Docker 方式长期运行 DSA；如需定时任务或消息投递，由仓库外层调度器负责。
 
 ## 核心 API 参考
 

@@ -3,10 +3,8 @@
 # AI Stock Analysis System
 
 [![GitHub stars](https://img.shields.io/github/stars/ZhuLinsen/daily_stock_analysis?style=social)](https://github.com/ZhuLinsen/daily_stock_analysis/stargazers)
-[![CI](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/)
 
 <p>
@@ -18,7 +16,7 @@
 
 Run analysis → generate a decision dashboard → persist local reports or optional Feishu cloud docs → let your outer caller deliver results
 
-**Zero-cost deployment** · Runs on GitHub Actions · API-first / skill-friendly
+**Docker / local deployment** · API-first / skill-friendly
 
 [**Quick Start**](#-quick-start) · [**Key Features**](#-key-features) · [**Output Examples**](#-output-examples) · [**Full Guide**](./full-guide_EN.md) · [**FAQ**](./FAQ_EN.md) · [**Contributing**](./CONTRIBUTING_EN.md) · [**All Docs**](./INDEX_EN.md)
 
@@ -48,7 +46,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | Backtest | AI Backtest Validation | Auto-evaluate historical analysis accuracy, with a 1-day next-session validation view for AI prediction vs actual move and accuracy |
 | Agent Q&A | Strategy Chat | Multi-turn strategy chat with 11 built-in trading strategies (internally loaded as skills) (API/Skill) |
 | Output Boundary | Report-first | Local markdown reports and optional Feishu cloud docs; message delivery is handled outside this repo |
-| Automation | Scheduled Runs | GitHub Actions scheduled execution, no server required |
+| Automation | Scheduled Runs | Docker, local cron, or any external scheduler can drive runs |
 
 > The Backtest page now includes a 1-day next-session validation view. You can filter by stock code and analysis date range to compare the original AI prediction with the next trading day close and inspect the filtered accuracy rate. This is based on historical analysis plus `eval_window_days=1` backtest data, not real trade execution logs.
 
@@ -73,89 +71,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 
 ## 🚀 Quick Start
 
-### Option 1: GitHub Actions (Recommended, Zero Cost)
-
-**No server needed, runs automatically every day!**
-
-#### 1. Fork this repository
-
-Click the `Fork` button in the upper right corner
-
-#### 2. Configure Secrets
-
-Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-
-**AI Model Configuration (Choose one)**
-
-> For detailed configuration, see [LLM Config Guide](LLM_CONFIG_GUIDE_EN.md). The default path is: pick a provider, add the API key, then optionally pin a primary model. Use channels only when you need multi-provider routing or fallbacks; advanced YAML routing is optional for expert setups.
-
-| Secret Name | Description | Required |
-|------------|------|:----:|
-| `GEMINI_API_KEY` | Get free API key from [Google AI Studio](https://aistudio.google.com/) | ✅* |
-| `OPENAI_API_KEY` | OpenAI-compatible API Key (supports DeepSeek, Qwen, etc.) | Optional |
-| `OPENAI_BASE_URL` | OpenAI-compatible API endpoint (e.g., `https://api.deepseek.com/v1`) | Optional |
-| `OPENAI_MODEL` | Model name (e.g., `deepseek-chat`) | Optional |
-| `OLLAMA_API_BASE` | Ollama local service address (e.g. `http://localhost:11434`), for local/Docker deployment; **do not** use `OPENAI_BASE_URL` for Ollama, see [LLM Config Guide - Ollama](LLM_CONFIG_GUIDE_EN.md#example-4-using-ollama-local-models) | Optional |
-
-> *Note: Configure at least one of `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `OLLAMA_API_BASE` (local). **Ollama** requires `OLLAMA_API_BASE`; using `OPENAI_BASE_URL` causes 404.
-
-<details>
-<summary><b>Output boundary</b> (expand)</summary>
-
-> Notification delivery has been removed. The repository now only handles analysis execution, report generation, local result persistence, and optional Feishu cloud-document creation.
->
-> If you want to deliver messages to Telegram / Discord / Slack / email / WeChat Work / Feishu, do it outside this repository in the caller layer.
-
-Retained output-related settings: `REPORT_TYPE`, `REPORT_LANGUAGE`, `REPORT_SUMMARY_ONLY`, `REPORT_TEMPLATES_DIR`, `REPORT_RENDERER_ENABLED`, `REPORT_INTEGRITY_ENABLED`, `REPORT_INTEGRITY_RETRY`, `REPORT_HISTORY_COMPARE_N`, and `ANALYSIS_DELAY`.
-
-</details>
-
-**Stock List Configuration**
-
-| Secret Name | Description | Required |
-|------------|------|:----:|
-| `STOCK_LIST` | Watchlist codes, e.g., `600519` | ✅ |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) Search API (for news) | Recommended |
-| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API (privacy-focused, US stocks optimized) | Optional |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) Backup search | Optional |
-| `BOCHA_API_KEYS` | [Bocha Search](https://open.bocha.cn/) Web Search API (Chinese search optimized, supports AI summaries, multiple keys comma-separated) | Optional |
-| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token | ✅ |
-| `WECHAT_MSG_TYPE` | WeChat Work message type, default `markdown`, set to `text` for plain markdown text | Optional |
-| `AGENT_MODE` | Enable Agent strategy chat mode (internally normalized as `skill`, `true`/`false`, default `false`) | Optional |
-| `AGENT_LITELLM_MODEL` | Optional Agent-only primary model; when empty it inherits the primary model, and bare names are normalized to `openai/<model>` | Optional |
-| `AGENT_MAX_STEPS` | Max reasoning-step limit for Agent mode (default `10`); at the default each sub-agent keeps its own preset, when raised above the default all sub-agents adopt this value, and when lowered below a sub-agent's preset that sub-agent is capped at this value | Optional |
-| `AGENT_SKILLS` | Comma-separated active strategy-skill ids. Leave empty to use the primary default strategy skill declared in metadata (built-in default: `bull_trend`); use `all` to activate every loaded strategy skill. | Optional |
-| `AGENT_SKILL_DIR` | Custom strategy-skill directory (default built-in `strategies/` compatibility path) | Optional |
-
-**Stock Code Format**
-
-| Market | Format | Examples |
-|--------|--------|----------|
-| A-shares | 6-digit number | `600519`, `000001`, `300750` |
-| BSE (Beijing) | 8/4/92 prefix, 6-digit | `920748`, `838163`, `430047` |
-| HK Stocks | hk + 5-digit number | `hk00700`, `hk09988` |
-| US Stocks | 1-5 uppercase letters | `AAPL`, `TSLA`, `GOOGL` |
-
-#### 3. Enable Actions
-
-Go to `Actions` tab → Click `I understand my workflows, go ahead and enable them`
-
-#### 4. Manual Test
-
-`Actions` → `Daily Stock Analysis` → `Run workflow` → Select mode → `Run workflow`
-
-#### 5. Done!
-
-The system will:
-- Run automatically at scheduled time (default: 18:00 Beijing Time)
-- Generate decision-dashboard output and local reports
-- Leave channel delivery to your outer caller / automation layer
-
-> Resume fetch and `--dry-run` data-existence checks now resolve the "latest reusable trading day" from each market's local timezone and trading calendar. Weekends and holidays reuse the most recent trading day, intraday runs reuse the last completed trading day, and after market close the run skips only if the current trading day's data is already stored. See [Full Guide](./full-guide_EN.md) for the exact rules.
-
----
-
-### Option 2: Local Deployment
+### Option 1: Local Deployment
 
 #### 1. Clone Repository
 

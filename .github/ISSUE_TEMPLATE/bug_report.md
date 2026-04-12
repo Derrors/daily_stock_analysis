@@ -20,7 +20,6 @@ Please confirm you are on the latest version before filing, to avoid duplicate r
 - [ ] 我已同步最新代码 / I am on the latest commit (Fork users: Sync fork first, then re-run Actions)
 - 代码版本 / Commit hash:
   - 本地 / Local: `git rev-parse --short HEAD` → ______
-  - GitHub Actions: commit hash shown at the top of the workflow log → ______
 
 ## 问题描述 / Problem Description
 
@@ -54,7 +53,7 @@ Paste relevant error logs here
 
 - 操作系统 / OS: [e.g. Ubuntu 22.04 / Windows 11 / macOS 14]
 - Python 版本 / Python version: [e.g. 3.11]
-- 运行方式 / Run mode: [Local / Docker / GitHub Actions]
+- 运行方式 / Run mode: [Local / Docker / API service]
 - 相关配置 / Relevant config:
   - GEMINI_MODEL / AI model: 
   - 数据源 / Data source: 

@@ -18,13 +18,11 @@ daily_stock_analysis/
 ├── api/                 # FastAPI backend service
 ├── docker/              # Docker configuration
 ├── docs/                # Project documentation
-└── .github/workflows/   # GitHub Actions
 ```
 
 ## Table of Contents
 
 - [Project Structure](#project-structure)
-- [GitHub Actions Configuration](#github-actions-configuration)
 - [Complete Environment Variables List](#complete-environment-variables-list)
 - [Docker Deployment](#docker-deployment)
 - [Local Deployment](#local-deployment)
@@ -33,79 +31,6 @@ daily_stock_analysis/
 - [Data Source Configuration](#data-source-configuration)
 - [Advanced Features](#advanced-features)
 - [Backtesting](#backtesting)
-
----
-
-## GitHub Actions Configuration
-
-### 1. Fork this Repository
-
-Click the `Fork` button in the upper right corner.
-
-### 2. Configure Secrets
-
-Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-
-<div align="center">
-  <img src="../sources/secret_config.png" alt="GitHub Secrets Configuration" width="600">
-</div>
-
-#### AI Model Configuration (Choose One)
-
-| Secret Name | Description | Required |
-|------------|------|:----:|
-| `GEMINI_API_KEY` | Get free key from [Google AI Studio](https://aistudio.google.com/) | ✅* |
-| `OPENAI_API_KEY` | OpenAI-compatible API Key (supports DeepSeek, Qwen, etc.) | Optional |
-| `OPENAI_BASE_URL` | OpenAI-compatible API endpoint (e.g., `https://api.deepseek.com/v1`) | Optional |
-| `OPENAI_MODEL` | Model name (e.g., `deepseek-chat`) | Optional |
-
-> *Note: Configure at least one of `GEMINI_API_KEY` or `OPENAI_API_KEY`
-
-#### Output Boundary
-
-> Notification delivery has been removed; the repository now only generates results, saves local reports, and can optionally create Feishu cloud documents.
->
-> If you need external message delivery, handle it in the caller layer.
-
-#### Other Configuration
-
-| Secret Name | Description | Required |
-|------------|------|:----:|
-| `STOCK_LIST` | Watchlist codes, e.g., `600519,300750,002594` | ✅ |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) Search API (for news search) | Recommended |
-| `BOCHA_API_KEYS` | [Bocha Search](https://open.bocha.cn/) Web Search API (Chinese search optimized, supports AI summaries, multiple keys comma-separated) | Optional |
-| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API (privacy-focused, US-stocks optimized) | Optional |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) Backup search | Optional |
-| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638) Token (the only retained runtime market-data source) | ✅ |
-
-#### ✅ Minimum Configuration Example
-
-To get started quickly, you need at minimum:
-
-1. **AI Model**: `GEMINI_API_KEY` (recommended) or `OPENAI_API_KEY`
-2. **Stock List**: `STOCK_LIST` (required)
-3. **Search API**: `TAVILY_API_KEYS` (strongly recommended for news search)
-4. **Output Handling**: use local Markdown reports by default, or Feishu cloud documents for long-form carrying
-
-> Configure these 4 items and you're ready to go!
-
-### 3. Enable Actions
-
-1. Go to your forked repository
-2. Click the `Actions` tab at the top
-3. If prompted, click `I understand my workflows, go ahead and enable them`
-
-### 4. Manual Test
-
-1. Go to `Actions` tab
-2. Select `Daily Stock Analysis` workflow on the left
-3. Click `Run workflow` button on the right
-4. Select run mode
-5. Click green `Run workflow` to confirm
-
-### 5. Done!
-
-Default schedule: Every weekday at **18:00 (Beijing Time)** automatic execution.
 
 ---
 

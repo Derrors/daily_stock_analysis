@@ -3,10 +3,8 @@
 # 股票智能分析系統
 
 [![GitHub stars](https://img.shields.io/github/stars/ZhuLinsen/daily_stock_analysis?style=social)](https://github.com/ZhuLinsen/daily_stock_analysis/stargazers)
-[![CI](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/)
 
 <p>
@@ -18,7 +16,7 @@
 
 執行分析 → 生成決策儀表盤 → 落本地報告或可選飛書雲文檔 → 由外部調用方自行投遞結果
 
-**零成本部署** · GitHub Actions 免費運行 · API-first / skill-friendly
+**Docker / 本地部署可用** · API-first / skill-friendly
 
 [**功能特性**](#-功能特性) · [**快速開始**](#-快速開始) · [**輸出示例**](#-輸出示例) · [**完整指南**](./full-guide.md) · [**常見問題**](./FAQ.md) · [**更新日誌**](./CHANGELOG.md)
 
@@ -47,7 +45,7 @@
 | 回測 | AI 回測驗證 | 自動評估歷史分析準確率，方向勝率、止盈止損命中率 |
 | **Agent 問股** | **策略對話** | **多輪策略問答，支援 11 種內建策略（API/Skill）** |
 | 輸出邊界 | 報告優先 | 本地 Markdown 報告與可選飛書雲文檔承載；消息投遞由倉庫外調用方處理 |
-| 自動化 | 定時運行 | GitHub Actions 定時執行，無需伺服器 |
+| 自動化 | 定時運行 | Docker / 本地 cron / 外部調度器均可接入 |
 
 ### 技術棧與數據來源
 
@@ -70,73 +68,7 @@
 
 ## 🚀 快速開始
 
-### 方式一：GitHub Actions（推薦）
-
-**無需服務器，每天自動運行！**
-
-#### 1. Fork 本倉庫
-
-點擊右上角 `Fork` 按鈕（順便點個 Star 支持一下）
-
-#### 2. 配置 Secrets
-
-進入你 Fork 的倉庫 → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-
-**AI 模型配置（二選一）**
-
-> 詳細配置請參考 [LLM 配置指南](LLM_CONFIG_GUIDE.md)。預設路徑是先選服務商、填 API Key，再視需要補主模型；只有需要多模型切換時才啟用渠道模式，高級 YAML 路由則留給進階用戶。
-
-| Secret 名稱 | 說明 | 必填 |
-|------------|------|:----:|
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/) 獲取免費 Key | ✅* |
-| `OPENAI_API_KEY` | OpenAI 兼容 API Key（支持 DeepSeek、通義千問等） | 可選 |
-| `OPENAI_BASE_URL` | OpenAI 兼容 API 地址（如 `https://api.deepseek.com/v1`） | 可選 |
-| `OPENAI_MODEL` | 模型名稱（如 `deepseek-chat`） | 可選 |
-
-> *注：`GEMINI_API_KEY` 和 `OPENAI_API_KEY` 至少配置一個
-
-<details>
-<summary><b>結果輸出邊界</b>（點擊展開）</summary>
-
-> 通知發送能力已下線。當前倉庫只負責：分析執行、報告生成、本地結果落盤，以及可選飛書雲文檔建立。
->
-> 如需將結果發送到 Telegram / Discord / Slack / 郵件 / 企業微信 / 飛書，請在倉庫外部由調用方自行處理。
-
-保留的輸出相關配置：`REPORT_TYPE`、`REPORT_LANGUAGE`、`REPORT_SUMMARY_ONLY`、`REPORT_TEMPLATES_DIR`、`REPORT_RENDERER_ENABLED`、`REPORT_INTEGRITY_ENABLED`、`REPORT_INTEGRITY_RETRY`、`REPORT_HISTORY_COMPARE_N`、`ANALYSIS_DELAY`。
-
-</details>
-
-**其他配置**
-
-| Secret 名稱 | 說明 | 必填 |
-|------------|------|:----:|
-| `STOCK_LIST` | 自選股代碼，如 `600519` | ✅ |
-| `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) 搜索 API（新聞搜索） | 推薦 |
-| `BOCHA_API_KEYS` | [博查搜索](https://open.bocha.cn/) Web Search API（中文搜索優化，支持AI摘要，多個 key 用逗號分隔） | 可選 |
-| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API（隱私優先，美股優化，多個 key 用逗號分隔） | 可選 |
-| `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) 備用搜索 | 可選 |
-| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token | ✅ |
-| `AGENT_MODE` | 啟用 Agent 策略問股模式（內部統一命名為 skill，`true`/`false`，預設 `false`） | 可選 |
-| `AGENT_LITELLM_MODEL` | Agent 專用主模型（可選）；留空時繼承主模型，無 provider 前綴時按 `openai/<model>` 解析 | 可選 |
-| `AGENT_MAX_STEPS` | Agent 最大推理步數上限（預設 `10`）；保持預設時各子 Agent 依自身預設步數運行；主動調高到高於預設值時，所有子 Agent 統一採用該值；若設定值低於某子 Agent 的預設步數，則仍按該值作為上限進行限制 | 可選 |
-| `AGENT_SKILLS` | 逗號分隔的策略技能 id。留空時使用 metadata 宣告的主預設策略 skill（內建預設為 `bull_trend`）；使用 `all` 可啟用所有已載入策略技能。 | 可選 |
-| `AGENT_SKILL_DIR` | 自訂策略技能目錄（預設沿用內建 `strategies/` 相容路徑） | 可選 |
-
-#### 3. 啟用 Actions
-
-進入 `Actions` 標籤 → 點擊 `I understand my workflows, go ahead and enable them`
-
-#### 4. 手動測試
-
-`Actions` → `每日股票分析` → `Run workflow` → 選擇模式 → `Run workflow`
-
-#### 5. 完成！
-
-默認每個工作日 **18:00（北京時間）** 自動執行
-
-> 斷點續傳與 `--dry-run` 的資料存在性判斷，現在會按股票所屬市場的本地時區與交易日曆解析「最新可復用交易日」；週末 / 節假日會復用最近交易日，交易日盤中會復用上一個已完成交易日，盤後若當日資料已落庫則可直接跳過。詳細規則見 [完整配置指南](./full-guide.md)。
-
-### 方式二：本地運行 / Docker 部署
+### 方式一：本地運行 / Docker 部署
 
 > 📖 本地運行、Docker 部署詳細步驟請參考 [完整配置指南](./full-guide.md)
 

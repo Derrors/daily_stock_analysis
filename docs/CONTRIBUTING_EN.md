@@ -83,8 +83,6 @@ After opening a PR, CI will automatically run the following PR checks:
 | `backend-gate` | `scripts/ci_gate.sh` — py_compile + flake8 critical errors + `./test.sh code` + `./test.sh yfinance` + offline pytest | ✅ |
 | `docker-build` | Docker image build and key module import smoke test | ✅ |
 
-Separately, the repository also has a non-blocking `network-smoke` workflow in `.github/workflows/network-smoke.yml`, but it is only triggered by `schedule` and `workflow_dispatch`, not by pull requests.
-
 **Running checks locally:**
 
 ```bash
