@@ -737,19 +737,8 @@ def main() -> int:
     if args.webui_only:
         args.serve_only = True
 
-    # 兼容旧版 WEBUI_ENABLED 环境变量：历史上用于启动前端壳，现统一收敛为 API 服务。
-    if config.webui_enabled and not (args.serve or args.serve_only):
-        args.serve = True
-
     # === 启动 API 服务 (如果启用) ===
     start_serve = (args.serve or args.serve_only) and os.getenv("GITHUB_ACTIONS") != "true"
-
-    # 兼容旧版 WEBUI_HOST/WEBUI_PORT：历史 WebUI 配置现在统一映射到 API 服务监听地址。
-    if start_serve:
-        if args.host == '0.0.0.0' and os.getenv('WEBUI_HOST'):
-            args.host = os.getenv('WEBUI_HOST')
-        if args.port == 8000 and os.getenv('WEBUI_PORT'):
-            args.port = int(os.getenv('WEBUI_PORT'))
 
     if start_serve:
         try:

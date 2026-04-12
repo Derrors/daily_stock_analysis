@@ -343,7 +343,6 @@ class TestValidateStructuredNotification:
             feishu_app_id="cli_xxx",
             feishu_app_secret="secret_xxx",
             feishu_webhook_url=None,
-            feishu_stream_enabled=False,
         )
         issues = cfg.validate_structured()
         warn = [i for i in issues if i.severity == "warning"]
@@ -356,7 +355,6 @@ class TestValidateStructuredNotification:
             feishu_app_secret="secret_xxx",
             feishu_folder_token="folder_xxx",
             feishu_webhook_url=None,
-            feishu_stream_enabled=False,
         )
         issues = cfg.validate_structured()
         warn = [i for i in issues if i.severity == "warning"]
