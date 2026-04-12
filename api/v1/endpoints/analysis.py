@@ -50,6 +50,7 @@ from api.v1.schemas.history import (
 from data_provider.base import canonical_stock_code, normalize_stock_code
 from src.config import Config
 from src.report_language import get_localized_stock_name, normalize_report_language
+from src.schemas.analysis_contract import QuerySource
 from src.services.name_to_code_resolver import resolve_name_to_code
 from src.services.stock_code_utils import is_code_like
 from src.services.task_queue import (
@@ -167,11 +168,7 @@ def trigger_analysis(
         HTTPException: 500 - 分析失败
     """
     # 校验请求参数
-    stock_codes = []
-    if request.stock_code:
-        stock_codes.append(request.stock_code)
-    if request.stock_codes:
-        stock_codes.extend(request.stock_codes)
+    stock_codes = request.iter_raw_inputs()
 
     if not stock_codes:
         raise HTTPException(
@@ -218,8 +215,17 @@ def trigger_analysis(
             }
         )
 
-    # Sync mode only supports single-stock analysis.
-    if not request.async_mode:
+    # Bridge to the v2 contract early so all entry paths start converging on the
+    # unified request shape, while preserving the current external API behavior.
+    if request.async_mode:
+        _contract_batch = request.to_batch_contract(stock_inputs=stock_codes, query_source=QuerySource.API)
+        logger.debug(
+            "[analysis-api] unified batch contract prepared: count=%s mode=%s async=%s",
+            len(_contract_batch.batch),
+            _contract_batch.shared.mode.value,
+            _contract_batch.execution.async_mode,
+        )
+    else:
         if len(stock_codes) > 1:
             raise HTTPException(
                 status_code=400,
@@ -228,6 +234,17 @@ def trigger_analysis(
                     "message": "同步模式仅支持单只股票分析，请使用 async_mode=true 进行批量分析"
                 }
             )
+        _contract_request = request.to_contract_request(
+            stock_input=stock_codes[0],
+            stock_code=stock_codes[0],
+            query_source=QuerySource.API,
+        )
+        logger.debug(
+            "[analysis-api] unified single contract prepared: stock=%s mode=%s async=%s",
+            _contract_request.stock.code or _contract_request.stock.input,
+            _contract_request.mode.value,
+            _contract_request.execution.async_mode,
+        )
         return _handle_sync_analysis(stock_codes[0], request)
 
     # Async mode submits one task per stock.
@@ -242,7 +259,8 @@ def _handle_async_analysis_batch(
     Handle asynchronous analysis requests, including batch submission.
     """
     task_queue = get_task_queue()
-    
+    contract_batch = request.to_batch_contract(stock_inputs=stock_codes, query_source=QuerySource.API)
+
     # Preserve metadata for single-stock requests. For batch requests,
     # only carry through metadata that semantically applies to the whole
     # batch, such as import/image source tracking.
@@ -255,7 +273,7 @@ def _handle_async_analysis_batch(
     notify = getattr(request, "notify", True)
 
     submit_kwargs = dict(
-        stock_codes=stock_codes,
+        stock_codes=[item.stock.code or item.stock.input for item in contract_batch.batch],
         stock_name=stock_name,
         original_query=original_query,
         selection_source=selection_source,
@@ -333,15 +351,21 @@ def _handle_sync_analysis(
     """
     import uuid
     from src.services.analysis_service import AnalysisService
-    
+
+    contract_request = request.to_contract_request(
+        stock_input=stock_code,
+        stock_code=stock_code,
+        query_source=QuerySource.API,
+    )
+
     query_id = uuid.uuid4().hex
     
     try:
         service = AnalysisService()
         result = service.analyze_stock(
-            stock_code=stock_code,
+            stock_code=contract_request.stock.code or stock_code,
             report_type=request.report_type,
-            force_refresh=request.force_refresh,
+            force_refresh=contract_request.execution.force_refresh,
             query_id=query_id,
             send_notification=getattr(request, "notify", True),
         )

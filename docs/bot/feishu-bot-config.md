@@ -1,9 +1,9 @@
-# 飞书通知配置指南
+# 飞书通知与应用集成指南
 
 本文只解决两类常见诉求：
 
 1. 把分析结果推送到飞书群
-2. 避免把飞书应用模式和群机器人 Webhook 模式混用
+2. 区分飞书 Webhook 推送与飞书应用 / 云文档集成，避免混用
 
 ## 先分清两种模式
 
@@ -12,7 +12,7 @@
 适用场景：
 - 你只想把分析报告推送到飞书群
 - 不需要处理飞书消息回调
-- 不需要 Stream Bot
+- 不需要飞书应用或云文档集成
 
 这也是本项目最推荐、最容易落地的飞书通知方式。
 
@@ -25,25 +25,23 @@ FEISHU_WEBHOOK_SECRET=your_sign_secret
 FEISHU_WEBHOOK_KEYWORD=股票日报
 ```
 
-### 模式二：飞书应用 / Stream Bot / 云文档
+### 模式二：飞书应用 / 云文档集成
 
 适用场景：
-- 你要做飞书应用机器人交互
-- 你要启用 Stream 模式
-- 你要用飞书云文档能力
+- 你要接入飞书云文档
+- 你要使用飞书应用侧凭据访问云空间能力
+- 你需要项目与飞书应用进行非 Webhook 集成
 
 相关变量：
 
 ```env
 FEISHU_APP_ID=cli_xxx
 FEISHU_APP_SECRET=xxx
-FEISHU_STREAM_ENABLED=true
 ```
 
 注意：
 - `FEISHU_APP_ID` / `FEISHU_APP_SECRET` 不会直接开启群 Webhook 推送
 - 只想收通知时，不要只填 App ID / Secret，必须优先配置 `FEISHU_WEBHOOK_URL`
-- 如果你做的是应用机器人 / Stream Bot，可直接看文末保留的原流程截图参考
 
 ## Webhook 推送的正确配置步骤
 
@@ -116,7 +114,7 @@ FEISHU_APP_SECRET=...
 - 实际完全收不到群通知
 
 原因：
-- 这两个变量是应用模式用的，不是群 Webhook 推送入口
+- 这两个变量是应用 / 云文档集成用的，不是群 Webhook 推送入口
 
 正确做法：
 - 补 `FEISHU_WEBHOOK_URL`
@@ -185,15 +183,15 @@ FEISHU_WEBHOOK_KEYWORD=股票日报
 
 ## 排查顺序建议
 
-1. 先确认你要的是“群 Webhook 推送”还是“应用 / Stream Bot”
+1. 先确认你要的是“群 Webhook 推送”还是“飞书应用 / 云文档集成”
 2. 只做群推送时，先保证 `FEISHU_WEBHOOK_URL` 已配置
 3. 回到飞书机器人安全设置，确认是否启用了关键词或签名
 4. 若启用了，就补齐 `FEISHU_WEBHOOK_KEYWORD` / `FEISHU_WEBHOOK_SECRET`
 5. 最后再检查机器人是否在群里、是否有权限、是否命中 IP 白名单
 
-## 附：应用 / Stream Bot 原流程截图参考
+## 附：飞书应用 / 云文档集成流程截图参考
 
-如果你不是单纯做群 Webhook 推送，而是要继续配置飞书应用、长连接机器人或云文档，可以参考下面这组原截图。
+如果你不是单纯做群 Webhook 推送，而是要继续配置飞书应用或云文档集成，可以参考下面这组原截图。
 
 ### 1. 创建应用
 

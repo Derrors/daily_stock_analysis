@@ -15,9 +15,7 @@ daily_stock_analysis/
 │   ├── notification.py  # 消息推送
 │   └── ...
 ├── data_provider/       # 多数据源适配器
-├── bot/                 # 机器人交互模块
 ├── api/                 # FastAPI 后端服务
-├── apps/dsa-web/        # React 前端
 ├── docker/              # Docker 配置
 ├── docs/                # 项目文档
 └── .github/workflows/   # GitHub Actions
@@ -252,10 +250,10 @@ daily_stock_analysis/
 > 飞书云文档配置步骤：
 > 1. 在 [飞书开发者后台](https://open.feishu.cn/app) 创建应用
 > 2. 配置 GitHub Secrets
-> 3. 创建群组并添加应用机器人
-> 4. 在云盘文件夹中添加群组为协作者（可管理权限）
+> 3. 将应用加入需要访问的飞书空间或文档场景
+> 4. 在云盘文件夹中添加对应协作者权限
 >
-> 说明：`FEISHU_APP_ID` / `FEISHU_APP_SECRET` 用于飞书应用、云文档或 Stream Bot 模式，不会直接启用群 Webhook 推送。只想收通知时，请优先配置 `FEISHU_WEBHOOK_URL`。
+> 说明：`FEISHU_APP_ID` / `FEISHU_APP_SECRET` 用于飞书应用或云文档集成，不会直接启用群 Webhook 推送。只想收通知时，请优先配置 `FEISHU_WEBHOOK_URL`。
 
 ### 搜索服务配置
 
@@ -344,7 +342,7 @@ daily_stock_analysis/
 
 Dockerfile 使用多阶段构建，前端会在构建镜像时自动打包并内置到 `static/`。
 如需覆盖静态资源，可挂载本地 `static/` 到容器内 `/app/static`。
-运行中的 `server` 容器默认直接复用 `/app/static` 里的预构建产物，不要求容器内保留 `apps/dsa-web` 源码目录或运行时安装 `npm`；若 WebUI 无法打开，请优先确认 `/app/static/index.html` 是否存在。
+项目已下线内置前端托管；运行中的 `server` 容器现在只提供 API 服务，无需再构建或挂载 WebUI 静态资源。
 
 ### 快速启动
 
@@ -606,7 +604,7 @@ FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/your_hook_token
    - **开启了「签名校验」**：把飞书显示的 secret 填到 `FEISHU_WEBHOOK_SECRET`。两端必须同时启用或同时不填，否则飞书返回签名校验失败。
    - **开启了「关键词」**：把同一个关键词填到 `FEISHU_WEBHOOK_KEYWORD`；系统会自动在每条消息前补上，无需手动修改报告模板。
    - **开启了 IP 白名单**：确保当前运行环境的出口 IP 在白名单中（本地/Docker/GitHub Actions 出口 IP 各不相同）。
-4. `FEISHU_APP_ID` / `FEISHU_APP_SECRET` 是飞书应用 / Stream Bot / 云文档模式专用，不会触发群 Webhook 推送，不要用它们替代 `FEISHU_WEBHOOK_URL`。
+4. `FEISHU_APP_ID` / `FEISHU_APP_SECRET` 是飞书应用 / 云文档集成专用，不会触发群 Webhook 推送，不要用它们替代 `FEISHU_WEBHOOK_URL`。
 
 **常见失败原因：**
 - 只填了 `FEISHU_APP_ID` / `FEISHU_APP_SECRET`，没有配置 `FEISHU_WEBHOOK_URL`
@@ -1049,7 +1047,6 @@ python main.py --serve-only --host 0.0.0.0 --port 8888
 ### 注意事项
 
 - 浏览器访问：`http://127.0.0.1:8000`（或您配置的端口）
-- 在云服务器上部署后，不知道浏览器该输入什么地址？请看 [云服务器 Web 界面访问指南](deploy-webui-cloud.md)
 - 分析完成后自动推送通知到配置的渠道
 - 此功能在 GitHub Actions 环境中会自动禁用
 - 另见 [openclaw Skill 集成指南](openclaw-skill-integration.md)
@@ -1127,18 +1124,14 @@ A: 检查是否启用了 Actions，以及 cron 表达式是否正确（注意是
 - On online failure, fallback to latest cached rate and mark `is_stale=true`.
 - Main snapshot/risk pipeline stays available even when online FX fetch is unavailable.
 
-## Portfolio P0 PR3 (Web + Agent Consumption)
+## Portfolio P0 PR3 (Agent/API Consumption)
 
-### Web consumption page
-- Added Web page route: `/portfolio` (`apps/dsa-web/src/pages/PortfolioPage.tsx`).
+### API consumption
+- Portfolio snapshot and risk data are consumed via API/service paths.
 - Data sources:
   - `GET /api/v1/portfolio/snapshot`
   - `GET /api/v1/portfolio/risk`
-- Supports:
-  - full portfolio / single account switch
-  - cost method switch (`fifo` / `avg`)
-  - concentration pie chart (Top Positions) with Recharts
-  - snapshot KPI cards and risk summary cards
+- Suitable for Agent/API clients and downstream integrations.
 
 ### Agent tool
 - Added `get_portfolio_snapshot` data tool for account-aware LLM suggestions.

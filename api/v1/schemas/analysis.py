@@ -14,6 +14,23 @@ from typing import Optional, List, Any
 from enum import Enum
 
 from pydantic import BaseModel, Field
+from src.schemas.analysis_contract import (
+    AnalysisContextMeta as UnifiedAnalysisContextMeta,
+    AnalysisExecution as UnifiedAnalysisExecution,
+    AnalysisFeatures as UnifiedAnalysisFeatures,
+    AnalysisMode as UnifiedAnalysisMode,
+    AnalysisOutput as UnifiedAnalysisOutput,
+    AnalysisRequest as UnifiedAnalysisRequest,
+    AnalysisResponse as UnifiedAnalysisResponse,
+    BatchAnalysisRequest as UnifiedBatchAnalysisRequest,
+    BatchSharedOptions as UnifiedBatchSharedOptions,
+    DecisionAction,
+    Market,
+    QuerySource,
+    SelectionSource,
+    StockInfo as UnifiedStockInfo,
+    StockTarget as UnifiedStockTarget,
+)
 from src.utils.analysis_metadata import SELECTION_SOURCE_PATTERN
 
 
@@ -26,15 +43,15 @@ class TaskStatusEnum(str, Enum):
 
 
 class AnalyzeRequest(BaseModel):
-    """Analysis request parameters"""
-    
+    """Legacy API request model with bridge helpers to the v2 unified contract."""
+
     stock_code: Optional[str] = Field(
-        None, 
-        description="单只股票代码", 
+        None,
+        description="单只股票代码",
         example="600519"
     )
     stock_codes: Optional[List[str]] = Field(
-        None, 
+        None,
         description="多只股票代码（与 stock_code 二选一）",
         example=["600519", "000858"]
     )
@@ -86,16 +103,127 @@ class AnalyzeRequest(BaseModel):
             }
         }
 
+    def iter_raw_inputs(self) -> List[str]:
+        """Return raw stock inputs from the legacy API shape."""
+        values: List[str] = []
+        if self.stock_code:
+            values.append(self.stock_code)
+        if self.stock_codes:
+            values.extend(self.stock_codes)
+        return [value for value in values if value and str(value).strip()]
+
+    def _report_type_to_mode(self) -> UnifiedAnalysisMode:
+        if self.report_type == "brief":
+            return UnifiedAnalysisMode.QUICK
+        return UnifiedAnalysisMode.STANDARD
+
+    def _selection_source_enum(self) -> SelectionSource:
+        raw = (self.selection_source or "manual").strip().lower()
+        try:
+            return SelectionSource(raw)
+        except ValueError:
+            return SelectionSource.UNKNOWN
+
+    def _build_contract_context(self, *, query_source: QuerySource) -> UnifiedAnalysisContextMeta:
+        return UnifiedAnalysisContextMeta(
+            query_source=query_source,
+            original_query=self.original_query,
+            selection_source=self._selection_source_enum(),
+        )
+
+    def to_contract_request(
+        self,
+        *,
+        stock_input: str,
+        stock_code: Optional[str] = None,
+        market: Optional[str] = None,
+        query_source: QuerySource = QuerySource.API,
+    ) -> UnifiedAnalysisRequest:
+        """Bridge one legacy API request into the v2 unified single-stock contract."""
+        target_market = None
+        if market:
+            try:
+                target_market = Market(market)
+            except ValueError:
+                target_market = None
+
+        return UnifiedAnalysisRequest(
+            stock=UnifiedStockTarget(
+                input=stock_input,
+                code=stock_code,
+                market=target_market,
+                name=self.stock_name,
+            ),
+            mode=self._report_type_to_mode(),
+            strategy=None,
+            features=UnifiedAnalysisFeatures(
+                include_news=True,
+                include_fundamental=False,
+                include_market_context=False,
+                include_realtime_quote=True,
+                include_chip_data=False,
+            ),
+            output=UnifiedAnalysisOutput(
+                format=("summary" if self.report_type == "brief" else "dashboard"),
+                language="zh",
+                verbosity=("brief" if self.report_type == "brief" else "standard"),
+            ),
+            execution=UnifiedAnalysisExecution(
+                async_mode=self.async_mode,
+                force_refresh=self.force_refresh,
+                save_history=True,
+                dry_run=False,
+            ),
+            context=self._build_contract_context(query_source=query_source),
+        )
+
+    def to_batch_contract(
+        self,
+        *,
+        stock_inputs: List[str],
+        query_source: QuerySource = QuerySource.API,
+    ) -> UnifiedBatchAnalysisRequest:
+        """Bridge the legacy batch API shape into the v2 unified batch contract."""
+        requests = [
+            self.to_contract_request(stock_input=stock_input, query_source=query_source)
+            for stock_input in stock_inputs
+        ]
+        return UnifiedBatchAnalysisRequest(
+            batch=requests,
+            shared=UnifiedBatchSharedOptions(
+                mode=self._report_type_to_mode(),
+                strategy=None,
+                features=UnifiedAnalysisFeatures(
+                    include_news=True,
+                    include_fundamental=False,
+                    include_market_context=False,
+                    include_realtime_quote=True,
+                    include_chip_data=False,
+                ),
+                output=UnifiedAnalysisOutput(
+                    format=("summary" if self.report_type == "brief" else "dashboard"),
+                    language="zh",
+                    verbosity=("brief" if self.report_type == "brief" else "standard"),
+                ),
+            ),
+            execution=UnifiedAnalysisExecution(
+                async_mode=True,
+                force_refresh=self.force_refresh,
+                save_history=True,
+                dry_run=False,
+            ),
+        )
+
 
 class AnalysisResultResponse(BaseModel):
-    """分析结果响应模型"""
-    
+    """Legacy API response model with compatibility helpers for v2 unified output."""
+
     query_id: str = Field(..., description="分析记录唯一标识")
     stock_code: str = Field(..., description="股票代码")
     stock_name: Optional[str] = Field(None, description="股票名称")
     report: Optional[Any] = Field(None, description="分析报告")
     created_at: str = Field(..., description="创建时间")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -111,6 +239,68 @@ class AnalysisResultResponse(BaseModel):
                 "created_at": "2024-01-01T12:00:00"
             }
         }
+
+    @classmethod
+    def from_unified(
+        cls,
+        response: UnifiedAnalysisResponse,
+        *,
+        query_id: str,
+        created_at: str,
+    ) -> "AnalysisResultResponse":
+        """Build the legacy API payload shape from the unified v2 response."""
+        report = {
+            "stock": response.stock.model_dump(mode="json") if response.stock else None,
+            "trend": response.trend.model_dump(mode="json") if response.trend else None,
+            "intel": response.intel.model_dump(mode="json") if response.intel else None,
+            "decision": response.decision.model_dump(mode="json") if response.decision else None,
+            "dashboard": response.dashboard.model_dump(mode="json") if response.dashboard else None,
+            "evidence": response.evidence.model_dump(mode="json") if response.evidence else None,
+            "metadata": response.metadata.model_dump(mode="json") if response.metadata else None,
+        }
+        return cls(
+            query_id=query_id,
+            stock_code=response.stock.code,
+            stock_name=response.stock.name,
+            report=report,
+            created_at=created_at,
+        )
+
+    def to_unified(self, *, market: Optional[str] = None) -> UnifiedAnalysisResponse:
+        """Best-effort conversion from the legacy API payload to the unified v2 response."""
+        market_value = Market.CN
+        if market:
+            try:
+                market_value = Market(market)
+            except ValueError:
+                market_value = Market.CN
+
+        report = self.report if isinstance(self.report, dict) else {}
+        unified_payload = {
+            "stock": report.get("stock") or UnifiedStockInfo(
+                code=self.stock_code,
+                name=self.stock_name,
+                market=market_value,
+            ).model_dump(mode="json"),
+            "trend": report.get("trend"),
+            "intel": report.get("intel"),
+            "decision": report.get("decision") or {
+                "action": DecisionAction.WAIT,
+                "summary": report.get("summary", {}).get("analysis_summary")
+                or "Legacy response has not been migrated to unified decision block.",
+            },
+            "dashboard": report.get("dashboard"),
+            "evidence": report.get("evidence"),
+            "metadata": report.get("metadata") or {
+                "request_id": self.query_id,
+                "generated_at": self.created_at,
+                "degraded": False,
+                "partial": report.get("trend") is None or report.get("intel") is None,
+                "errors": [],
+                "query_source": QuerySource.API,
+            },
+        }
+        return UnifiedAnalysisResponse.model_validate(unified_payload)
 
 
 class TaskAccepted(BaseModel):

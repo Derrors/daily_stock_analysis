@@ -21,12 +21,6 @@
 |----------|-------------|
 | [FAQ (EN)](FAQ_EN.md) | Frequently asked questions and common errors |
 
-## 🤖 Bot Integration
-
-| Document | Description |
-|----------|-------------|
-| [Bot Commands (EN)](bot-command_EN.md) | Bot architecture, commands, webhook routes, Feishu / DingTalk integration |
-
 ## 🤝 Contributing
 
 | Document | Description |

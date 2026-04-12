@@ -16,7 +16,6 @@ CLAUDE_SKILLS_DIR = ROOT / ".claude" / "skills"
 
 REQUIRED_INSTRUCTION_FILES = {
     "backend.instructions.md",
-    "client.instructions.md",
     "governance.instructions.md",
 }
 

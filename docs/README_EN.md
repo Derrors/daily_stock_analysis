@@ -46,7 +46,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | Review | Market Review | Daily overview, sectors, northbound capital flow |
 | Intel | Announcement + Capital Flow Intelligence | IntelAgent now also pulls listed-company announcements (SSE/SZSE/CNINFO) and A-share main-force capital flow, and exposes `capital_flow_signal` (`inflow/outflow/neutral/not_available`) for flow direction context |
 | Backtest | AI Backtest Validation | Auto-evaluate historical analysis accuracy, with a 1-day next-session validation view for AI prediction vs actual move and accuracy |
-| Agent Q&A | Strategy Chat | Multi-turn strategy chat with 11 built-in trading strategies (internally loaded as skills) (Web/Bot/API) |
+| Agent Q&A | Strategy Chat | Multi-turn strategy chat with 11 built-in trading strategies (internally loaded as skills) (Web/API/Skill) |
 | Notifications | Multi-channel Push | Telegram, Discord, Slack, Email, WeChat Work, Feishu, etc. |
 | Automation | Scheduled Runs | GitHub Actions scheduled execution, no server required |
 
@@ -459,7 +459,7 @@ Enable the FastAPI service for configuration management and triggering analysis 
 - 📝 **Configuration Management** - View/modify watchlist
 - 🚀 **Quick Analysis** - Trigger analysis via API
 - 📊 **Real-time Progress** - Analysis task status updates in real-time, supports parallel tasks
-- 🤖 **Agent Strategy Chat** - Use `/ask`, `/chat`, `/history`, `/strategies`, and `/research` for multi-turn Q&A, history, strategy listing, and deep research (enable with `AGENT_MODE=true`)
+- 🤖 **Agent Strategy Chat** - Use the Web chat page or `/api/v1/agent/chat*` endpoints for multi-turn strategy Q&A, session history, and deep-research style follow-ups (enable with `AGENT_MODE=true`)
 - 🧩 **Intel compatibility** - `capital_flow_signal` is an additive Intel output field; clients that do not consume it can ignore it safely, while existing fields such as `risk_alerts` and `positive_catalysts` remain unchanged.
 - 📈 **Backtest Validation** - Evaluate historical analysis accuracy, query direction win rate and simulated returns
 
@@ -485,28 +485,13 @@ Enable the FastAPI service for configuration management and triggering analysis 
 
 ---
 
-## 🔎 Smart Search Autocomplete (MVP)
-
-The home analysis input now behaves more like a search box, reducing the need to memorize exact symbols.
-
-- **Multi-signal matching**: supports stock code, company name, pinyin abbreviation, and aliases (for example `gzmt` -> 贵州茅台, `tencent` -> 腾讯控股, `aapl` -> Apple Inc.).
-- **Multi-market coverage**: the local index now covers **A-shares, Hong Kong stocks, and US stocks**. It can be regenerated from either Tushare or AkShare source data when needed.
-- **Graceful fallback**:
-  - If the index is outdated, missing a newly listed symbol, or fails to load, the UI falls back to plain manual input without blocking analysis.
-  - If no suggestion matches, pressing Enter still submits the original input directly.
-
-> Tip: to refresh the index, run `python3 scripts/fetch_tushare_stock_list.py` to update the stock-list CSV files, then run `python3 scripts/generate_index_from_csv.py` to rebuild the static index.
-
----
 
 ## 📖 Documentation
 
 - [Complete Configuration Guide](./full-guide_EN.md)
 - [FAQ](./FAQ_EN.md)
 - [Deployment Guide](DEPLOY_EN.md)
-- [Bot Command Reference](bot-command.md)
-- [Feishu Bot Setup](bot/feishu-bot-config.md)
-- [DingTalk Bot Setup](bot/dingding-bot-config.md)
+- [Feishu Webhook Setup](bot/feishu-bot-config.md)
 
 ---
 

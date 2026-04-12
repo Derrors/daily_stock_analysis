@@ -45,7 +45,7 @@
 | 補全 | 智慧補全 (MVP) | **[測試階段]** 首頁搜尋框支援代碼 / 名稱 / 拼音 / 別名聯想；本地索引已覆蓋 A股、港股、美股，並可透過 Tushare 或 AkShare 重新生成 |
 | 復盤 | 大盤復盤 | 每日市場概覽、板塊漲跌、北向資金 |
 | 回測 | AI 回測驗證 | 自動評估歷史分析準確率，方向勝率、止盈止損命中率 |
-| **Agent 問股** | **策略對話** | **多輪策略問答，支援 11 種內建策略（Web/Bot/API）** |
+| **Agent 問股** | **策略對話** | **多輪策略問答，支援 11 種內建策略（Web/API/Skill）** |
 | 推送 | 多渠道通知 | Telegram、Discord、Slack、郵件、企業微信、飛書等 |
 | 自動化 | 定時運行 | GitHub Actions 定時執行，無需伺服器 |
 
@@ -238,7 +238,7 @@
 - 📝 **配置管理** - 查看/修改自選股列表
 - 🚀 **快速分析** - 通過 API 接口觸發分析
 - 📊 **實時進度** - 分析任務狀態實時更新，支持多任務並行
-- 🤖 **Agent 策略對話** - 啟用 `AGENT_MODE=true` 後可使用 `/ask`、`/chat`、`/history`、`/strategies`、`/research` 進行問答、查歷史、查看策略與深度研究
+- 🤖 **Agent 策略對話** - 啟用 `AGENT_MODE=true` 後，可透過 Web 問股頁或 `/api/v1/agent/chat*` 相關接口進行多輪問答、查看歷史會話與深度研究式追問
 - 📈 **回測驗證** - 評估歷史分析準確率，查詢方向勝率與模擬收益
 
 ### API 接口
@@ -261,15 +261,6 @@
 
 ## 🔎 智慧搜尋補全 (MVP)
 
-首頁分析輸入框現已升級為類搜尋引擎的補全框，降低手動記憶股票代碼的負擔。
-
-- **多維匹配**：支援股票代碼、公司名稱、拼音縮寫與別名（例如 `gzmt` -> 貴州茅台、`tencent` -> 騰訊控股、`aapl` -> Apple Inc.）。
-- **多市場覆蓋**：本地索引已覆蓋 **A股、港股、美股** 三個市場；需要時可基於 Tushare 或 AkShare 資料重新生成。
-- **自動降級**：
-  - 若索引尚未更新、缺少新上市標的，或載入失敗，介面會自動退回一般手動輸入模式，不阻斷分析流程。
-  - 若補全未命中，直接按 Enter 仍會送出原始輸入。
-
-> 提示：如需更新索引，可先執行 `python3 scripts/fetch_tushare_stock_list.py` 更新股票列表 CSV，再執行 `python3 scripts/generate_index_from_csv.py` 重新生成靜態索引。
 
 ## 項目結構
 
@@ -284,7 +275,6 @@ daily_stock_analysis/
 │   ├── storage.py       # 數據存儲
 │   └── ...
 ├── api/                 # FastAPI API 模塊
-├── bot/                 # 機器人模塊
 ├── data_provider/       # 數據源適配器
 ├── docker/              # Docker 配置
 │   ├── Dockerfile
@@ -302,11 +292,11 @@ daily_stock_analysis/
 ### 🔔 通知渠道擴展
 - [x] 企業微信機器人
 - [x] 飛書機器人
-- [x] Telegram Bot
+- [x] Telegram 推送
 - [x] 郵件通知（SMTP）
 - [x] 自定義 Webhook（支持釘釘、Discord、Slack、Bark 等）
 - [x] iOS/Android 推送（Pushover）
-- [x] 釘釘機器人 （已支持命令交互 >> [相關配置](bot/dingding-bot-config.md)）
+- [x] 自定義 Webhook（可覆蓋釘釘等渠道）
 ### 🤖 AI 模型支持
 - [x] Google Gemini（主力，免費額度）
 - [x] OpenAI 兼容 API（支持 GPT-4/DeepSeek/通義千問/Claude/文心一言 等）

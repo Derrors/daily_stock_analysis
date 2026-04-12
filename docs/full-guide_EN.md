@@ -15,9 +15,7 @@ daily_stock_analysis/
 │   ├── notification.py  # Message push notifications
 │   └── ...
 ├── data_provider/       # Multi-source data adapters
-├── bot/                 # Bot interaction module
 ├── api/                 # FastAPI backend service
-├── apps/dsa-web/        # React frontend
 ├── docker/              # Docker configuration
 ├── docs/                # Project documentation
 └── .github/workflows/   # GitHub Actions
@@ -225,10 +223,10 @@ Default schedule: Every weekday at **18:00 (Beijing Time)** automatic execution.
 > Feishu Cloud Document setup steps:
 > 1. Create an app in [Feishu Developer Console](https://open.feishu.cn/app)
 > 2. Configure GitHub Secrets
-> 3. Create a group and add the app bot
-> 4. Add the group as a collaborator to the cloud drive folder (with manage permissions)
+> 3. Grant the app access to the target Feishu document/space scenario
+> 4. Add the required collaborators to the cloud drive folder
 >
-> Note: `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app mode, cloud documents, or Stream Bot mode. They do not enable group webhook notifications by themselves. For simple push notifications, use `FEISHU_WEBHOOK_URL` first.
+> Note: `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app or cloud-document integrations. They do not enable group webhook notifications by themselves. For simple push notifications, use `FEISHU_WEBHOOK_URL` first.
 
 ### Search Service Configuration
 
@@ -306,7 +304,7 @@ Default schedule: Every weekday at **18:00 (Beijing Time)** automatic execution.
 
 ## Docker Deployment
 
-The image uses prebuilt frontend assets under `/app/static` at runtime, so the running `server` container does not require the `apps/dsa-web` source tree or runtime `npm`. If WebUI cannot be opened after Docker deployment, first verify that `/app/static/index.html` exists inside the container.
+The project no longer ships an embedded frontend. The running `server` container now provides API-only delivery and does not require frontend assets or runtime `npm`.
 
 ### Quick Start
 
@@ -498,7 +496,7 @@ FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/your_hook_token
    - **Signature verification enabled**: copy the secret shown in Feishu into `FEISHU_WEBHOOK_SECRET`. **Both sides must be enabled or disabled together** — if Feishu has signing on but `FEISHU_WEBHOOK_SECRET` is missing (or vice versa), every request will be rejected.
    - **Keyword enabled**: copy the exact same keyword into `FEISHU_WEBHOOK_KEYWORD`. The app will prepend it to every message automatically; no need to change report templates.
    - **IP allowlist enabled**: make sure the outbound IP of your runtime (local / Docker / GitHub Actions each have different IPs) is on the allowlist.
-4. `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app / Stream Bot / cloud document flows only — they do **not** trigger group webhook notifications and must not be used instead of `FEISHU_WEBHOOK_URL`.
+4. `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app / cloud document integrations only — they do **not** trigger group webhook notifications and must not be used instead of `FEISHU_WEBHOOK_URL`.
 
 **Common failure causes:**
 - Only `FEISHU_APP_ID` / `FEISHU_APP_SECRET` were set, but `FEISHU_WEBHOOK_URL` was not configured

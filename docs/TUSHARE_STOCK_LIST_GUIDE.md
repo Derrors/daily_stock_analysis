@@ -97,16 +97,6 @@ stock = a_stocks[a_stocks['ts_code'] == '600519.SH']
 print(stock[['name', 'industry', 'list_date']])
 ```
 
-### 更新自动补全索引
-
-获取数据后，可以更新自动补全索引：
-
-```bash
-# 将 Tushare CSV 数据生成为前端自动补全索引
-python3 scripts/generate_index_from_csv.py --test  # 先测试
-python3 scripts/generate_index_from_csv.py         # 确认后生成
-```
-
 ## 注意事项
 
 1. **积分要求**：确保账号积分足够（A股/港股2000，美股120试用）

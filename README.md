@@ -47,7 +47,7 @@
 | 历史记录 | 批量管理 | 支持多选、全选及批量删除历史分析记录，优化管理效率与 UI/UX 体验 |
 | 回测 | AI 回测验证 | 自动评估历史分析准确率，支持按股票与分析日期查看“AI 预测 vs 次日实际（1 日窗口）”和准确率 |
 | 资讯 | 公司公告 + 资金流 | IntelAgent 新增公告抓取与主力资金流维度（上交所/深交所/cninfo + A 股主力资金流）用于补强舆情链路 |
-| **Agent 问股** | **策略对话** | **多轮策略问答，支持均线金叉/缠论/波浪等 11 种内置策略，Web/Bot/API 全链路** |
+| **Agent 问股** | **策略对话** | **多轮策略问答，支持均线金叉/缠论/波浪等 11 种内置策略，Web/API/Skill 全链路** |
 | 推送 | 多渠道通知 | 企业微信、飞书、Telegram、Discord、Slack、钉钉、邮件、Pushover |
 | 自动化 | 定时运行 | GitHub Actions 定时执行，无需服务器 |
 
@@ -293,7 +293,6 @@ LITELLM_MODEL=openai/deepseek-chat
 如果同时启用了高级模型路由 YAML（`LITELLM_CONFIG`），YAML 主要用于定义可用模型和路由规则（`model_list`）；运行时主模型 / 备选模型 / Vision / Temperature 仍由 `LITELLM_MODEL`、`LITELLM_FALLBACK_MODELS`、`VISION_MODEL`、`LLM_TEMPERATURE` 等字段决定。渠道编辑器只保存渠道条目，不会覆盖这些运行时字段的选择。
 
 > Docker 部署、定时任务配置请参考 [完整指南](docs/full-guide.md)
-> 桌面客户端打包请参考 [桌面端打包说明](docs/desktop-package.md)
 
 ## 📱 推送效果
 
@@ -390,7 +389,6 @@ LITELLM_MODEL=openai/deepseek-chat
   - **新股/异常**：若索引未及时更新或加载失败，系统将无缝退回普通输入模式，确保分析链路 100% 可用。
   - **未命中**：搜索未命中时，用户直接按回车即可走原有手动输入流程，完全不影响分析。
 
-> 💡 **索引更新提示**：如需更新索引数据，可通过 `scripts/fetch_tushare_stock_list.py` 获取最新股票列表，再运行 `scripts/generate_index_from_csv.py` 重新生成索引文件。详见 [Tushare 股票列表获取工具使用说明](docs/TUSHARE_STOCK_LIST_GUIDE.md)。
 
 **LLM 用量查询**：`GET /api/v1/usage/summary?period=today|month|all`，返回按调用类型和模型分组的 token 消耗汇总（`total_calls`、`total_tokens`、`by_call_type`、`by_model`）。
 
@@ -417,7 +415,6 @@ LITELLM_MODEL=openai/deepseek-chat
 - **多轮对话**：支持追问上下文，会话历史持久化保存
 - **导出与发送**：可将会话导出为 `.md` 文件，或发送到已配置的通知渠道，并提供明确的成功/失败反馈
 - **后台执行**：切换页面不中断分析，完成时 Dock 问股图标显示角标
-- **Bot 命令**：`/ask` 技能分析（支持多股对比）、`/chat` 自由对话、`/history` 会话历史、`/strategies` 策略/技能列表、`/research` 深度研究
 - **自定义策略（Skill）**：在 `strategies/` 目录下新建 YAML 文件或在自定义 skill 目录中放入 `SKILL.md` bundle，即可添加新的交易策略，无需写代码
 - **多 Agent 架构**（实验性）：设置 `AGENT_ARCH=multi` 启用 Technical → Intel → Risk → Specialist → Decision 多 Agent 级联编排，通过 `AGENT_ORCHESTRATOR_MODE` 控制深度（quick/standard/full/specialist）。其中 `strategy` / `skill` 仍作为旧值兼容并会自动归一化到 `specialist`。超时或中间阶段 JSON 解析失败时，系统会优先保留已完成阶段结果并降级生成最小可用仪表盘，避免整份报告直接退回默认占位。详见 [完整配置指南](docs/full-guide.md)
 - **Intel 增强字段兼容说明**：`capital_flow_signal` 为新增扩展字段（`inflow/outflow/neutral/not_available`），用于描述 A 股资金流方向，未返回时不会影响后续阶段；下游解析建议以 `risk_alerts` 与 `positive_catalysts` 为主，新增字段可忽略，兼容历史客户端。
@@ -426,24 +423,13 @@ LITELLM_MODEL=openai/deepseek-chat
 
 ### 启动方式
 
-1. **启动服务**（默认会自动编译前端）
+1. **启动 API 服务**
    ```bash
-   python main.py --webui       # 启动 Web 界面 + 执行定时分析
-   python main.py --webui-only  # 仅启动 Web 界面
-   ```
-   启动时会在 `apps/dsa-web` 自动执行 `npm install && npm run build`。
-   如需关闭自动构建，设置 `WEBUI_AUTO_BUILD=false`，并改为手动执行：
-   ```bash
-   cd ./apps/dsa-web
-   npm install && npm run build
-   cd ../..
+   python main.py --serve       # 启动 API 服务 + 执行分析
+   python main.py --serve-only  # 仅启动 API 服务
    ```
 
-访问 `http://127.0.0.1:8000` 即可使用。
-
-> 在云服务器上部署后，不知道浏览器该输入什么地址？请看 [云服务器 Web 界面访问指南](docs/deploy-webui-cloud.md)。
-
-> 也可以使用 `python main.py --serve` (等效命令)
+访问 `http://127.0.0.1:8000/docs` 即可查看接口文档。
 
 ## 🗺️ Roadmap
 
@@ -479,14 +465,6 @@ pip install flake8 pytest
 ./scripts/ci_gate.sh
 ```
 
-如修改前端（`apps/dsa-web`）：
-
-```bash
-cd apps/dsa-web
-npm ci
-npm run lint
-npm run build
-```
 
 ## 📄 License
 [MIT License](LICENSE) © 2026 ZhuLinsen
