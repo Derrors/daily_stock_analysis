@@ -460,7 +460,7 @@ def run_full_analysis(
             and effective_region != ''
         ):
             review_result = run_market_review(
-                notifier=pipeline.notifier,
+                notifier=pipeline.report_service,
                 analyzer=pipeline.analyzer,
                 search_service=pipeline.search_service,
                 override_region=effective_region,
@@ -502,9 +502,9 @@ def run_full_analysis(
                 if market_report:
                     full_content += f"# 📈 大盘复盘\n\n{market_report}\n\n---\n\n"
 
-                # 添加个股决策仪表盘（使用 NotificationService 生成，按 report_type 分支）
+                # 添加个股决策仪表盘（通过报告输出服务生成，按 report_type 分支）
                 if results:
-                    dashboard_content = pipeline.notifier.generate_aggregate_report(
+                    dashboard_content = pipeline.report_service.generate_aggregate_report(
                         results,
                         getattr(config, 'report_type', 'simple'),
                     )
@@ -750,7 +750,7 @@ def main() -> int:
                     return 0
 
             logger.info("模式: 仅大盘复盘")
-            notifier = NotificationService()
+            report_service = NotificationService()
 
             # 初始化搜索服务和分析器（如果有配置）
             search_service = None
@@ -779,7 +779,7 @@ def main() -> int:
                 logger.warning("未检测到 API Key (Gemini/OpenAI)，将仅使用模板生成报告")
 
             run_market_review(
-                notifier=notifier,
+                notifier=report_service,
                 analyzer=analyzer,
                 search_service=search_service,
                 override_region=effective_region,

@@ -6,7 +6,7 @@ A股自选股智能分析系统 - 核心分析流水线
 
 职责：
 1. 管理整个分析流程
-2. 协调数据获取、存储、搜索、分析、通知等模块
+2. 协调数据获取、存储、搜索、分析、报告输出等模块
 3. 实现并发控制和异常处理
 4. 提供股票分析的核心功能
 """
@@ -17,7 +17,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Tuple
 
 import pandas as pd
 
@@ -55,7 +55,7 @@ class StockAnalysisPipeline:
     
     职责：
     1. 管理整个分析流程
-    2. 协调数据获取、存储、搜索、分析、通知等模块
+    2. 协调数据获取、存储、搜索、分析、报告输出等模块
     3. 实现并发控制和异常处理
     """
     
@@ -92,7 +92,8 @@ class StockAnalysisPipeline:
         # 不再单独创建 akshare_fetcher，统一使用 fetcher_manager 获取增强数据
         self.trend_analyzer = StockTrendAnalyzer()  # 技术分析器
         self.analyzer = GeminiAnalyzer(config=self.config)
-        self.notifier = NotificationService(source_message=source_message)
+        self.report_service = NotificationService(source_message=source_message)
+        self.notifier = self.report_service  # 兼容旧调用方/测试桩；新代码请优先使用 report_service。
         
         # 初始化搜索服务（可选，初始化失败不应阻断主分析流程）
         try:
@@ -1371,15 +1372,20 @@ class StockAnalysisPipeline:
 
         return results
 
+    def _get_report_service(self):
+        """Return the preferred report-output service while preserving legacy notifier-only test doubles."""
+        return getattr(self, "report_service", getattr(self, "notifier"))
+
     def _save_local_report(
         self,
         results: List[AnalysisResult],
         report_type: ReportType = ReportType.SIMPLE,
     ) -> None:
-        """保存分析报告到本地文件（与通知推送解耦）"""
+        """保存分析报告到本地文件（与外部消息投递解耦）"""
         try:
+            report_service = self._get_report_service()
             report = self._generate_aggregate_report(results, report_type)
-            filepath = self.notifier.save_report_to_file(report)
+            filepath = report_service.save_report_to_file(report)
             logger.info(f"决策仪表盘日报已保存: {filepath}")
         except Exception as e:
             logger.error(f"保存本地报告失败: {e}")
@@ -1389,10 +1395,11 @@ class StockAnalysisPipeline:
         results: List[AnalysisResult],
         report_type: ReportType,
     ) -> str:
-        """Generate aggregate report with backward-compatible notifier fallback."""
-        generator = getattr(self.notifier, "generate_aggregate_report", None)
+        """Generate aggregate report via the report-output service, with notifier fallback kept only for compatibility."""
+        report_service = self._get_report_service()
+        generator = getattr(report_service, "generate_aggregate_report", None)
         if callable(generator):
             return generator(results, report_type)
-        if report_type == ReportType.BRIEF and hasattr(self.notifier, "generate_brief_report"):
-            return self.notifier.generate_brief_report(results)
-        return self.notifier.generate_dashboard_report(results)
+        if report_type == ReportType.BRIEF and hasattr(report_service, "generate_brief_report"):
+            return report_service.generate_brief_report(results)
+        return report_service.generate_dashboard_report(results)

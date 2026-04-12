@@ -565,7 +565,8 @@ class HistoryService:
         """
         Generate a Markdown report for a single stock analysis.
 
-        This follows the same format as NotificationService.generate_dashboard_report()
+        This follows the same format as the report-output formatter
+        (`NotificationService.generate_dashboard_report()` compatibility path)
         using dashboard structured data for detailed report.
 
         Args:

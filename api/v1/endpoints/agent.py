@@ -242,7 +242,7 @@ async def delete_chat_session(session_id: str):
 
 
 class SendChatRequest(BaseModel):
-    """Request body for sending chat content to notification channels."""
+    """Deprecated request shape retained only for compatibility handling."""
 
     content: str = Field(..., min_length=1, max_length=50000)
     title: Optional[str] = None
@@ -250,24 +250,15 @@ class SendChatRequest(BaseModel):
 
 @router.post("/chat/send")
 async def send_chat_to_notification(request: SendChatRequest):
-    """
-    Send chat session content to configured notification channels.
-    Uses run_in_executor to avoid blocking the event loop.
-    """
-    from src.notification import NotificationService
-
-    loop = asyncio.get_running_loop()
-    success = await loop.run_in_executor(
-        None,
-        lambda: NotificationService().send(request.content),
+    """Deprecated endpoint: notification delivery has been removed from this repository."""
+    _ = request
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "通知发送能力已下线；当前仓库只负责分析执行、报告生成、本地结果落盘，"
+            "如需投递到飞书/Telegram/邮件等渠道，请在仓库外部由调用方处理。"
+        ),
     )
-    if not success:
-        return {
-            "success": False,
-            "error": "no_channels",
-            "message": "未配置通知渠道，请先在设置中配置",
-        }
-    return {"success": True}
 
 
 def _build_executor(config, skills: Optional[List[str]] = None):

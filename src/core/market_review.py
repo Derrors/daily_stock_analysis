@@ -7,7 +7,7 @@
 职责：
 1. 根据 MARKET_REVIEW_REGION 配置选择市场区域（cn / us / both）
 2. 执行大盘复盘分析并生成复盘报告
-3. 保存复盘报告
+3. 通过报告输出服务保存复盘报告
 """
 
 import logging
@@ -54,7 +54,7 @@ def run_market_review(
     执行大盘复盘分析
 
     Args:
-        notifier: 通知服务
+        notifier: 报告输出服务（沿用旧参数名保持兼容）
         analyzer: AI分析器（可选）
         search_service: 搜索服务（可选）
         override_region: 覆盖 config 的 market_review_region（Issue #373 交易日过滤后有效子集）

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A股自选股智能分析系统 - 通知层
+A股自选股智能分析系统 - 报告输出层（兼容通知空壳）
 ===================================
 
 职责：
 1. 汇总分析结果生成日报
 2. 支持 Markdown 格式输出
 3. 提供本地保存能力
-4. 保留发送接口兼容壳（主动通知发送已下线）
+4. 保留旧通知接口兼容壳（主动通知发送已下线）
 """
 import logging
 from datetime import datetime
@@ -77,7 +77,7 @@ class ChannelDetector:
 
 class NotificationService:
     """
-    通知服务
+    报告输出服务（保留 NotificationService 名称以兼容旧调用方）
     
     职责：
     1. 生成 Markdown 格式的分析日报
@@ -106,7 +106,7 @@ class NotificationService:
         self._history_compare_cache: Dict[Tuple[int, Tuple[Tuple[str, str], ...]], Dict[str, List[Dict[str, Any]]]] = {}
         self._available_channels: List[NotificationChannel] = []
 
-        logger.info("通知发送能力已下线：NotificationService 当前仅负责报告生成与本地保存")
+        logger.info("通知发送能力已下线：NotificationService 当前仅负责报告生成、本地保存与兼容空壳")
 
     def _normalize_report_type(self, report_type: Any) -> ReportType:
         """Normalize string/enum input into ReportType."""
@@ -1390,15 +1390,15 @@ class NotificationBuilder:
 
 # 便捷函数
 def get_notification_service() -> NotificationService:
-    """获取通知服务实例"""
+    """获取报告输出服务实例（沿用旧函数名保持兼容）。"""
     return NotificationService()
 
 
 def send_daily_report(results: List[AnalysisResult]) -> bool:
     """
-    发送每日报告的快捷方式
-    
-    自动识别渠道并推送
+    兼容旧调用方的每日报告快捷方式。
+
+    当前行为：生成日报、保存到本地，然后走兼容 send() 空壳（恒为 no-op）。
     """
     service = get_notification_service()
     
@@ -1408,7 +1408,7 @@ def send_daily_report(results: List[AnalysisResult]) -> bool:
     # 保存到本地
     service.save_report_to_file(report)
     
-    # 推送到配置的渠道（自动识别）
+    # 兼容旧发送路径；通知发送能力已下线。
     return service.send(report)
 
 
