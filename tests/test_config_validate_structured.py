@@ -8,7 +8,6 @@ Covers:
   legacy keys) via llm_model_list
 - validate() backward-compat: still returns List[str] with the same messages
 """
-import pytest
 from unittest.mock import patch
 
 from src.config import Config, ConfigIssue
@@ -38,8 +37,6 @@ def _make_config(**kwargs) -> Config:
         tavily_api_keys=[],
         brave_api_keys=[],
         serpapi_keys=[],
-        searxng_base_urls=[],
-        searxng_public_instances_enabled=True,
         llm_channels=[],
         litellm_config_path=None,
         gemini_api_key=None,
@@ -312,23 +309,15 @@ class TestValidateStructuredLLM:
 
 class TestValidateStructuredSearch:
     def test_no_search_engine_is_info(self):
-        cfg = _make_config(searxng_public_instances_enabled=False)
+        cfg = _make_config()
         issues = cfg.validate_structured()
         info = [i for i in issues if i.severity == "info"]
         assert any("搜索引擎" in i.message for i in info)
         search_issue = next(i for i in info if "搜索引擎" in i.message)
         assert search_issue.field == "BOCHA_API_KEYS"
 
-    def test_searxng_configured_no_search_info(self):
-        """When searxng_base_urls is configured, no 'unconfigured search engine' info."""
-        cfg = _make_config(searxng_base_urls=["https://searx.example.org"])
-        issues = cfg.validate_structured()
-        info = [i for i in issues if i.severity == "info"]
-        assert not any("搜索引擎" in i.message and "未配置" in i.message for i in info)
-
-    def test_public_searxng_enabled_no_search_info(self):
-        """Public SearXNG mode also counts as search capability."""
-        cfg = _make_config(searxng_public_instances_enabled=True)
+    def test_retained_provider_configured_no_search_info(self):
+        cfg = _make_config(bocha_api_keys=["bocha-key"])
         issues = cfg.validate_structured()
         info = [i for i in issues if i.severity == "info"]
         assert not any("搜索引擎" in i.message and "未配置" in i.message for i in info)

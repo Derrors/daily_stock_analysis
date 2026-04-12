@@ -6,7 +6,7 @@ A股自选股智能分析系统 - 搜索服务模块
 
 职责：
 1. 提供统一的新闻搜索接口
-2. 支持 Bocha、Tavily、Brave、SerpAPI、SearXNG 多种搜索引擎
+2. 支持 Bocha、Tavily、Brave、SerpAPI 四种搜索引擎
 3. 多 Key 负载均衡和故障转移
 4. 搜索结果缓存和格式化
 """
@@ -2136,12 +2136,12 @@ class SearchService:
         Args:
             bocha_keys: 博查搜索 API Key 列表
             tavily_keys: Tavily API Key 列表
-            anspire_keys: Anspire Search API Key 列表
+            anspire_keys: 兼容保留参数，当前运行时不再启用
             brave_keys: Brave Search API Key 列表
             serpapi_keys: SerpAPI Key 列表
-            minimax_keys: MiniMax API Key 列表
-            searxng_base_urls: SearXNG 实例地址列表（自建无配额兜底）
-            searxng_public_instances_enabled: 未配置自建实例时，是否自动使用公共 SearXNG 实例
+            minimax_keys: 兼容保留参数，当前运行时不再启用
+            searxng_base_urls: 兼容保留参数，当前运行时不再启用
+            searxng_public_instances_enabled: 兼容保留参数，当前运行时不再启用
             news_max_age_days: 新闻最大时效（天）
             news_strategy_profile: 新闻窗口策略档位（ultra_short/short/medium/long）
         """
@@ -2184,27 +2184,11 @@ class SearchService:
             self._providers.append(SerpAPISearchProvider(serpapi_keys))
             logger.info(f"已配置 SerpAPI 搜索，共 {len(serpapi_keys)} 个 API Key")
 
-        # 5. MiniMax（Coding Plan Web Search，结构化结果）
-        if minimax_keys:
-            self._providers.append(MiniMaxSearchProvider(minimax_keys))
-            logger.info(f"已配置 MiniMax 搜索，共 {len(minimax_keys)} 个 API Key")
-
-        # 6. SearXNG（自建实例优先；未配置时可自动发现公共实例）
-        searxng_provider = SearXNGSearchProvider(
-            searxng_base_urls,
-            use_public_instances=bool(searxng_public_instances_enabled and not searxng_base_urls),
-        )
-        if searxng_provider.is_available:
-            self._providers.append(searxng_provider)
-            if searxng_base_urls:
-                logger.info("已配置 SearXNG 搜索，共 %s 个自建实例", len(searxng_base_urls))
-            else:
-                logger.info("已启用 SearXNG 公共实例自动发现模式")
-
-        # 7. Anspire Search（实时智能搜索优化）
-        if anspire_keys:
-            self._providers.insert(0, AnspireSearchProvider(anspire_keys))
-            logger.info(f"已配置 Anspire Search 搜索，共 {len(anspire_keys)} 个 API Key")
+        # 其余历史搜索源（Anspire / MiniMax / SearXNG）已不再加入运行时 provider 列表。
+        if anspire_keys or minimax_keys or searxng_base_urls or searxng_public_instances_enabled:
+            logger.info(
+                "检测到已下线搜索源配置（Anspire/MiniMax/SearXNG）；当前运行时仅保留 Bocha/Tavily/Brave/SerpAPI"
+            )
             
         if not self._providers:
             logger.warning("未配置任何搜索能力，新闻搜索功能将不可用")
@@ -3438,12 +3422,8 @@ def get_search_service() -> SearchService:
                 _search_service = SearchService(
                     bocha_keys=config.bocha_api_keys,
                     tavily_keys=config.tavily_api_keys,
-                    anspire_keys=config.anspire_api_keys,
                     brave_keys=config.brave_api_keys,
                     serpapi_keys=config.serpapi_keys,
-                    minimax_keys=config.minimax_api_keys,
-                    searxng_base_urls=config.searxng_base_urls,
-                    searxng_public_instances_enabled=config.searxng_public_instances_enabled,
                     news_max_age_days=config.news_max_age_days,
                     news_strategy_profile=getattr(config, "news_strategy_profile", "short"),
                 )

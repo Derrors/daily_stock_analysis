@@ -438,10 +438,6 @@ class Config:
 
     # === 数据源 API Token ===
     tushare_token: Optional[str] = None
-    tickflow_api_key: Optional[str] = None
-    longbridge_app_key: Optional[str] = None
-    longbridge_app_secret: Optional[str] = None
-    longbridge_access_token: Optional[str] = None
 
     # === AI 分析配置 ===
     # LiteLLM unified model config (provider/model format, e.g. gemini/gemini-2.5-flash)
@@ -499,14 +495,10 @@ class Config:
     vision_provider_priority: str = "gemini,anthropic,openai"
 
     # === 搜索引擎配置（支持多 Key 负载均衡）===
-    anspire_api_keys: List[str] = field(default_factory=list)  # Anspire Search API Keys
     bocha_api_keys: List[str] = field(default_factory=list)  # Bocha API Keys
-    minimax_api_keys: List[str] = field(default_factory=list)  # MiniMax API Keys
     tavily_api_keys: List[str] = field(default_factory=list)  # Tavily API Keys
     brave_api_keys: List[str] = field(default_factory=list)  # Brave Search API Keys
     serpapi_keys: List[str] = field(default_factory=list)  # SerpAPI Keys
-    searxng_base_urls: List[str] = field(default_factory=list)  # SearXNG instance URLs (self-hosted, no quota)
-    searxng_public_instances_enabled: bool = True  # Auto-discover public SearXNG instances when base URLs are absent
 
     # === Social Sentiment (US stocks only, api.adanos.org) ===
     social_sentiment_api_key: Optional[str] = None
@@ -926,44 +918,18 @@ class Config:
             configured_models=set(get_configured_llm_models(llm_model_list)),
         )
 
-        # 解析搜索引擎 API Keys（支持多个 key，逗号分隔）
-        # Anspire Search
-        anspire_keys_str = os.getenv('ANSPIRE_API_KEYS', '')
-        anspire_api_keys = [k.strip() for k in anspire_keys_str.split(',') if k.strip()]
-
+        # 解析保留搜索引擎 API Keys（支持多个 key，逗号分隔）
         bocha_keys_str = os.getenv('BOCHA_API_KEYS', '')
         bocha_api_keys = [k.strip() for k in bocha_keys_str.split(',') if k.strip()]
 
-        minimax_keys_str = os.getenv('MINIMAX_API_KEYS', '')
-        minimax_api_keys = [k.strip() for k in minimax_keys_str.split(',') if k.strip()]
-        
         tavily_keys_str = os.getenv('TAVILY_API_KEYS', '')
         tavily_api_keys = [k.strip() for k in tavily_keys_str.split(',') if k.strip()]
-        
+
         serpapi_keys_str = os.getenv('SERPAPI_API_KEYS', '')
         serpapi_keys = [k.strip() for k in serpapi_keys_str.split(',') if k.strip()]
 
         brave_keys_str = os.getenv('BRAVE_API_KEYS', '')
         brave_api_keys = [k.strip() for k in brave_keys_str.split(',') if k.strip()]
-
-        _raw_urls = [u.strip() for u in os.getenv('SEARXNG_BASE_URLS', '').split(',') if u.strip()]
-        searxng_base_urls = []
-        invalid_searxng_urls = []
-        for u in _raw_urls:
-            p = urlparse(u)
-            if p.scheme in ('http', 'https') and p.netloc:
-                searxng_base_urls.append(u)
-            else:
-                invalid_searxng_urls.append(u)
-        if invalid_searxng_urls:
-            logger.warning(
-                "SEARXNG_BASE_URLS 中存在无效 URL，已忽略: %s",
-                ", ".join(invalid_searxng_urls[:3]),
-            )
-        searxng_public_instances_enabled = parse_env_bool(
-            os.getenv('SEARXNG_PUBLIC_INSTANCES_ENABLED'),
-            default=True,
-        )
 
         # Preserve historical semantics for startup flags: only an explicit
         # literal "true" enables immediate execution; empty strings stay False.
@@ -1002,10 +968,6 @@ class Config:
             feishu_app_secret=os.getenv('FEISHU_APP_SECRET'),
             feishu_folder_token=os.getenv('FEISHU_FOLDER_TOKEN'),
             tushare_token=os.getenv('TUSHARE_TOKEN'),
-            tickflow_api_key=os.getenv('TICKFLOW_API_KEY'),
-            longbridge_app_key=os.getenv('LONGBRIDGE_APP_KEY') or None,
-            longbridge_app_secret=os.getenv('LONGBRIDGE_APP_SECRET') or None,
-            longbridge_access_token=os.getenv('LONGBRIDGE_ACCESS_TOKEN') or None,
             litellm_model=litellm_model,
             litellm_fallback_models=litellm_fallback_models,
             llm_temperature=resolve_unified_llm_temperature(litellm_model),
@@ -1048,14 +1010,10 @@ class Config:
                 or ""
             ),
             vision_provider_priority=os.getenv('VISION_PROVIDER_PRIORITY', 'gemini,anthropic,openai'),
-            anspire_api_keys=anspire_api_keys,
             bocha_api_keys=bocha_api_keys,
-            minimax_api_keys=minimax_api_keys,
             tavily_api_keys=tavily_api_keys,
             brave_api_keys=brave_api_keys,
             serpapi_keys=serpapi_keys,
-            searxng_base_urls=searxng_base_urls,
-            searxng_public_instances_enabled=searxng_public_instances_enabled,
             social_sentiment_api_key=os.getenv('SOCIAL_SENTIMENT_API_KEY') or None,
             social_sentiment_api_url=os.getenv('SOCIAL_SENTIMENT_API_URL', 'https://api.adanos.org').rstrip('/'),
             news_max_age_days=parse_env_int(os.getenv('NEWS_MAX_AGE_DAYS'), 3, field_name='NEWS_MAX_AGE_DAYS', minimum=1),
@@ -1682,32 +1640,18 @@ class Config:
     @classmethod
     def _resolve_realtime_source_priority(cls) -> str:
         """
-        Resolve realtime source priority with automatic tushare injection.
+        Resolve realtime source priority for the simplified runtime.
 
-        When TUSHARE_TOKEN is configured but REALTIME_SOURCE_PRIORITY is not
-        explicitly set, automatically prepend 'tushare' to the default priority
-        so that the paid data source is utilized for realtime quotes as well.
+        The current runtime only keeps Tushare as the market-data provider, so
+        any historical multi-source priority string is normalized to `tushare`.
         """
-        explicit = os.getenv('REALTIME_SOURCE_PRIORITY')
-        default_priority = 'tencent,akshare_sina,efinance,akshare_em'
-
-        if explicit:
-            # User explicitly set priority, respect it
-            return explicit
-
-        tushare_token = os.getenv('TUSHARE_TOKEN', '').strip()
-        if tushare_token:
-            # Token configured but no explicit priority override
-            # Prepend tushare so the paid source is tried first
-            import logging
-            logger = logging.getLogger(__name__)
-            resolved = f'tushare,{default_priority}'
-            logger.info(
-                f"TUSHARE_TOKEN detected, auto-injecting tushare into realtime priority: {resolved}"
+        explicit = (os.getenv('REALTIME_SOURCE_PRIORITY') or '').strip()
+        if explicit and explicit.lower() != 'tushare':
+            logging.getLogger(__name__).warning(
+                "REALTIME_SOURCE_PRIORITY=%r is deprecated after data-source simplification; normalizing to 'tushare'",
+                explicit,
             )
-            return resolved
-
-        return default_priority
+        return 'tushare'
 
     @classmethod
     def reset_instance(cls) -> None:
@@ -1717,19 +1661,16 @@ class Config:
         cls._BOOTSTRAP_RUNTIME_ENV_OVERRIDES = frozenset()
 
     def has_searxng_enabled(self) -> bool:
-        """Whether SearXNG fallback is enabled via self-hosted or public mode."""
-        return bool(self.searxng_base_urls) or bool(self.searxng_public_instances_enabled)
+        """Legacy compatibility helper kept after search-source simplification."""
+        return False
 
     def has_search_capability_enabled(self) -> bool:
-        """Whether any search provider is configured or SearXNG fallback is enabled."""
+        """Whether any retained search provider is configured."""
         return bool(
-            self.anspire_api_keys
-            or self.bocha_api_keys
-            or self.minimax_api_keys
+            self.bocha_api_keys
             or self.tavily_api_keys
             or self.brave_api_keys
             or self.serpapi_keys
-            or self.has_searxng_enabled()
         )
 
     def is_agent_available(self) -> bool:

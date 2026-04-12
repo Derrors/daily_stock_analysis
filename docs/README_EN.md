@@ -57,10 +57,10 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | Type | Supported |
 |------|----------|
 | LLMs | Gemini (free), OpenAI-compatible, DeepSeek, Qwen, Claude, Ollama |
-| Market Data | AkShare, Tushare, Pytdx, Baostock, YFinance, [Longbridge](https://open.longbridge.com/) (primary for US/HK when configured) |
-| News Search | Tavily, Anspire、SerpAPI, Bocha, Brave, MiniMax |
+| Market Data | Tushare (the only retained runtime market-data provider after simplification) |
+| News Search | Tavily, SerpAPI, Bocha, Brave |
 
-> **Longbridge-first (US/HK only):** With `LONGBRIDGE_APP_KEY` / `LONGBRIDGE_APP_SECRET` / `LONGBRIDGE_ACCESS_TOKEN` set, **daily bars and realtime quotes** for US & HK stocks are fetched from **Longbridge first**; **YFinance / AkShare** are used for **fallback** or **field merge** when Longbridge fails or returns incomplete fields. **If Longbridge is not configured, it is not called** — US/HK still use YFinance / AkShare as before. **US market indices** (e.g. SPX) always prefer **YFinance** (indices are not supported on Longbridge). **A-share** routing is unchanged. See `.env.example` and the [full guide](./full-guide_EN.md).
+> **Current data-source boundary:** runtime market data is now simplified to **Tushare only**; news search keeps **Bocha / Tavily / Brave / SerpAPI**. Historical provider implementations may remain in the repo temporarily, but the main runtime no longer initializes them.
 
 ### Built-in Trading Rules
 
@@ -114,28 +114,12 @@ Retained output-related settings: `REPORT_TYPE`, `REPORT_LANGUAGE`, `REPORT_SUMM
 
 | Secret Name | Description | Required |
 |------------|------|:----:|
-| `STOCK_LIST` | Watchlist codes, e.g., `600519,AAPL,hk00700` | ✅ |
+| `STOCK_LIST` | Watchlist codes, e.g., `600519` | ✅ |
 | `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) Search API (for news) | Recommended |
-| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/) Specially optimized for Chinese content (effectively enhances A-share analysis) | Optional |
-| `MINIMAX_API_KEYS` | [MiniMax](https://platform.minimaxi.com/) Coding Plan Web Search (structured search results) | Optional |
 | `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API (privacy-focused, US stocks optimized) | Optional |
 | `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) Backup search | Optional |
 | `BOCHA_API_KEYS` | [Bocha Search](https://open.bocha.cn/) Web Search API (Chinese search optimized, supports AI summaries, multiple keys comma-separated) | Optional |
-| `SEARXNG_BASE_URLS` | SearXNG self-hosted instances (quota-free fallback, enable format: json in settings.yml); when empty the app auto-discovers public instances | Optional |
-| `SEARXNG_PUBLIC_INSTANCES_ENABLED` | Auto-discover public SearXNG instances from `searx.space` when `SEARXNG_BASE_URLS` is empty (default `true`) | Optional |
-| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token | Optional |
-| `TICKFLOW_API_KEY` | [TickFlow](https://tickflow.org) API key (CN market review index enhancement; breadth also uses TickFlow when the plan supports universe queries) | Optional |
-| `LONGBRIDGE_APP_KEY` | [Longbridge OpenAPI](https://open.longbridge.com/) App Key (becomes primary US/HK data source when configured) | Optional |
-| `LONGBRIDGE_APP_SECRET` | Longbridge App Secret | Optional |
-| `LONGBRIDGE_ACCESS_TOKEN` | Longbridge Access Token | Optional |
-| `LONGBRIDGE_STATIC_INFO_TTL_SECONDS` | In-process `static_info` cache TTL in seconds (default `86400`; `0` = no cache) | Optional |
-| `LONGBRIDGE_HTTP_URL` | HTTP API base URL (default `https://openapi.longbridge.com`) | Optional |
-| `LONGBRIDGE_QUOTE_WS_URL` | Quote WebSocket URL (default `wss://openapi-quote.longbridge.com/v2`) | Optional |
-| `LONGBRIDGE_TRADE_WS_URL` | Trade WebSocket URL (default `wss://openapi-trade.longbridge.com/v2`) | Optional |
-| `LONGBRIDGE_REGION` | Override region endpoint; the SDK auto-selects by network (default `hk`); set if wrong (e.g. `cn`, `hk`) | Optional |
-| `LONGBRIDGE_ENABLE_OVERNIGHT` | Overnight session quotes: `true` / `false` (default `false`) | Optional |
-| `LONGBRIDGE_PUSH_CANDLESTICK_MODE` | Candlestick push mode: `realtime` or `confirmed` (default `realtime`) | Optional |
-| `LONGBRIDGE_PRINT_QUOTE_PACKAGES` | Whether to print quote packages on connect (default `false` when unset; set `1`/`true`/`yes` to enable) | Optional |
+| `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token | ✅ |
 | `WECHAT_MSG_TYPE` | WeChat Work message type, default `markdown`, set to `text` for plain markdown text | Optional |
 | `AGENT_MODE` | Enable Agent strategy chat mode (internally normalized as `skill`, `true`/`false`, default `false`) | Optional |
 | `AGENT_LITELLM_MODEL` | Optional Agent-only primary model; when empty it inherits the primary model, and bare names are normalized to `openai/<model>` | Optional |

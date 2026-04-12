@@ -6,7 +6,6 @@ Covers:
 - is_bse_code()
 - normalize_stock_code() BJ prefix/suffix
 - TushareFetcher._convert_stock_code() BSE branch
-- AkshareFetcher _to_sina_tx_symbol() BSE and Shanghai B-share handling
 """
 import sys
 import unittest
@@ -36,14 +35,6 @@ try:
 except ImportError as e:
     _TUSHARE_IMPORTS_OK = False
     _TUSHARE_IMPORT_ERROR = str(e)
-
-try:
-    from data_provider.akshare_fetcher import _to_sina_tx_symbol
-    _AKSHARE_IMPORTS_OK = True
-    _AKSHARE_IMPORT_ERROR = ""
-except ImportError as e:
-    _AKSHARE_IMPORTS_OK = False
-    _AKSHARE_IMPORT_ERROR = str(e)
 
 
 @unittest.skipIf(not _BASE_IMPORTS_OK, f"base imports failed: {_BASE_IMPORT_ERROR}")
@@ -119,31 +110,6 @@ class TestTushareConvertStockCode(unittest.TestCase):
         self.assertEqual(fetcher._convert_stock_code("920748"), "920748.BJ")
         self.assertEqual(fetcher._convert_stock_code("838163"), "838163.BJ")
         self.assertEqual(fetcher._convert_stock_code("430047"), "430047.BJ")
-
-
-@unittest.skipIf(not _AKSHARE_IMPORTS_OK, f"akshare fetcher imports failed: {_AKSHARE_IMPORT_ERROR}")
-class TestAkshareToSinaTxSymbol(unittest.TestCase):
-    """Tests for _to_sina_tx_symbol() BSE and Shanghai B-share handling."""
-
-    def test_bse_returns_bj_prefix(self):
-        """BSE codes should get bj prefix."""
-        self.assertEqual(_to_sina_tx_symbol("920748"), "bj920748")
-        self.assertEqual(_to_sina_tx_symbol("838163"), "bj838163")
-
-    def test_shanghai_b_share_not_regression(self):
-        """900xxx (Shanghai B-shares) must map to sh - critical regression case."""
-        self.assertEqual(_to_sina_tx_symbol("900901"), "sh900901")
-        self.assertEqual(_to_sina_tx_symbol("900906"), "sh900906")
-
-    def test_shanghai_shenzhen(self):
-        """Shanghai/Shenzhen should map correctly."""
-        self.assertEqual(_to_sina_tx_symbol("600519"), "sh600519")
-        self.assertEqual(_to_sina_tx_symbol("000001"), "sz000001")
-        self.assertEqual(_to_sina_tx_symbol("512400"), "sh512400")
-
-    def test_with_suffix_strips_correctly(self):
-        """Code with .BJ suffix should produce bj + base, not bj + full."""
-        self.assertEqual(_to_sina_tx_symbol("920748.BJ"), "bj920748")
 
 
 if __name__ == "__main__":
