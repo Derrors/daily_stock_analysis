@@ -64,7 +64,6 @@ class AnalysisService:
         report_type: str = "detailed",
         force_refresh: bool = False,
         query_id: Optional[str] = None,
-        send_notification: bool = True,
         progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
@@ -75,7 +74,6 @@ class AnalysisService:
             report_type: 报告类型 (simple/detailed)
             force_refresh: 是否强制刷新
             query_id: 查询 ID（可选）
-            send_notification: 是否发送通知（API 触发默认发送）
             
         Returns:
             分析结果字典，包含:
@@ -112,7 +110,6 @@ class AnalysisService:
             result = pipeline.process_single_stock(
                 code=stock_code,
                 skip_analysis=False,
-                single_stock_notify=send_notification,
                 report_type=rt,
             )
             
@@ -148,7 +145,6 @@ class AnalysisService:
         report_type: str = "detailed",
         force_refresh: bool = False,
         query_id: Optional[str] = None,
-        send_notification: bool = True,
         progress_callback: Optional[Callable[[int, str], None]] = None,
         query_source: QuerySource = QuerySource.API,
     ) -> Optional[AnalysisResponse]:
@@ -158,7 +154,6 @@ class AnalysisService:
             report_type=report_type,
             force_refresh=force_refresh,
             query_id=query_id,
-            send_notification=send_notification,
             progress_callback=progress_callback,
         )
         if payload is None:

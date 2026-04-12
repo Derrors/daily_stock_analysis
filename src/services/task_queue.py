@@ -342,7 +342,6 @@ class AnalysisTaskQueue:
         selection_source: Optional[str] = None,
         report_type: str = "detailed",
         force_refresh: bool = False,
-        notify: bool = True,
     ) -> Tuple[List[TaskInfo], List[DuplicateTaskError]]:
         """
         Submit analysis tasks in batch.
@@ -390,7 +389,6 @@ class AnalysisTaskQueue:
                         stock_code,
                         report_type,
                         force_refresh,
-                        notify,
                     )
                 except Exception:
                     # Roll back the current batch to avoid partial submission.
@@ -531,7 +529,6 @@ class AnalysisTaskQueue:
         stock_code: str,
         report_type: str,
         force_refresh: bool,
-        notify: bool = True,
     ) -> Optional[Dict[str, Any]]:
         """
         执行分析任务（在线程池中运行）
@@ -572,7 +569,6 @@ class AnalysisTaskQueue:
                 report_type=report_type,
                 force_refresh=force_refresh,
                 query_id=task_id,
-                send_notification=notify,
                 progress_callback=_on_progress,
             )
             

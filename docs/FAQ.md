@@ -81,8 +81,7 @@
 2. **Secrets**（点击 `New repository secret`）：存放敏感信息
    - `GEMINI_API_KEY`
    - `OPENAI_API_KEY`
-   - `TELEGRAM_BOT_TOKEN`
-   - 各类 Webhook URL
+   - `FEISHU_APP_SECRET`（如启用飞书云文档）
 3. **Variables**（点击 `Variables` 标签）：存放非敏感配置
    - `STOCK_LIST`
    - `GEMINI_MODEL`
@@ -148,28 +147,12 @@ PROXY_PORT=10809
 
 **现象**：分析成功但未收到推送，日志显示 400 错误或 `Message too long`
 
-**原因**：不同平台消息长度限制不同：
-- 企业微信：4KB
-- 飞书：20KB
-- 钉钉：20KB
+**原因**：当前仓库不再负责消息投递，长报告不会再通过内置通知渠道发送。
 
 **解决方案**：
-1. **自动分块**：最新版本已实现长消息自动切割
-2. **单股推送模式**：设置 `SINGLE_STOCK_NOTIFY=true`，每分析完一只股票立即推送
-3. **精简报告**：设置 `REPORT_TYPE=simple` 使用精简格式
-
----
-
-### Q9: Telegram 推送收不到消息？
-
-**解决方案**：
-1. 确认 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID` 都已配置
-2. 获取 Chat ID 方法：
-   - 给 Bot 发送任意消息
-   - 访问 `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   - 在返回的 JSON 中找到 `chat.id`
-3. 确保 Bot 已被添加到目标群组（如果是群聊）
-4. 本地运行时需要能访问 Telegram API（可能需要代理）
+1. 使用本地落盘的 Markdown 报告
+2. 使用飞书云文档承载完整内容
+3. 由外部调用方按自己的渠道限制做裁剪、分段或转发
 
 ---
 

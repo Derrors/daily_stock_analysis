@@ -96,35 +96,13 @@
 > *注：`GEMINI_API_KEY` 和 `OPENAI_API_KEY` 至少配置一個
 
 <details>
-<summary><b>通知渠道配置</b>（點擊展開，至少配置一個）</summary>
+<summary><b>結果輸出邊界</b>（點擊展開）</summary>
 
-| Secret 名稱 | 說明 | 必填 |
-|------------|------|:----:|
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token（@BotFather 獲取） | 可選 |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID | 可選 |
-| `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID (用於發送到子話題) | 可選 |
-| `DISCORD_WEBHOOK_URL` | Discord Webhook URL | 可選 |
-| `DISCORD_BOT_TOKEN` | Discord Bot Token（與 Webhook 二選一） | 可選 |
-| `DISCORD_MAIN_CHANNEL_ID` | Discord Channel ID（使用 Bot 時需要） | 可選 |
-| `DISCORD_INTERACTIONS_PUBLIC_KEY` | Discord Public Key（僅接收入站 Interaction/Webhook 回調並進行簽名校驗時需要） | 可選 |
-| `SLACK_BOT_TOKEN` | Slack Bot Token（推薦，支援圖片上傳；同時配置時優先於 Webhook） | 可選 |
-| `SLACK_CHANNEL_ID` | Slack Channel ID（使用 Bot 時需要） | 可選 |
-| `SLACK_WEBHOOK_URL` | Slack Incoming Webhook URL（僅文字，不支援圖片） | 可選 |
-| `EMAIL_SENDER` | 發件人郵箱（如 `xxx@qq.com`） | 可選 |
-| `EMAIL_PASSWORD` | 郵箱授權碼（非登錄密碼） | 可選 |
-| `EMAIL_RECEIVERS` | 收件人郵箱（多個用逗號分隔，留空則發給自己） | 可選 |
-| `WECHAT_WEBHOOK_URL` | 企業微信 Webhook URL | 可選 |
-| `FEISHU_WEBHOOK_URL` | 飛書 Webhook URL | 可選 |
-| `PUSHPLUS_TOKEN` | PushPlus Token（[獲取地址](https://www.pushplus.plus)，國內推送服務） | 可選 |
-| `SERVERCHAN3_SENDKEY` | Server酱³ Sendkey（[獲取地址](https://sc3.ft07.com/)，手機軟體推播服務） | 可选 |
-| `CUSTOM_WEBHOOK_URLS` | 自定義 Webhook（支持釘釘等，多個用逗號分隔） | 可選 |
-| `CUSTOM_WEBHOOK_BEARER_TOKEN` | 自定義 Webhook 的 Bearer Token（用於需要認證的 Webhook） | 可選 |
-| `SINGLE_STOCK_NOTIFY` | 單股推送模式：設為 `true` 則每分析完一隻股票立即推送 | 可選 |
-| `REPORT_TYPE` | 報告類型：`simple`(精簡) 或 `full`(完整)，Docker環境推薦設為 `full` | 可選 |
-| `REPORT_LANGUAGE` | 報告輸出語言：`zh`(預設中文) / `en`(英文)；會同步影響 Prompt、Markdown 模板、通知 fallback 與 Web 報告頁固定文案 | 可選 |
-| `ANALYSIS_DELAY` | 個股分析和大盤分析之間的延遲（秒），避免API限流，如 `10` | 可選 |
+> 通知發送能力已下線。當前倉庫只負責：分析執行、報告生成、本地結果落盤，以及可選飛書雲文檔建立。
+>
+> 如需將結果發送到 Telegram / Discord / Slack / 郵件 / 企業微信 / 飛書，請在倉庫外部由調用方自行處理。
 
-> 至少配置一個渠道，配置多個則同時推送。更多配置請參考 [完整指南](./full-guide.md)
+保留的輸出相關配置：`REPORT_TYPE`、`REPORT_LANGUAGE`、`REPORT_SUMMARY_ONLY`、`REPORT_TEMPLATES_DIR`、`REPORT_RENDERER_ENABLED`、`REPORT_INTEGRITY_ENABLED`、`REPORT_INTEGRITY_RETRY`、`REPORT_HISTORY_COMPARE_N`、`ANALYSIS_DELAY`。
 
 </details>
 
@@ -288,25 +266,6 @@ daily_stock_analysis/
 ## 🗺️ Roadmap
 
 > 📢 以下功能將視後續情況逐步完成，如果你有好的想法或建議，歡迎 [提交 Issue](https://github.com/ZhuLinsen/daily_stock_analysis/issues) 討論！
-
-### 🔔 通知渠道擴展
-- [x] 企業微信機器人
-- [x] 飛書機器人
-- [x] Telegram 推送
-- [x] 郵件通知（SMTP）
-- [x] 自定義 Webhook（支持釘釘、Discord、Slack、Bark 等）
-- [x] iOS/Android 推送（Pushover）
-- [x] 自定義 Webhook（可覆蓋釘釘等渠道）
-### 🤖 AI 模型支持
-- [x] Google Gemini（主力，免費額度）
-- [x] OpenAI 兼容 API（支持 GPT-4/DeepSeek/通義千問/Claude/文心一言 等）
-- [x] 本地模型（Ollama）
-
-### 📊 數據源擴展
-- [x] AkShare（免費）
-- [x] Tushare Pro
-- [x] Baostock
-- [x] YFinance
 
 ### 🎯 功能增強
 - [x] 決策儀表盤

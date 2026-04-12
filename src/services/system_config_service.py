@@ -1019,60 +1019,6 @@ class SystemConfigService:
         """Validate dependencies across multiple keys."""
         issues: List[Dict[str, Any]] = []
 
-        token_value = (effective_map.get("TELEGRAM_BOT_TOKEN") or "").strip()
-        chat_id_value = (effective_map.get("TELEGRAM_CHAT_ID") or "").strip()
-        if token_value and not chat_id_value and (
-            "TELEGRAM_BOT_TOKEN" in updated_keys or "TELEGRAM_CHAT_ID" in updated_keys
-        ):
-            issues.append(
-                {
-                    "key": "TELEGRAM_CHAT_ID",
-                    "code": "missing_dependency",
-                    "message": "TELEGRAM_CHAT_ID is required when TELEGRAM_BOT_TOKEN is set",
-                    "severity": "error",
-                    "expected": "non-empty TELEGRAM_CHAT_ID",
-                    "actual": chat_id_value,
-                }
-            )
-
-        feishu_relevant_keys = {
-            "FEISHU_APP_ID",
-            "FEISHU_APP_SECRET",
-            "FEISHU_WEBHOOK_URL",
-            "FEISHU_WEBHOOK_SECRET",
-            "FEISHU_WEBHOOK_KEYWORD",
-            "FEISHU_FOLDER_TOKEN",
-        }
-        has_feishu_app_id = bool((effective_map.get("FEISHU_APP_ID") or "").strip())
-        has_feishu_app_secret = bool((effective_map.get("FEISHU_APP_SECRET") or "").strip())
-        has_feishu_app_credentials = has_feishu_app_id or has_feishu_app_secret
-        has_feishu_webhook = bool((effective_map.get("FEISHU_WEBHOOK_URL") or "").strip())
-        has_feishu_folder_token = bool((effective_map.get("FEISHU_FOLDER_TOKEN") or "").strip())
-        has_feishu_full_cloud_doc_credentials = (
-            has_feishu_app_id
-            and has_feishu_app_secret
-            and has_feishu_folder_token
-        )
-        if (
-            has_feishu_app_credentials
-            and not has_feishu_full_cloud_doc_credentials
-            and not has_feishu_webhook
-            and (updated_keys & feishu_relevant_keys)
-        ):
-            issues.append(
-                {
-                    "key": "FEISHU_WEBHOOK_URL",
-                    "code": "feishu_mode_mismatch",
-                    "message": (
-                        "仅配置 FEISHU_APP_ID / FEISHU_APP_SECRET 不会开启飞书群 Webhook 推送；"
-                        "如需通知推送请填写 FEISHU_WEBHOOK_URL；如需飞书应用能力，请补齐 FEISHU_FOLDER_TOKEN 等应用集成配置。"
-                    ),
-                    "severity": "warning",
-                    "expected": "FEISHU_WEBHOOK_URL or FEISHU_FOLDER_TOKEN",
-                    "actual": "app credentials only",
-                }
-            )
-
         issues.extend(
             SystemConfigService._validate_llm_channel_map(
                 effective_map=effective_map,

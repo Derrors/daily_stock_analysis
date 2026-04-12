@@ -79,8 +79,7 @@ This document compiles common issues encountered by users and their solutions.
 2. **Secrets** (click `New repository secret`): Store sensitive information
    - `GEMINI_API_KEY`
    - `OPENAI_API_KEY`
-   - `TELEGRAM_BOT_TOKEN`
-   - Various Webhook URLs
+   - `FEISHU_APP_SECRET` (if Feishu cloud documents are enabled)
 3. **Variables** (click `Variables` tab): Store non-sensitive configuration
    - `STOCK_LIST`
    - `GEMINI_MODEL`
@@ -146,28 +145,12 @@ Use channel mode: set `LLM_CHANNELS=aihubmix,deepseek,gemini` and configure each
 
 **Symptom**: Analysis succeeded but no notification received, log shows 400 error or `Message too long`
 
-**Cause**: Different platforms have different message length limits:
-- WeChat Work: 4KB
-- Feishu: 20KB
-- DingTalk: 20KB
+**Cause**: The repository no longer performs message delivery, so long reports are not sent through built-in notification channels anymore.
 
 **Solution**:
-1. **Auto-chunking**: Latest version implements automatic long message splitting
-2. **Single stock push mode**: Set `SINGLE_STOCK_NOTIFY=true`, push immediately after each stock analysis
-3. **Brief report**: Set `REPORT_TYPE=simple` for simplified format
-
----
-
-### Q9: Not receiving Telegram push messages?
-
-**Solution**:
-1. Confirm both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are configured
-2. How to get Chat ID:
-   - Send any message to the Bot
-   - Visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   - Find `chat.id` in the returned JSON
-3. Ensure Bot has been added to target group (if group chat)
-4. When running locally, need to be able to access Telegram API (may need proxy)
+1. Use the locally saved Markdown report
+2. Use Feishu cloud documents for full-length content
+3. Let the outer caller handle channel-specific truncation / splitting / forwarding
 
 ---
 

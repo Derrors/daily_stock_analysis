@@ -11,7 +11,6 @@ def test_analyze_request_to_contract_request() -> None:
         stock_name="贵州茅台",
         original_query="茅台",
         selection_source="autocomplete",
-        notify=False,
     )
 
     contract = request.to_contract_request(

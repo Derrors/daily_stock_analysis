@@ -75,7 +75,7 @@ docker-compose -f ./docker/docker-compose.yml up -d
 docker-compose -f ./docker/docker-compose.yml exec stock-analyzer bash
 
 # 手动执行一次分析
-docker-compose -f ./docker/docker-compose.yml exec stock-analyzer python main.py --no-notify
+docker-compose -f ./docker/docker-compose.yml exec stock-analyzer python main.py
 ```
 
 ### 5. 数据持久化
@@ -194,7 +194,6 @@ journalctl -u stock-analyzer -f
 |--------|------|----------|
 | `GEMINI_API_KEY` | AI 分析必需 | [Google AI Studio](https://aistudio.google.com/) |
 | `STOCK_LIST` | 自选股列表 | 逗号分隔的股票代码 |
-| `WECHAT_WEBHOOK_URL` | 微信推送 | 企业微信群机器人 |
 
 ### 可选配置项
 
@@ -381,23 +380,16 @@ git push -u origin main
 | Secret 名称 | 说明 | 必填 |
 |------------|------|------|
 | `GEMINI_API_KEY` | Gemini AI API Key | ✅ |
-| `WECHAT_WEBHOOK_URL` | 企业微信机器人 Webhook | 可选* |
-| `FEISHU_WEBHOOK_URL` | 飞书机器人 Webhook | 可选* |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | 可选* |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID | 可选* |
-| `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID | 可选* |
-| `EMAIL_SENDER` | 发件人邮箱 | 可选* |
-| `EMAIL_PASSWORD` | 邮箱授权码 | 可选* |
-| `SERVERCHAN3_SENDKEY` | Server酱³ Sendkey | 可选* |
-| `CUSTOM_WEBHOOK_URLS` | 自定义 Webhook（多个逗号分隔） | 可选* |
 | `STOCK_LIST` | 自选股列表，如 `600519,300750` | ✅ |
 | `TAVILY_API_KEYS` | Tavily 搜索 API Key | 推荐 |
 | `MINIMAX_API_KEYS` | MiniMax Coding Plan Web Search | 可选 |
 | `SERPAPI_API_KEYS` | SerpAPI Key | 可选 |
-| `SEARXNG_BASE_URLS` | SearXNG 自建实例（无配额兜底，需在 settings.yml 启用 format: json）；留空时默认自动发现公共实例 | 可选 |
-| `SEARXNG_PUBLIC_INSTANCES_ENABLED` | 是否在 `SEARXNG_BASE_URLS` 为空时自动从 `searx.space` 获取公共实例（默认 `true`） | 可选 |
+| `SEARXNG_BASE_URLS` | SearXNG 自建实例（无配额兜底） | 可选 |
+| `SEARXNG_PUBLIC_INSTANCES_ENABLED` | 是否允许自动发现公共 SearXNG 实例 | 可选 |
 | `TUSHARE_TOKEN` | Tushare Token | 可选 |
 | `GEMINI_MODEL` | 模型名称（默认 gemini-2.0-flash） | 可选 |
+
+> 说明：通知发送能力已下线，GitHub Actions 不再向微信 / 飞书 / Telegram / 邮件等渠道主动推送。
 
 > *注：通知渠道至少配置一个，支持多渠道同时推送
 

@@ -7,12 +7,8 @@ A股自选股智能分析系统 - 通知层
 职责：
 1. 汇总分析结果生成日报
 2. 支持 Markdown 格式输出
-3. 多渠道推送（自动识别）：
-   - 企业微信 Webhook
-   - 飞书 Webhook
-   - Telegram Bot
-   - 邮件 SMTP
-   - Pushover（手机/桌面推送）
+3. 提供本地保存能力
+4. 保留发送接口兼容壳（主动通知发送已下线）
 """
 import logging
 from datetime import datetime
@@ -32,20 +28,6 @@ from src.report_language import (
     normalize_report_language,
 )
 from src.utils.data_processing import normalize_model_used
-from src.notification_sender import (
-    AstrbotSender,
-    CustomWebhookSender,
-    DiscordSender,
-    EmailSender,
-    FeishuSender,
-    PushoverSender,
-    PushplusSender,
-    Serverchan3Sender,
-    SlackSender,
-    TelegramSender,
-    WechatSender,
-    WECHAT_IMAGE_MAX_BYTES
-)
 
 logger = logging.getLogger(__name__)
 
@@ -93,81 +75,38 @@ class ChannelDetector:
         return names.get(channel, "未知渠道")
 
 
-class NotificationService(
-    AstrbotSender,
-    CustomWebhookSender,
-    DiscordSender,
-    EmailSender,
-    FeishuSender,
-    PushoverSender,
-    PushplusSender,
-    Serverchan3Sender,
-    SlackSender,
-    TelegramSender,
-    WechatSender
-):
+class NotificationService:
     """
     通知服务
     
     职责：
     1. 生成 Markdown 格式的分析日报
-    2. 向所有已配置的渠道推送消息（多渠道并发）
-    3. 支持本地保存日报
-    
-    支持的渠道：
-    - 企业微信 Webhook
-    - 飞书 Webhook
-    - Telegram Bot
-    - 邮件 SMTP
-    - Pushover（手机/桌面推送）
-    
-    注意：所有已配置的渠道都会收到推送
+    2. 支持本地保存日报
+    3. 为旧调用方保留发送接口兼容壳（统一 no-op）
     """
     
     def __init__(self, source_message: Optional[Any] = None):
         """
-        初始化通知服务
-        
-        检测所有已配置的渠道，推送时会向所有渠道发送
+        初始化报告生成服务。
+
+        通知发送能力已下线；这里仅保留报告生成、本地落盘，以及旧接口的兼容空壳。
         """
         config = get_config()
         self._source_message = source_message
         self._context_channels: List[str] = []
 
-        # Markdown 转图片（Issue #289）
+        # 保留这些字段仅为了兼容旧测试桩/旧调用方属性访问。
         self._markdown_to_image_channels = set(
             getattr(config, 'markdown_to_image_channels', []) or []
         )
         self._markdown_to_image_max_chars = getattr(
             config, 'markdown_to_image_max_chars', 15000
         )
-
-        # 仅分析结果摘要（Issue #262）：true 时只推送汇总，不含个股详情
         self._report_summary_only = getattr(config, 'report_summary_only', False)
         self._history_compare_cache: Dict[Tuple[int, Tuple[Tuple[str, str], ...]], Dict[str, List[Dict[str, Any]]]] = {}
+        self._available_channels: List[NotificationChannel] = []
 
-        # 初始化各渠道
-        AstrbotSender.__init__(self, config)
-        CustomWebhookSender.__init__(self, config)
-        DiscordSender.__init__(self, config)
-        EmailSender.__init__(self, config)
-        FeishuSender.__init__(self, config)
-        PushoverSender.__init__(self, config)
-        PushplusSender.__init__(self, config)
-        Serverchan3Sender.__init__(self, config)
-        SlackSender.__init__(self, config)
-        TelegramSender.__init__(self, config)
-        WechatSender.__init__(self, config)
-
-        # 检测所有已配置的渠道
-        self._available_channels = self._detect_all_channels()
-
-        if not self._available_channels and not self._context_channels:
-            logger.warning("未配置有效的通知渠道，将不发送推送通知")
-        else:
-            channel_names = [ChannelDetector.get_channel_name(ch) for ch in self._available_channels]
-            channel_names.extend(self._context_channels)
-            logger.info(f"已配置 {len(channel_names)} 个通知渠道：{', '.join(channel_names)}")
+        logger.info("通知发送能力已下线：NotificationService 当前仅负责报告生成与本地保存")
 
     def _normalize_report_type(self, report_type: Any) -> ReportType:
         """Normalize string/enum input into ReportType."""
@@ -254,69 +193,24 @@ class NotificationService(
         return list(dict.fromkeys(models))
     
     def _detect_all_channels(self) -> List[NotificationChannel]:
-        """
-        检测所有已配置的渠道
-        
-        Returns:
-            已配置的渠道列表
-        """
-        channels = []
-        
-        # 企业微信
-        if self._wechat_url:
-            channels.append(NotificationChannel.WECHAT)
-        
-        # 飞书
-        if self._feishu_url:
-            channels.append(NotificationChannel.FEISHU)
-        
-        # Telegram
-        if self._is_telegram_configured():
-            channels.append(NotificationChannel.TELEGRAM)
-        
-        # 邮件
-        if self._is_email_configured():
-            channels.append(NotificationChannel.EMAIL)
-        
-        # Pushover
-        if self._is_pushover_configured():
-            channels.append(NotificationChannel.PUSHOVER)
-
-        # PushPlus
-        if self._pushplus_token:
-            channels.append(NotificationChannel.PUSHPLUS)
-
-       # Server酱3
-        if self._serverchan3_sendkey:
-            channels.append(NotificationChannel.SERVERCHAN3)
-       
-        # 自定义 Webhook
-        if self._custom_webhook_urls:
-            channels.append(NotificationChannel.CUSTOM)
-        
-        # Discord
-        if self._is_discord_configured():
-            channels.append(NotificationChannel.DISCORD)
-        # Slack
-        if self._is_slack_configured():
-            channels.append(NotificationChannel.SLACK)
-        # AstrBot
-        if self._is_astrbot_configured():
-            channels.append(NotificationChannel.ASTRBOT)
-        return channels
+        """通知发送能力已下线，永远返回空渠道列表。"""
+        return []
 
     def is_available(self) -> bool:
-        """检查通知服务是否可用（至少有一个渠道或上下文渠道）"""
-        return len(self._available_channels) > 0 or self._has_context_channel()
-    
+        """通知发送能力已下线。"""
+        return False
+
     def get_available_channels(self) -> List[NotificationChannel]:
-        """获取所有已配置的渠道"""
-        return self._available_channels
-    
+        """通知发送能力已下线，返回空列表以兼容旧调用方。"""
+        return []
+
     def get_channel_names(self) -> str:
-        """获取所有已配置渠道的名称"""
-        names = [ChannelDetector.get_channel_name(ch) for ch in self._available_channels]
-        return ', '.join(names)
+        """通知发送能力已下线。"""
+        return ""
+
+    def _log_send_disabled(self, channel: str) -> bool:
+        logger.info("通知发送能力已下线：忽略 %s 发送请求", channel)
+        return False
 
     # ===== Context channel =====
     def _has_context_channel(self) -> bool:
@@ -326,6 +220,54 @@ class NotificationService(
     def send_to_context(self, content: str) -> bool:
         """Bot 会话上下文推送已下线。"""
         return False
+
+    def send_to_wechat(self, content: str) -> bool:
+        return self._log_send_disabled("wechat")
+
+    def send_to_feishu(self, content: str) -> bool:
+        return self._log_send_disabled("feishu")
+
+    def send_to_telegram(self, content: str) -> bool:
+        return self._log_send_disabled("telegram")
+
+    def send_to_email(self, content: str, receivers: Optional[List[str]] = None, subject: Optional[str] = None) -> bool:
+        return self._log_send_disabled("email")
+
+    def send_to_pushover(self, content: str, title: Optional[str] = None) -> bool:
+        return self._log_send_disabled("pushover")
+
+    def send_to_pushplus(self, content: str, title: Optional[str] = None) -> bool:
+        return self._log_send_disabled("pushplus")
+
+    def send_to_serverchan3(self, content: str, title: Optional[str] = None) -> bool:
+        return self._log_send_disabled("serverchan3")
+
+    def send_to_custom(self, content: str) -> bool:
+        return self._log_send_disabled("custom webhook")
+
+    def send_to_discord(self, content: str) -> bool:
+        return self._log_send_disabled("discord")
+
+    def send_to_slack(self, content: str) -> bool:
+        return self._log_send_disabled("slack")
+
+    def send_to_astrbot(self, content: str) -> bool:
+        return self._log_send_disabled("astrbot")
+
+    def _send_wechat_image(self, image_bytes: Optional[bytes]) -> bool:
+        return self._log_send_disabled("wechat image")
+
+    def _send_telegram_photo(self, image_bytes: Optional[bytes]) -> bool:
+        return self._log_send_disabled("telegram photo")
+
+    def _send_email_with_inline_image(self, image_bytes: Optional[bytes], receivers: Optional[List[str]] = None) -> bool:
+        return self._log_send_disabled("email inline image")
+
+    def _send_custom_webhook_image(self, image_bytes: Optional[bytes], fallback_content: str = "") -> bool:
+        return self._log_send_disabled("custom webhook image")
+
+    def _send_slack_image(self, image_bytes: Optional[bytes], fallback_content: str = "") -> bool:
+        return self._log_send_disabled("slack image")
 
     def generate_daily_report(
         self,
@@ -1343,22 +1285,8 @@ class NotificationService(
     def _should_use_image_for_channel(
         self, channel: NotificationChannel, image_bytes: Optional[bytes]
     ) -> bool:
-        """
-        Decide whether to send as image for the given channel (Issue #289).
-
-        Fallback rules (send as Markdown text instead of image):
-        - image_bytes is None: conversion failed / imgkit not installed / content over max_chars
-        - WeChat: image exceeds ~2MB limit
-        """
-        if channel.value not in self._markdown_to_image_channels or image_bytes is None:
-            return False
-        if channel == NotificationChannel.WECHAT and len(image_bytes) > WECHAT_IMAGE_MAX_BYTES:
-            logger.warning(
-                "企业微信图片超限 (%d bytes)，回退为 Markdown 文本发送",
-                len(image_bytes),
-            )
-            return False
-        return True
+        """通知发送能力已下线，统一不再走图片发送。"""
+        return False
 
     def send(
         self,
@@ -1366,137 +1294,10 @@ class NotificationService(
         email_stock_codes: Optional[List[str]] = None,
         email_send_to_all: bool = False
     ) -> bool:
-        """
-        统一发送接口 - 向所有已配置的渠道发送
-
-        遍历所有已配置的渠道，逐一发送消息
-
-        Fallback rules (Markdown-to-image, Issue #289):
-        - When image_bytes is None (conversion failed / imgkit not installed /
-          content over max_chars): all channels configured for image will send
-          as Markdown text instead.
-        - When WeChat image exceeds ~2MB: that channel falls back to Markdown text.
-
-        Args:
-            content: 消息内容（Markdown 格式）
-            email_stock_codes: 股票代码列表（可选，用于邮件渠道路由到对应分组邮箱，Issue #268）
-            email_send_to_all: 邮件是否发往所有配置邮箱（用于大盘复盘等无股票归属的内容）
-
-        Returns:
-            是否至少有一个渠道发送成功
-        """
-        context_success = self.send_to_context(content)
-
-        if not self._available_channels:
-            if context_success:
-                logger.info("已通过消息上下文渠道完成推送（无其他通知渠道）")
-                return True
-            logger.warning("通知服务不可用，跳过推送")
-            return False
-
-        # Markdown to image (Issue #289): convert once if any channel needs it.
-        # Per-channel decision via _should_use_image_for_channel (see send() docstring for fallback rules).
-        image_bytes = None
-        channels_needing_image = {
-            ch for ch in self._available_channels
-            if ch.value in self._markdown_to_image_channels
-        }
-        if channels_needing_image:
-            from src.md2img import markdown_to_image
-            image_bytes = markdown_to_image(
-                content, max_chars=self._markdown_to_image_max_chars
-            )
-            if image_bytes:
-                logger.info("Markdown 已转换为图片，将向 %s 发送图片",
-                            [ch.value for ch in channels_needing_image])
-            elif channels_needing_image:
-                try:
-                    from src.config import get_config
-                    engine = getattr(get_config(), "md2img_engine", "wkhtmltoimage")
-                except Exception:
-                    engine = "wkhtmltoimage"
-                hint = (
-                    "npm i -g markdown-to-file" if engine == "markdown-to-file"
-                    else "wkhtmltopdf (apt install wkhtmltopdf / brew install wkhtmltopdf)"
-                )
-                logger.warning(
-                    "Markdown 转图片失败，将回退为文本发送。请检查 MARKDOWN_TO_IMAGE_CHANNELS 配置并安装 %s",
-                    hint,
-                )
-
-        channel_names = self.get_channel_names()
-        logger.info(f"正在向 {len(self._available_channels)} 个渠道发送通知：{channel_names}")
-
-        success_count = 0
-        fail_count = 0
-
-        for channel in self._available_channels:
-            channel_name = ChannelDetector.get_channel_name(channel)
-            use_image = self._should_use_image_for_channel(channel, image_bytes)
-            try:
-                if channel == NotificationChannel.WECHAT:
-                    if use_image:
-                        result = self._send_wechat_image(image_bytes)
-                    else:
-                        result = self.send_to_wechat(content)
-                elif channel == NotificationChannel.FEISHU:
-                    result = self.send_to_feishu(content)
-                elif channel == NotificationChannel.TELEGRAM:
-                    if use_image:
-                        result = self._send_telegram_photo(image_bytes)
-                    else:
-                        result = self.send_to_telegram(content)
-                elif channel == NotificationChannel.EMAIL:
-                    receivers = None
-                    if email_send_to_all and self._stock_email_groups:
-                        receivers = self.get_all_email_receivers()
-                    elif email_stock_codes and self._stock_email_groups:
-                        receivers = self.get_receivers_for_stocks(email_stock_codes)
-                    if use_image:
-                        result = self._send_email_with_inline_image(
-                            image_bytes, receivers=receivers
-                        )
-                    else:
-                        result = self.send_to_email(content, receivers=receivers)
-                elif channel == NotificationChannel.PUSHOVER:
-                    result = self.send_to_pushover(content)
-                elif channel == NotificationChannel.PUSHPLUS:
-                    result = self.send_to_pushplus(content)
-                elif channel == NotificationChannel.SERVERCHAN3:
-                    result = self.send_to_serverchan3(content)
-                elif channel == NotificationChannel.CUSTOM:
-                    if use_image:
-                        result = self._send_custom_webhook_image(
-                            image_bytes, fallback_content=content
-                        )
-                    else:
-                        result = self.send_to_custom(content)
-                elif channel == NotificationChannel.DISCORD:
-                    result = self.send_to_discord(content)
-                elif channel == NotificationChannel.SLACK:
-                    if use_image:
-                        result = self._send_slack_image(
-                            image_bytes, fallback_content=content
-                        )
-                    else:
-                        result = self.send_to_slack(content)
-                elif channel == NotificationChannel.ASTRBOT:
-                    result = self.send_to_astrbot(content)
-                else:
-                    logger.warning(f"不支持的通知渠道: {channel}")
-                    result = False
-
-                if result:
-                    success_count += 1
-                else:
-                    fail_count += 1
-
-            except Exception as e:
-                logger.error(f"{channel_name} 发送失败: {e}")
-                fail_count += 1
-
-        logger.info(f"通知发送完成：成功 {success_count} 个，失败 {fail_count} 个")
-        return success_count > 0 or context_success
+        """统一发送接口兼容壳；通知发送能力已下线。"""
+        _ = (content, email_stock_codes, email_send_to_all)
+        logger.info("通知发送能力已下线：忽略 send() 调用")
+        return False
    
     def save_report_to_file(
         self, 

@@ -67,12 +67,10 @@ class MainScheduleModeTestCase(unittest.TestCase):
             "market_review": False,
             "schedule": False,
             "no_run_immediately": False,
-            "no_notify": False,
             "no_market_review": False,
             "dry_run": False,
             "workers": 1,
             "force_run": False,
-            "single_notify": False,
             "no_context_snapshot": False,
         }
         defaults.update(overrides)

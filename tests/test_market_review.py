@@ -49,7 +49,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
         notifier.send.return_value = True
         return notifier
 
-    def test_run_market_review_uses_english_notification_title(self) -> None:
+    def test_run_market_review_uses_english_wrapper_and_does_not_send_notifications(self) -> None:
         notifier = self._make_notifier()
         market_analyzer = MagicMock()
         market_analyzer.run_daily_review.return_value = "## 2026-04-10 A-share Market Recap\n\nBody"
@@ -59,14 +59,12 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
             "get_config",
             return_value=SimpleNamespace(report_language="en", market_review_region="cn"),
         ), patch.object(market_review_module, "MarketAnalyzer", return_value=market_analyzer):
-            result = run_market_review(notifier, send_notification=True)
+            result = run_market_review(notifier)
 
         self.assertEqual(result, "## 2026-04-10 A-share Market Recap\n\nBody")
         saved_content = notifier.save_report_to_file.call_args.args[0]
         self.assertTrue(saved_content.startswith("# 🎯 Market Review\n\n"))
-        sent_content = notifier.send.call_args.args[0]
-        self.assertTrue(sent_content.startswith("🎯 Market Review\n\n"))
-        self.assertTrue(notifier.send.call_args.kwargs["email_send_to_all"])
+        notifier.send.assert_not_called()
 
     def test_run_market_review_merges_both_regions_with_english_wrappers(self) -> None:
         notifier = self._make_notifier()
@@ -84,7 +82,7 @@ class MarketReviewLocalizationTestCase(unittest.TestCase):
             "MarketAnalyzer",
             side_effect=[cn_analyzer, us_analyzer],
         ):
-            result = run_market_review(notifier, send_notification=False)
+            result = run_market_review(notifier)
 
         self.assertIn("# A-share Market Recap\n\nCN body", result)
         self.assertIn("> US market recap follows", result)

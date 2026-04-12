@@ -412,7 +412,7 @@ def validate_event_alert_rule(rule: Dict[str, Any]) -> None:
 
 
 def build_event_monitor_from_config(config=None, notifier=None) -> Optional[EventMonitor]:
-    """Build an EventMonitor from runtime config and attach notification callbacks."""
+    """Build an EventMonitor from runtime config and attach non-delivery callbacks."""
     if config is None:
         from src.config import get_config
         config = get_config()
@@ -435,17 +435,16 @@ def build_event_monitor_from_config(config=None, notifier=None) -> Optional[Even
     if not monitor.rules:
         return None
 
-    from src.notification import NotificationBuilder, NotificationService
-
-    notification_service = notifier or NotificationService()
+    _ = notifier  # 保留参数仅作兼容；通知发送能力已下线。
 
     def _notify(triggered: TriggeredAlert) -> None:
         title = f"Event Alert | {triggered.rule.stock_code}"
         content = triggered.message or triggered.rule.description or "Alert triggered"
-        alert_text = NotificationBuilder.build_simple_alert(title=title, content=content, alert_type="warning")
-        sent = notification_service.send(alert_text)
-        if not sent:
-            logger.info("[EventMonitor] No notification channel available for alert: %s", title)
+        logger.info(
+            "[EventMonitor] Alert triggered (external delivery required): %s | %s",
+            title,
+            content,
+        )
 
     monitor.on_trigger(_notify)
     logger.info("[EventMonitor] Loaded %d configured alert rule(s)", len(monitor.rules))

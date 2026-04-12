@@ -73,7 +73,7 @@ docker-compose -f ./docker/docker-compose.yml up -d
 docker-compose -f ./docker/docker-compose.yml exec stock-analyzer bash
 
 # Manually run analysis once
-docker-compose -f ./docker/docker-compose.yml exec stock-analyzer python main.py --no-notify
+docker-compose -f ./docker/docker-compose.yml exec stock-analyzer python main.py
 ```
 
 ### 5. Data Persistence
@@ -186,7 +186,6 @@ journalctl -u stock-analyzer -f
 |--------|------|----------|
 | `GEMINI_API_KEY` | Required for AI analysis | [Google AI Studio](https://aistudio.google.com/) |
 | `STOCK_LIST` | Watchlist | Comma-separated stock codes |
-| `WECHAT_WEBHOOK_URL` | WeChat push | WeChat Work group bot |
 
 ### Optional Configuration
 
@@ -350,21 +349,14 @@ Add these Secrets:
 | Secret Name | Description | Required |
 |------------|------|------|
 | `GEMINI_API_KEY` | Gemini AI API Key | ✅ |
-| `WECHAT_WEBHOOK_URL` | WeChat Work Bot Webhook | Optional* |
-| `FEISHU_WEBHOOK_URL` | Feishu Bot Webhook | Optional* |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token | Optional* |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional* |
-| `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID | Optional* |
-| `EMAIL_SENDER` | Sender email | Optional* |
-| `EMAIL_PASSWORD` | Email authorization code | Optional* |
-| `SERVERCHAN3_SENDKEY` | ServerChan v3 Sendkey | Optional* |
-| `CUSTOM_WEBHOOK_URLS` | Custom Webhook (comma-separated for multiple) | Optional* |
 | `STOCK_LIST` | Watchlist, e.g., `600519,300750` | ✅ |
 | `TAVILY_API_KEYS` | Tavily Search API Key | Recommended |
 | `MINIMAX_API_KEYS` | MiniMax Coding Plan Web Search | Optional |
 | `SERPAPI_API_KEYS` | SerpAPI Key | Optional |
 | `TUSHARE_TOKEN` | Tushare Token | Optional |
 | `GEMINI_MODEL` | Model name (default gemini-2.0-flash) | Optional |
+
+> Note: notification delivery has been removed. GitHub Actions no longer pushes messages to WeChat / Feishu / Telegram / email channels.
 
 > *Note: Configure at least one notification channel, multiple channels supported for simultaneous push
 

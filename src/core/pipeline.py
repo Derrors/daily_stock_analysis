@@ -15,10 +15,9 @@ import logging
 import threading
 import time
 import uuid
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional, Tuple, Callable
+from typing import List, Dict, Any, Optional, Callable
 
 import pandas as pd
 
@@ -29,7 +28,7 @@ from data_provider.base import normalize_stock_code
 from data_provider.realtime_types import ChipDistribution
 from src.analyzer import GeminiAnalyzer, AnalysisResult, fill_chip_structure_if_needed, fill_price_position_if_needed
 from src.data.stock_mapping import STOCK_NAME_MAP
-from src.notification import NotificationService, NotificationChannel
+from src.notification import NotificationService
 from src.report_language import (
     get_unknown_text,
     localize_confidence_level,
@@ -49,11 +48,6 @@ from data_provider.us_index_mapping import is_us_stock_code
 
 
 logger = logging.getLogger(__name__)
-
-# 防御性 guard：当实例绕过 __init__（如测试中 __new__）构造时，
-# double-check 初始化 _single_stock_notify_lock 仍然线程安全。
-_SINGLE_STOCK_NOTIFY_LOCK_INIT_GUARD = threading.Lock()
-
 
 class StockAnalysisPipeline:
     """
@@ -99,7 +93,6 @@ class StockAnalysisPipeline:
         self.trend_analyzer = StockTrendAnalyzer()  # 技术分析器
         self.analyzer = GeminiAnalyzer(config=self.config)
         self.notifier = NotificationService(source_message=source_message)
-        self._single_stock_notify_lock = threading.Lock()
         
         # 初始化搜索服务（可选，初始化失败不应阻断主分析流程）
         try:
@@ -1177,7 +1170,6 @@ class StockAnalysisPipeline:
         self,
         code: str,
         skip_analysis: bool = False,
-        single_stock_notify: bool = False,
         report_type: ReportType = ReportType.SIMPLE,
         analysis_query_id: Optional[str] = None,
         current_time: Optional[datetime] = None,
@@ -1189,7 +1181,7 @@ class StockAnalysisPipeline:
         1. 获取数据
         2. 保存数据
         3. AI 分析
-        4. 单股推送（可选，#55）
+        4. 返回分析结果（通知发送已下线）
 
         此方法会被线程池调用，需要处理好异常
 
@@ -1197,7 +1189,6 @@ class StockAnalysisPipeline:
             analysis_query_id: 查询链路关联 id
             code: 股票代码
             skip_analysis: 是否跳过 AI 分析
-            single_stock_notify: 是否启用单股推送模式（每分析完一只立即推送）
             report_type: 报告类型枚举（从配置读取，Issue #119）
             current_time: 本轮运行冻结的参考时间，用于统一断点续传目标交易日判断
 
@@ -1232,14 +1223,6 @@ class StockAnalysisPipeline:
                     f"[{code}] 分析完成: {result.operation_advice}, "
                     f"评分 {result.sentiment_score}"
                 )
-                
-                # 单股推送模式（#55）：每分析完一只股票立即推送
-                if single_stock_notify:
-                    self._send_single_stock_notification(
-                        result,
-                        report_type=report_type,
-                        fallback_code=code,
-                    )
             elif result:
                 logger.warning(
                     f"[{code}] 分析未成功: {result.error_message or '未知错误'}"
@@ -1256,8 +1239,6 @@ class StockAnalysisPipeline:
         self,
         stock_codes: Optional[List[str]] = None,
         dry_run: bool = False,
-        send_notification: bool = True,
-        merge_notification: bool = False
     ) -> List[AnalysisResult]:
         """
         运行完整的分析流程
@@ -1266,13 +1247,11 @@ class StockAnalysisPipeline:
         1. 获取待分析的股票列表
         2. 使用线程池并发处理
         3. 收集分析结果
-        4. 发送通知
+        4. 保存结果产物（通知发送已下线）
 
         Args:
             stock_codes: 股票代码列表（可选，默认使用配置中的自选股）
             dry_run: 是否仅获取数据不分析
-            send_notification: 是否发送推送通知
-            merge_notification: 是否合并推送（跳过本次推送，由 main 层合并个股+大盘后统一发送，Issue #190）
 
         Returns:
             分析结果列表
@@ -1307,8 +1286,6 @@ class StockAnalysisPipeline:
         if not dry_run:
             self.fetcher_manager.prefetch_stock_names(stock_codes, use_bulk=False)
 
-        # 单股推送模式（#55）：从配置读取
-        single_stock_notify = getattr(self.config, 'single_stock_notify', False)
         # Issue #119: 从配置读取报告类型
         report_type_str = getattr(self.config, 'report_type', 'simple').lower()
         if report_type_str == 'brief':
@@ -1320,11 +1297,6 @@ class StockAnalysisPipeline:
         # Issue #128: 从配置读取分析间隔
         analysis_delay = getattr(self.config, 'analysis_delay', 0)
 
-        if single_stock_notify:
-            logger.info(
-                "已启用单股推送模式：分析仍并发执行，通知改为在结果收集侧串行发送（报告类型: %s）",
-                report_type_str,
-            )
         
         results: List[AnalysisResult] = []
         
@@ -1337,7 +1309,6 @@ class StockAnalysisPipeline:
                     self.process_single_stock,
                     code,
                     skip_analysis=dry_run,
-                    single_stock_notify=False,
                     report_type=report_type,  # Issue #119: 传递报告类型
                     analysis_query_id=uuid.uuid4().hex,
                     current_time=resume_reference_time,
@@ -1352,12 +1323,6 @@ class StockAnalysisPipeline:
                     result = future.result()
                     if result and result.success:
                         results.append(result)
-                        if single_stock_notify and send_notification and not dry_run:
-                            self._send_single_stock_notification(
-                                result,
-                                report_type=report_type,
-                                fallback_code=code,
-                            )
                     elif result and not result.success:
                         logger.warning(
                             f"[{code}] 分析结果标记为失败，不计入汇总: "
@@ -1404,58 +1369,7 @@ class StockAnalysisPipeline:
         if results and not dry_run:
             self._save_local_report(results, report_type)
 
-        # 发送通知（单股推送模式下跳过汇总推送，避免重复）
-        if results and send_notification and not dry_run:
-            if single_stock_notify:
-                # 单股推送模式：只保存汇总报告，不再重复推送
-                logger.info("单股推送模式：跳过汇总推送，仅保存报告到本地")
-                self._send_notifications(results, report_type, skip_push=True)
-            elif merge_notification:
-                # 合并模式（Issue #190）：仅保存，不推送，由 main 层合并个股+大盘后统一发送
-                logger.info("合并推送模式：跳过本次推送，将在个股+大盘复盘后统一发送")
-                self._send_notifications(results, report_type, skip_push=True)
-            else:
-                self._send_notifications(results, report_type)
-        
         return results
-
-    def _send_single_stock_notification(
-        self,
-        result: AnalysisResult,
-        report_type: ReportType = ReportType.SIMPLE,
-        fallback_code: Optional[str] = None,
-    ) -> None:
-        """发送单股通知，供直接单股入口和批量串行推送共用。"""
-        if not self.notifier.is_available():
-            return
-
-        stock_code = getattr(result, "code", None) or fallback_code or "unknown"
-        notify_lock = getattr(self, "_single_stock_notify_lock", None)
-        if notify_lock is None:
-            with _SINGLE_STOCK_NOTIFY_LOCK_INIT_GUARD:
-                notify_lock = getattr(self, "_single_stock_notify_lock", None)
-                if notify_lock is None:
-                    notify_lock = threading.Lock()
-                    setattr(self, "_single_stock_notify_lock", notify_lock)
-
-        with notify_lock:
-            try:
-                if report_type == ReportType.FULL:
-                    report_content = self.notifier.generate_dashboard_report([result])
-                    logger.info(f"[{stock_code}] 使用完整报告格式")
-                elif report_type == ReportType.BRIEF:
-                    report_content = self.notifier.generate_brief_report([result])
-                    logger.info(f"[{stock_code}] 使用简洁报告格式")
-                else:
-                    report_content = self.notifier.generate_single_stock_report(result)
-                    logger.info(f"[{stock_code}] 使用精简报告格式")
-
-                if self.notifier.send(report_content, email_stock_codes=[stock_code]):
-                    logger.info(f"[{stock_code}] 单股推送成功")
-                else:
-                    logger.warning(f"[{stock_code}] 单股推送失败")
-            except Exception as e:
-                logger.error(f"[{stock_code}] 单股推送异常: {e}")
 
     def _save_local_report(
         self,
@@ -1469,209 +1383,6 @@ class StockAnalysisPipeline:
             logger.info(f"决策仪表盘日报已保存: {filepath}")
         except Exception as e:
             logger.error(f"保存本地报告失败: {e}")
-
-    def _send_notifications(
-        self,
-        results: List[AnalysisResult],
-        report_type: ReportType = ReportType.SIMPLE,
-        skip_push: bool = False,
-    ) -> None:
-        """
-        发送分析结果通知
-        
-        生成决策仪表盘格式的报告
-        
-        Args:
-            results: 分析结果列表
-            skip_push: 是否跳过推送（仅保存到本地，用于单股推送模式）
-        """
-        try:
-            logger.info("生成决策仪表盘日报...")
-            report = self._generate_aggregate_report(results, report_type)
-            
-            # 跳过推送（单股推送模式 / 合并模式：报告已由 _save_local_report 保存）
-            if skip_push:
-                return
-            
-            # 推送通知
-            if self.notifier.is_available():
-                channels = self.notifier.get_available_channels()
-                context_success = self.notifier.send_to_context(report)
-
-                # Issue #455: Markdown 转图片（与 notification.send 逻辑一致）
-                from src.md2img import markdown_to_image
-
-                channels_needing_image = {
-                    ch for ch in channels
-                    if ch.value in self.notifier._markdown_to_image_channels
-                }
-                non_wechat_channels_needing_image = {
-                    ch for ch in channels_needing_image if ch != NotificationChannel.WECHAT
-                }
-
-                def _get_md2img_hint() -> str:
-                    try:
-                        engine = getattr(get_config(), "md2img_engine", "wkhtmltoimage")
-                    except Exception:
-                        engine = "wkhtmltoimage"
-                    return (
-                        "npm i -g markdown-to-file" if engine == "markdown-to-file"
-                        else "wkhtmltopdf (apt install wkhtmltopdf / brew install wkhtmltopdf)"
-                    )
-
-                image_bytes = None
-                if non_wechat_channels_needing_image:
-                    image_bytes = markdown_to_image(
-                        report, max_chars=self.notifier._markdown_to_image_max_chars
-                    )
-                    if image_bytes:
-                        logger.info(
-                            "Markdown 已转换为图片，将向 %s 发送图片",
-                            [ch.value for ch in non_wechat_channels_needing_image],
-                        )
-                    else:
-                        logger.warning(
-                            "Markdown 转图片失败，将回退为文本发送。请检查 MARKDOWN_TO_IMAGE_CHANNELS 配置并安装 %s",
-                            _get_md2img_hint(),
-                        )
-
-                # 企业微信：只发精简版（平台限制）
-                wechat_success = False
-                if NotificationChannel.WECHAT in channels:
-                    if report_type == ReportType.BRIEF:
-                        dashboard_content = self.notifier.generate_brief_report(results)
-                    else:
-                        dashboard_content = self.notifier.generate_wechat_dashboard(results)
-                    logger.info(f"企业微信仪表盘长度: {len(dashboard_content)} 字符")
-                    logger.debug(f"企业微信推送内容:\n{dashboard_content}")
-                    wechat_image_bytes = None
-                    if NotificationChannel.WECHAT in channels_needing_image:
-                        wechat_image_bytes = markdown_to_image(
-                            dashboard_content,
-                            max_chars=self.notifier._markdown_to_image_max_chars,
-                        )
-                        if wechat_image_bytes is None:
-                            logger.warning(
-                                "企业微信 Markdown 转图片失败，将回退为文本发送。请检查 MARKDOWN_TO_IMAGE_CHANNELS 配置并安装 %s",
-                                _get_md2img_hint(),
-                            )
-                    use_image = self.notifier._should_use_image_for_channel(
-                        NotificationChannel.WECHAT, wechat_image_bytes
-                    )
-                    if use_image:
-                        wechat_success = self.notifier._send_wechat_image(wechat_image_bytes)
-                    else:
-                        wechat_success = self.notifier.send_to_wechat(dashboard_content)
-
-                # 其他渠道：发完整报告（避免自定义 Webhook 被 wechat 截断逻辑污染）
-                non_wechat_success = False
-                stock_email_groups = getattr(self.config, 'stock_email_groups', []) or []
-                for channel in channels:
-                    if channel == NotificationChannel.WECHAT:
-                        continue
-                    if channel == NotificationChannel.FEISHU:
-                        non_wechat_success = self.notifier.send_to_feishu(report) or non_wechat_success
-                    elif channel == NotificationChannel.TELEGRAM:
-                        use_image = self.notifier._should_use_image_for_channel(
-                            channel, image_bytes
-                        )
-                        if use_image:
-                            result = self.notifier._send_telegram_photo(image_bytes)
-                        else:
-                            result = self.notifier.send_to_telegram(report)
-                        non_wechat_success = result or non_wechat_success
-                    elif channel == NotificationChannel.EMAIL:
-                        if stock_email_groups:
-                            code_to_emails: Dict[str, Optional[List[str]]] = {}
-                            for r in results:
-                                if r.code not in code_to_emails:
-                                    canonical = normalize_stock_code(r.code)
-                                    emails = []
-                                    for stocks, emails_list in stock_email_groups:
-                                        if canonical in stocks:
-                                            emails.extend(emails_list)
-                                    code_to_emails[r.code] = list(dict.fromkeys(emails)) if emails else None
-                            emails_to_results: Dict[Optional[Tuple], List] = defaultdict(list)
-                            for r in results:
-                                recs = code_to_emails.get(r.code)
-                                key = tuple(recs) if recs else None
-                                emails_to_results[key].append(r)
-                            for key, group_results in emails_to_results.items():
-                                grp_report = self._generate_aggregate_report(group_results, report_type)
-                                grp_image_bytes = None
-                                if channel.value in self.notifier._markdown_to_image_channels:
-                                    grp_image_bytes = markdown_to_image(
-                                        grp_report,
-                                        max_chars=self.notifier._markdown_to_image_max_chars,
-                                    )
-                                use_image = self.notifier._should_use_image_for_channel(
-                                    channel, grp_image_bytes
-                                )
-                                receivers = list(key) if key is not None else None
-                                if use_image:
-                                    result = self.notifier._send_email_with_inline_image(
-                                        grp_image_bytes, receivers=receivers
-                                    )
-                                else:
-                                    result = self.notifier.send_to_email(
-                                        grp_report, receivers=receivers
-                                    )
-                                non_wechat_success = result or non_wechat_success
-                        else:
-                            use_image = self.notifier._should_use_image_for_channel(
-                                channel, image_bytes
-                            )
-                            if use_image:
-                                result = self.notifier._send_email_with_inline_image(image_bytes)
-                            else:
-                                result = self.notifier.send_to_email(report)
-                            non_wechat_success = result or non_wechat_success
-                    elif channel == NotificationChannel.CUSTOM:
-                        use_image = self.notifier._should_use_image_for_channel(
-                            channel, image_bytes
-                        )
-                        if use_image:
-                            result = self.notifier._send_custom_webhook_image(
-                                image_bytes, fallback_content=report
-                            )
-                        else:
-                            result = self.notifier.send_to_custom(report)
-                        non_wechat_success = result or non_wechat_success
-                    elif channel == NotificationChannel.PUSHPLUS:
-                        non_wechat_success = self.notifier.send_to_pushplus(report) or non_wechat_success
-                    elif channel == NotificationChannel.SERVERCHAN3:
-                        non_wechat_success = self.notifier.send_to_serverchan3(report) or non_wechat_success
-                    elif channel == NotificationChannel.DISCORD:
-                        non_wechat_success = self.notifier.send_to_discord(report) or non_wechat_success
-                    elif channel == NotificationChannel.PUSHOVER:
-                        non_wechat_success = self.notifier.send_to_pushover(report) or non_wechat_success
-                    elif channel == NotificationChannel.ASTRBOT:
-                        non_wechat_success = self.notifier.send_to_astrbot(report) or non_wechat_success
-                    elif channel == NotificationChannel.SLACK:
-                        use_image = self.notifier._should_use_image_for_channel(
-                            channel, image_bytes
-                        )
-                        if use_image and self.notifier._slack_bot_token and self.notifier._slack_channel_id:
-                            result = self.notifier._send_slack_image(
-                                image_bytes, fallback_content=report
-                            )
-                        else:
-                            result = self.notifier.send_to_slack(report)
-                        non_wechat_success = result or non_wechat_success
-                    else:
-                        logger.warning(f"未知通知渠道: {channel}")
-
-                success = wechat_success or non_wechat_success or context_success
-                if success:
-                    logger.info("决策仪表盘推送成功")
-                else:
-                    logger.warning("决策仪表盘推送失败")
-            else:
-                logger.info("通知渠道未配置，跳过推送")
-                
-        except Exception as e:
-            import traceback
-            logger.error(f"发送通知失败: {e}\n{traceback.format_exc()}")
 
     def _generate_aggregate_report(
         self,

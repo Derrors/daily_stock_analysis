@@ -100,35 +100,13 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 > *Note: Configure at least one of `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `OLLAMA_API_BASE` (local). **Ollama** requires `OLLAMA_API_BASE`; using `OPENAI_BASE_URL` causes 404.
 
 <details>
-<summary><b>Notification channels</b> (expand, choose at least one)</summary>
+<summary><b>Output boundary</b> (expand)</summary>
 
-| Secret Name | Description | Required |
-|------------|------|:----:|
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot Token (Get from @BotFather) | Optional |
-| `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
-| `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID (For sending to topics) | Optional |
-| `DISCORD_WEBHOOK_URL` | Discord Webhook URL | Optional |
-| `DISCORD_BOT_TOKEN` | Discord Bot Token (choose one with Webhook) | Optional |
-| `DISCORD_MAIN_CHANNEL_ID` | Discord Channel ID (required when using Bot) | Optional |
-| `DISCORD_INTERACTIONS_PUBLIC_KEY` | Discord Public Key (required only for inbound Interaction/Webhook signature verification) | Optional |
-| `SLACK_BOT_TOKEN` | Slack Bot Token (recommended, supports image upload; takes priority over Webhook when both set) | Optional |
-| `SLACK_CHANNEL_ID` | Slack Channel ID (required when using Bot) | Optional |
-| `SLACK_WEBHOOK_URL` | Slack Incoming Webhook URL (text only, no image support) | Optional |
-| `EMAIL_SENDER` | Sender email (e.g., `xxx@qq.com`) | Optional |
-| `EMAIL_PASSWORD` | Email authorization code (not login password) | Optional |
-| `EMAIL_RECEIVERS` | Receiver emails (comma-separated, leave empty to send to yourself) | Optional |
-| `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL | Optional |
-| `FEISHU_WEBHOOK_URL` | Feishu Webhook URL | Optional |
-| `PUSHPLUS_TOKEN` | PushPlus Token ([Get it here](https://www.pushplus.plus), Chinese push service) | Optional |
-| `SERVERCHAN3_SENDKEY` | ServerChan v3 SendKey (([Get it here](https://sc3.ft07.com/), Mobile app push notification service) ) | Optional |
-| `CUSTOM_WEBHOOK_URLS` | Custom Webhook URLs (supports DingTalk, etc., comma-separated) | Optional |
-| `CUSTOM_WEBHOOK_BEARER_TOKEN` | Bearer token for custom webhooks (if required) | Optional |
-| `SINGLE_STOCK_NOTIFY` | Send notification immediately after each stock | Optional |
-| `REPORT_TYPE` | `simple`, `full`, or `brief` (Docker recommended: `full`) | Optional |
-| `REPORT_LANGUAGE` | Report output language: `zh` (default Chinese) / `en` (English); affects prompt instructions, Markdown templates, notification fallbacks, and fixed labels in the Web report view. The bundled `daily_analysis.yml` already maps this variable, so setting it in Actions Secrets/Variables works out of the box | Optional |
-| `ANALYSIS_DELAY` | Delay between stocks and market review (seconds) | Optional |
+> Notification delivery has been removed. The repository now only handles analysis execution, report generation, local result persistence, and optional Feishu cloud-document creation.
+>
+> If you want to deliver messages to Telegram / Discord / Slack / email / WeChat Work / Feishu, do it outside this repository in the caller layer.
 
-> Note: Configure at least one channel; multiple channels will all receive notifications.
+Retained output-related settings: `REPORT_TYPE`, `REPORT_LANGUAGE`, `REPORT_SUMMARY_ONLY`, `REPORT_TEMPLATES_DIR`, `REPORT_RENDERER_ENABLED`, `REPORT_INTEGRITY_ENABLED`, `REPORT_INTEGRITY_RETRY`, `REPORT_HISTORY_COMPARE_N`, and `ANALYSIS_DELAY`.
 
 </details>
 
@@ -232,9 +210,10 @@ GEMINI_API_KEY=your_gemini_api_key_here
 # Stock Watchlist (Mixed markets supported)
 STOCK_LIST=600519,AAPL,hk00700
 
-# Notification Channel (Choose at least one)
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
+# Result carrying (optional)
+FEISHU_APP_ID=cli_xxx
+FEISHU_APP_SECRET=secret_xxx
+FEISHU_FOLDER_TOKEN=fldr_xxx
 
 # News Search (Optional)
 TAVILY_API_KEYS=your_tavily_key
@@ -269,71 +248,9 @@ python main.py --market-review
 
 ---
 
-## 📱 Supported Notification Channels
+## 📦 Result Handling Boundary
 
-### 1. Telegram (Recommended)
-
-1. Talk to [@BotFather](https://t.me/BotFather) → `/newbot` → get Bot Token
-2. Get Chat ID: send a message to [@userinfobot](https://t.me/userinfobot)
-3. Configure:
-  ```bash
-  TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-  TELEGRAM_CHAT_ID=123456789
-  ```
-
-### 2. Discord
-
-Webhook:
-```bash
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/yyy
-```
-
-Bot:
-```bash
-DISCORD_BOT_TOKEN=your_bot_token
-DISCORD_MAIN_CHANNEL_ID=your_channel_id
-```
-
-### 3. Slack
-
-Bot (recommended, supports image upload; takes priority when both set):
-```bash
-SLACK_BOT_TOKEN=xoxb-...
-SLACK_CHANNEL_ID=C01234567
-```
-
-Webhook (text only):
-```bash
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../xxx
-```
-
-### 4. Email
-
-```bash
-EMAIL_SENDER=your_email@gmail.com
-EMAIL_PASSWORD=your_app_password
-EMAIL_RECEIVERS=receiver@example.com  # Optional
-```
-
-### 5. WeChat Work / Feishu
-
-WeChat Work:
-```bash
-WECHAT_WEBHOOK_URL=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
-```
-
-Feishu:
-```bash
-FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
-```
-
-### 6. PushPlus
-
-```bash
-PUSHPLUS_TOKEN=your_token_here
-```
-
----
+Notification delivery has been removed from the repository. Use the generated report text / local markdown files / optional Feishu cloud document as outputs, and let your outer caller deliver messages.
 
 ## 🎨 Sample Output
 
@@ -423,7 +340,6 @@ PUSHPLUS_TOKEN=your_token_here
 # === Analysis Behavior ===
 ANALYSIS_DELAY=10              # Delay between analysis (seconds) to avoid API rate limit
 REPORT_TYPE=full               # Report type: simple/full
-SINGLE_STOCK_NOTIFY=true       # Push immediately after each stock analysis
 
 # === Schedule ===
 SCHEDULE_ENABLED=true          # Enable scheduled task

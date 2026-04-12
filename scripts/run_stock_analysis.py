@@ -165,7 +165,6 @@ Examples:
     parser.add_argument("--force-refresh", action="store_true", help="Bypass cache/history reuse")
     parser.add_argument("--dry-run", action="store_true", help="Emit normalized request without running analysis")
     parser.add_argument("--no-save-history", action="store_true", help="Request-level hint to avoid saving history")
-    parser.add_argument("--notify", action="store_true", help="Allow downstream notification side effects")
     parser.add_argument("--include-news", dest="include_news", action="store_true", default=True)
     parser.add_argument("--no-include-news", dest="include_news", action="store_false")
     parser.add_argument("--include-fundamental", action="store_true", default=False)
@@ -208,7 +207,6 @@ def main() -> int:
         stock_code=request.stock.code or request.stock.input,
         report_type=_resolve_report_type(request),
         force_refresh=request.execution.force_refresh,
-        send_notification=args.notify,
         query_source=request.context.query_source,
     )
 

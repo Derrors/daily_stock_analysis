@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Regression tests for single-stock notification thread safety.
+Regression tests ensuring disabled single-stock notifications remain inert under concurrency.
 """
 
 import os
@@ -65,7 +65,7 @@ class _CriticalSectionTrackingNotifier:
 
 
 class TestPipelineSingleNotifyThreadSafety(unittest.TestCase):
-    def test_process_single_stock_serializes_direct_notification_path(self):
+    def test_process_single_stock_under_concurrency_does_not_send(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
         pipeline.fetch_and_save_stock_data = MagicMock(return_value=(True, None))
         pipeline.notifier = _CriticalSectionTrackingNotifier()
@@ -84,14 +84,13 @@ class TestPipelineSingleNotifyThreadSafety(unittest.TestCase):
         def _worker(code: str) -> None:
             result = pipeline.process_single_stock(
                 code=code,
-                single_stock_notify=True,
                 analysis_query_id=f"query-{code}",
             )
             with result_lock:
                 results.append(result)
 
         threads = [
-            threading.Thread(target=_worker, args=(code,), name=f"notify-{code}")
+            threading.Thread(target=_worker, args=(code,), name=f"worker-{code}")
             for code in ("000001", "600519")
         ]
 
@@ -102,18 +101,10 @@ class TestPipelineSingleNotifyThreadSafety(unittest.TestCase):
 
         self.assertEqual(len(results), 2)
         self.assertTrue(all(result is not None for result in results))
-        self.assertEqual(pipeline.notifier.generate_single_stock_report.call_count, 2)
-        self.assertEqual(pipeline.notifier.send.call_count, 2)
-        self.assertEqual(pipeline.notifier.max_inflight, 1)
-        self.assertCountEqual(
-            [(stage, code) for stage, code, _ in pipeline.notifier.calls],
-            [
-                ("generate", "000001"),
-                ("send", "000001"),
-                ("generate", "600519"),
-                ("send", "600519"),
-            ],
-        )
+        self.assertEqual(pipeline.notifier.generate_single_stock_report.call_count, 0)
+        self.assertEqual(pipeline.notifier.send.call_count, 0)
+        self.assertEqual(pipeline.notifier.max_inflight, 0)
+        self.assertEqual(pipeline.notifier.calls, [])
 
 
 if __name__ == "__main__":

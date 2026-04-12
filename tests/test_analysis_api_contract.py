@@ -210,7 +210,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         with patch("src.config.get_config", return_value=SimpleNamespace()), \
              patch("src.core.pipeline.StockAnalysisPipeline", return_value=pipeline_instance):
-            result = service.analyze_stock("600519", report_type="full", query_id="q1", send_notification=False)
+            result = service.analyze_stock("600519", report_type="full", query_id="q1")
 
         self.assertEqual(result["report"]["meta"]["report_type"], "full")
 
@@ -224,7 +224,7 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         with patch("src.config.get_config", return_value=SimpleNamespace()), \
              patch("src.core.pipeline.StockAnalysisPipeline", return_value=pipeline_instance):
-            result = service.analyze_stock("600519", report_type="detailed", query_id="q1", send_notification=False)
+            result = service.analyze_stock("600519", report_type="detailed", query_id="q1")
 
         self.assertIsNone(result)
         self.assertEqual(service.last_error, "LLM stream interrupted")
@@ -244,7 +244,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                     SimpleNamespace(
                         report_type="detailed",
                         force_refresh=False,
-                        notify=True,
                     ),
                 )
 
@@ -637,7 +636,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                     report_type="detailed",
                     force_refresh=False,
                     async_mode=True,
-                    notify=True,
                 ),
                 config=SimpleNamespace(),
             )
@@ -651,7 +649,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="manual",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_trigger_analysis_accepts_hk_suffix_code_from_autocomplete(self) -> None:
@@ -686,7 +683,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="autocomplete",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_trigger_analysis_accepts_hk_prefixed_code(self) -> None:
@@ -721,7 +717,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="manual",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_trigger_analysis_allows_stock_names_with_star_and_hyphen(self) -> None:
@@ -743,7 +738,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                     report_type="detailed",
                     force_refresh=False,
                     async_mode=True,
-                    notify=True,
                 ),
                 config=SimpleNamespace(),
             )
@@ -756,7 +750,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="manual",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_trigger_analysis_accepts_resolvable_free_text_input(self) -> None:
@@ -778,7 +771,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                     report_type="detailed",
                     force_refresh=False,
                     async_mode=True,
-                    notify=True,
                 ),
                 config=SimpleNamespace(),
             )
@@ -791,7 +783,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="manual",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_trigger_analysis_preserves_batch_metadata(self) -> None:
@@ -812,7 +803,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                     report_type="detailed",
                     force_refresh=False,
                     async_mode=True,
-                    notify=True,
                 ),
                 config=SimpleNamespace(),
             )
@@ -825,7 +815,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="import",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_trigger_analysis_rejects_cross_request_duplicate_for_equivalent_code_shapes(self) -> None:
@@ -849,7 +838,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                         report_type="detailed",
                         force_refresh=False,
                         async_mode=True,
-                        notify=True,
                     ),
                     config=SimpleNamespace(),
                 )
@@ -863,7 +851,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                         report_type="detailed",
                         force_refresh=False,
                         async_mode=True,
-                        notify=True,
                     ),
                     config=SimpleNamespace(),
                 )
@@ -902,7 +889,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                     report_type="detailed",
                     force_refresh=False,
                     async_mode=True,
-                    notify=True,
                 ),
                 config=SimpleNamespace(),
             )
@@ -915,7 +901,6 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             selection_source="import",
             report_type="detailed",
             force_refresh=False,
-            notify=True,
         )
 
     def test_spa_fallback_returns_json_404_for_bare_api_path(self) -> None:
