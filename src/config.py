@@ -636,9 +636,6 @@ class Config:
     portfolio_risk_lookback_days: int = 180
     portfolio_fx_update_enabled: bool = True
 
-    # Discord 机器人状态
-    discord_bot_status: str = "A股智能分析 | /help"
-
     # === 流控配置（防封禁关键参数）===
     # Akshare 请求间隔范围（秒）
     akshare_sleep_min: float = 2.0

@@ -307,7 +307,6 @@ Enable the FastAPI service for configuration management and triggering analysis 
 - [Complete Configuration Guide](./full-guide_EN.md)
 - [FAQ](./FAQ_EN.md)
 - [Deployment Guide](DEPLOY_EN.md)
-- [Feishu Webhook Setup](bot/feishu-bot-config.md)
 
 ---
 

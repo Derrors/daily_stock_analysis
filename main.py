@@ -272,18 +272,6 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '--webui',
-        action='store_true',
-        help='历史兼容参数：等价于 --serve'
-    )
-
-    parser.add_argument(
-        '--webui-only',
-        action='store_true',
-        help='历史兼容参数：等价于 --serve-only'
-    )
-
-    parser.add_argument(
         '--serve',
         action='store_true',
         help='启动 FastAPI 后端服务（同时执行分析任务）'
@@ -680,12 +668,6 @@ def main() -> int:
         stock_codes = [canonical_stock_code(c) for c in args.stocks.split(',') if (c or "").strip()]
         logger.info(f"使用命令行指定的股票列表: {stock_codes}")
 
-    # === 处理 --webui / --webui-only 参数，映射到 --serve / --serve-only ===
-    if args.webui:
-        args.serve = True
-    if args.webui_only:
-        args.serve_only = True
-
     # === 启动 API 服务 (如果启用) ===
     start_serve = (args.serve or args.serve_only) and os.getenv("GITHUB_ACTIONS") != "true"
 
@@ -695,10 +677,10 @@ def main() -> int:
         except Exception as e:
             logger.error(f"启动 FastAPI 服务失败: {e}")
 
-    # === 仅 Web 服务模式：不自动执行分析 ===
+    # === 仅 API 服务模式：不自动执行分析 ===
     if args.serve_only:
-        logger.info("模式: 仅 Web 服务")
-        logger.info(f"Web 服务运行中: http://{args.host}:{args.port}")
+        logger.info("模式: 仅 API 服务")
+        logger.info(f"API 服务运行中: http://{args.host}:{args.port}")
         logger.info("通过 /api/v1/analysis/analyze 接口触发分析")
         logger.info(f"API 文档: http://{args.host}:{args.port}/docs")
         logger.info("按 Ctrl+C 退出...")

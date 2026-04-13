@@ -36,22 +36,13 @@ class TestNotificationServiceAfterDescope(unittest.TestCase):
         self.assertFalse(service.send("test content"))
 
     @mock.patch("src.notification.get_config")
-    def test_channel_send_methods_are_all_noop(self, mock_get_config):
+    def test_only_generic_send_entry_remains_noop(self, mock_get_config):
         mock_get_config.return_value = _make_config()
         service = NotificationService()
 
-        self.assertFalse(service.send_to_wechat("x"))
-        self.assertFalse(service.send_to_feishu("x"))
-        self.assertFalse(service.send_to_telegram("x"))
-        self.assertFalse(service.send_to_email("x"))
-        self.assertFalse(service.send_to_pushover("x"))
-        self.assertFalse(service.send_to_pushplus("x"))
-        self.assertFalse(service.send_to_serverchan3("x"))
-        self.assertFalse(service.send_to_custom("x"))
-        self.assertFalse(service.send_to_discord("x"))
-        self.assertFalse(service.send_to_slack("x"))
-        self.assertFalse(service.send_to_astrbot("x"))
         self.assertFalse(service.send_to_context("x"))
+        self.assertFalse(service.send("x"))
+        self.assertFalse(service._has_context_channel())
 
     @mock.patch("src.notification.get_config")
     def test_generate_aggregate_report_still_delegates_by_report_type(self, mock_get_config):

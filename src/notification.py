@@ -13,7 +13,6 @@ A股自选股智能分析系统 - 报告输出层（兼容通知空壳）
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
-from enum import Enum
 
 from src.config import get_config
 from src.analyzer import AnalysisResult
@@ -30,49 +29,6 @@ from src.report_language import (
 from src.utils.data_processing import normalize_model_used
 
 logger = logging.getLogger(__name__)
-
-
-class NotificationChannel(Enum):
-    """通知渠道类型"""
-    WECHAT = "wechat"      # 企业微信
-    FEISHU = "feishu"      # 飞书
-    TELEGRAM = "telegram"  # Telegram
-    EMAIL = "email"        # 邮件
-    PUSHOVER = "pushover"  # Pushover（手机/桌面推送）
-    PUSHPLUS = "pushplus"  # PushPlus（国内推送服务）
-    SERVERCHAN3 = "serverchan3"  # Server酱3（手机APP推送服务）
-    CUSTOM = "custom"      # 自定义 Webhook
-    DISCORD = "discord"    # Discord 机器人 (Bot)
-    SLACK = "slack"        # Slack
-    ASTRBOT = "astrbot"
-    UNKNOWN = "unknown"    # 未知
-
-
-class ChannelDetector:
-    """
-    渠道检测器 - 简化版
-    
-    根据配置直接判断渠道类型（不再需要 URL 解析）
-    """
-    
-    @staticmethod
-    def get_channel_name(channel: NotificationChannel) -> str:
-        """获取渠道中文名称"""
-        names = {
-            NotificationChannel.WECHAT: "企业微信",
-            NotificationChannel.FEISHU: "飞书",
-            NotificationChannel.TELEGRAM: "Telegram",
-            NotificationChannel.EMAIL: "邮件",
-            NotificationChannel.PUSHOVER: "Pushover",
-            NotificationChannel.PUSHPLUS: "PushPlus",
-            NotificationChannel.SERVERCHAN3: "Server酱3",
-            NotificationChannel.CUSTOM: "自定义Webhook",
-            NotificationChannel.DISCORD: "Discord机器人",
-            NotificationChannel.SLACK: "Slack",
-            NotificationChannel.ASTRBOT: "ASTRBOT机器人",
-            NotificationChannel.UNKNOWN: "未知渠道",
-        }
-        return names.get(channel, "未知渠道")
 
 
 class NotificationService:
@@ -104,7 +60,7 @@ class NotificationService:
         )
         self._report_summary_only = getattr(config, 'report_summary_only', False)
         self._history_compare_cache: Dict[Tuple[int, Tuple[Tuple[str, str], ...]], Dict[str, List[Dict[str, Any]]]] = {}
-        self._available_channels: List[NotificationChannel] = []
+        self._available_channels: List[str] = []
 
         logger.info("通知发送能力已下线：NotificationService 当前仅负责报告生成、本地保存与兼容空壳")
 
@@ -192,7 +148,7 @@ class NotificationService:
                 models.append(model)
         return list(dict.fromkeys(models))
     
-    def _detect_all_channels(self) -> List[NotificationChannel]:
+    def _detect_all_channels(self) -> List[str]:
         """通知发送能力已下线，永远返回空渠道列表。"""
         return []
 
@@ -200,7 +156,7 @@ class NotificationService:
         """通知发送能力已下线。"""
         return False
 
-    def get_available_channels(self) -> List[NotificationChannel]:
+    def get_available_channels(self) -> List[str]:
         """通知发送能力已下线，返回空列表以兼容旧调用方。"""
         return []
 
@@ -221,53 +177,7 @@ class NotificationService:
         """Bot 会话上下文推送已下线。"""
         return False
 
-    def send_to_wechat(self, content: str) -> bool:
-        return self._log_send_disabled("wechat")
-
-    def send_to_feishu(self, content: str) -> bool:
-        return self._log_send_disabled("feishu")
-
-    def send_to_telegram(self, content: str) -> bool:
-        return self._log_send_disabled("telegram")
-
-    def send_to_email(self, content: str, receivers: Optional[List[str]] = None, subject: Optional[str] = None) -> bool:
-        return self._log_send_disabled("email")
-
-    def send_to_pushover(self, content: str, title: Optional[str] = None) -> bool:
-        return self._log_send_disabled("pushover")
-
-    def send_to_pushplus(self, content: str, title: Optional[str] = None) -> bool:
-        return self._log_send_disabled("pushplus")
-
-    def send_to_serverchan3(self, content: str, title: Optional[str] = None) -> bool:
-        return self._log_send_disabled("serverchan3")
-
-    def send_to_custom(self, content: str) -> bool:
-        return self._log_send_disabled("custom webhook")
-
-    def send_to_discord(self, content: str) -> bool:
-        return self._log_send_disabled("discord")
-
-    def send_to_slack(self, content: str) -> bool:
-        return self._log_send_disabled("slack")
-
-    def send_to_astrbot(self, content: str) -> bool:
-        return self._log_send_disabled("astrbot")
-
-    def _send_wechat_image(self, image_bytes: Optional[bytes]) -> bool:
-        return self._log_send_disabled("wechat image")
-
-    def _send_telegram_photo(self, image_bytes: Optional[bytes]) -> bool:
-        return self._log_send_disabled("telegram photo")
-
-    def _send_email_with_inline_image(self, image_bytes: Optional[bytes], receivers: Optional[List[str]] = None) -> bool:
-        return self._log_send_disabled("email inline image")
-
-    def _send_custom_webhook_image(self, image_bytes: Optional[bytes], fallback_content: str = "") -> bool:
-        return self._log_send_disabled("custom webhook image")
-
-    def _send_slack_image(self, image_bytes: Optional[bytes], fallback_content: str = "") -> bool:
-        return self._log_send_disabled("slack image")
+    # 渠道级发送接口已移除；统一保留 send() 作为唯一兼容入口。
 
     def generate_daily_report(
         self,
@@ -1281,12 +1191,6 @@ class NotificationService:
             ])
 
         lines.append("")
-
-    def _should_use_image_for_channel(
-        self, channel: NotificationChannel, image_bytes: Optional[bytes]
-    ) -> bool:
-        """通知发送能力已下线，统一不再走图片发送。"""
-        return False
 
     def send(
         self,
