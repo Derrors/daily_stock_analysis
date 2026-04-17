@@ -29,11 +29,31 @@ class TestAgentMemory(unittest.TestCase):
         self.assertFalse(cal.calibrated)
         self.assertAlmostEqual(cal.calibration_factor, 1.0)
 
-    def test_disabled_weights_all_equal(self):
+    def test_disabled_skill_weights_all_equal(self):
         from src.agent.memory import AgentMemory
         mem = AgentMemory(enabled=False)
-        weights = mem.compute_strategy_weights(["a", "b", "c"])
+        weights = mem.compute_skill_weights(["a", "b", "c"])
         self.assertEqual(weights, {"a": 1.0, "b": 1.0, "c": 1.0})
+
+    def test_compute_strategy_weights_delegates_to_skill_weights(self):
+        from src.agent.memory import AgentMemory
+
+        mem = AgentMemory(enabled=True)
+        with patch.object(mem, "compute_skill_weights", return_value={"legacy": 1.0}) as mock_compute:
+            weights = mem.compute_strategy_weights(["legacy"], use_backtest=False)
+
+        self.assertEqual(weights, {"legacy": 1.0})
+        mock_compute.assert_called_once_with(["legacy"], use_backtest=False)
+
+    def test_get_strategy_performance_delegates_to_skill_performance(self):
+        from src.agent.memory import AgentMemory
+
+        mem = AgentMemory(enabled=True)
+        with patch.object(mem, "get_skill_performance", return_value={"available": False}) as mock_get:
+            performance = mem.get_strategy_performance("legacy")
+
+        self.assertEqual(performance, {"available": False})
+        mock_get.assert_called_once_with("legacy")
 
     def test_calibrate_confidence_passthrough_when_disabled(self):
         from src.agent.memory import AgentMemory

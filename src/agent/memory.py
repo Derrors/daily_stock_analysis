@@ -216,7 +216,10 @@ class AgentMemory:
         }
 
     def get_strategy_performance(self, strategy_id: str) -> Dict[str, Any]:
-        """Compatibility wrapper for legacy strategy-based callers."""
+        """Compatibility wrapper for legacy strategy-based callers.
+
+        Canonical runtime code should prefer ``get_skill_performance()``.
+        """
         return self.get_skill_performance(strategy_id)
 
     # -----------------------------------------------------------------
@@ -243,7 +246,10 @@ class AgentMemory:
         strategy_ids: List[str],
         use_backtest: bool = True,
     ) -> Dict[str, float]:
-        """Compatibility wrapper for legacy strategy-based callers."""
+        """Compatibility wrapper for legacy strategy-based callers.
+
+        Canonical runtime code should prefer ``compute_skill_weights()``.
+        """
         return self.compute_skill_weights(strategy_ids, use_backtest=use_backtest)
 
     # -----------------------------------------------------------------

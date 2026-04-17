@@ -67,3 +67,38 @@ For repo-local validation commands, prefer `.venv/bin/python` explicitly instead
 - **Notes**: Re-ran the validation with `.venv/bin/python` and confirmed the rewritten `Unreleased` section no longer contains the retired doc/runtime cues.
 
 ---
+
+## [ERR-20260417-003] pytest-target-file-name-mismatch
+
+**Logged**: 2026-04-17T19:48:53+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tests
+
+### Summary
+A targeted pytest command referenced a non-existent test file name (`tests/test_skill_aggregator.py`) instead of the repo's actual aggregator test file.
+
+### Error
+```
+ERROR: file or directory not found: tests/test_skill_aggregator.py
+```
+
+### Context
+- Operation attempted: targeted regression for `src/agent/memory.py` compat-wrapper cleanup
+- Command: `.venv/bin/python -m pytest tests/test_agent_memory.py tests/test_skill_aggregator.py tests/test_base_agent.py`
+- Trigger case: guessed the aggregator test filename instead of discovering the real file name first
+
+### Suggested Fix
+Before running targeted pytest on inferred filenames, resolve the actual test paths with `find tests` / `grep` and then run the matrix using the discovered file names.
+
+### Metadata
+- Reproducible: yes
+- Related Files: tests/test_agent_memory.py, tests/test_agent_strategy_aggregator.py, tests/test_base_agent.py
+- See Also: ERR-20260417-002
+
+### Resolution
+- **Resolved**: 2026-04-17T19:48:53+08:00
+- **Commit/PR**: pending
+- **Notes**: Switched to discovering the real aggregator test file name first (`tests/test_agent_strategy_aggregator.py`) before re-running the focused suite.
+
+---
