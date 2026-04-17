@@ -1416,24 +1416,6 @@ class Config:
         return model_list
 
     @classmethod
-    def _legacy_keys_to_model_list(
-        cls,
-        gemini_keys: List[str],
-        anthropic_keys: List[str],
-        openai_keys: List[str],
-        openai_base_url: Optional[str],
-        deepseek_keys: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
-        """Backward-compatible alias for `_managed_env_keys_to_model_list()`."""
-        return cls._managed_env_keys_to_model_list(
-            gemini_keys,
-            anthropic_keys,
-            openai_keys,
-            openai_base_url,
-            deepseek_keys,
-        )
-
-    @classmethod
     def _parse_report_type(cls, value: str) -> str:
         """Parse REPORT_TYPE, fallback to simple for invalid values (supports brief)."""
         v = (value or 'simple').strip().lower()
@@ -1908,7 +1890,7 @@ class Config:
             # Union: fallback providers + primary model's own provider
             _all_providers = {_primary_prefix} | set(_priority_providers)
 
-            # Align with get_api_keys_for_model: keys must be non-empty and len >= 8
+            # Align with get_managed_api_keys_for_model: keys must be non-empty and len >= 8
             _has_any_key = any(
                 any(k and len(k) >= 8 for k in (_VISION_KEY_MAP.get(p) or []))
                 for p in _all_providers

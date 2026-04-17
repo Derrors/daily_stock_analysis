@@ -21,13 +21,17 @@ _PLACEHOLDER_TO_PROVIDER = {
 _MANAGED_LEGACY_PROVIDERS = set(_PLACEHOLDER_TO_PROVIDER.values())
 
 
-def _get_models_source(config) -> str:
-    source = getattr(config, "llm_models_source", "")
-    if source == "legacy_env":
-        return "managed_env"
-    if source in {"litellm_config", "llm_channels", "managed_env"}:
-        return source
+def _normalize_models_source(source: Any) -> str:
+    normalized = str(source or "").strip()
+    if normalized in {"litellm_config", "llm_channels", "managed_env"}:
+        return normalized
+    # `legacy_env` was the old name for the env-managed path; any unknown value
+    # also falls back to the only remaining env-managed source label.
     return "managed_env"
+
+
+def _get_models_source(config) -> str:
+    return _normalize_models_source(getattr(config, "llm_models_source", ""))
 
 
 def _get_model_provider(model_name: str) -> str:
