@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Shared schema exports for report and v2 analysis contracts."""
 
-from src.schemas.analysis_contract import (
+from src.stock_analysis_skill.contracts import (
     AnalysisContextMeta,
     AnalysisExecution,
     AnalysisFeatures,

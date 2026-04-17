@@ -1,4 +1,4 @@
-from src.schemas.analysis_contract import (
+from src.stock_analysis_skill.contracts import (
     AnalysisMode,
     AnalysisRequest,
     AnalysisResponse,

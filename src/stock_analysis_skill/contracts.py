@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Unified request/response contracts for the skill-first stock analysis rewrite.
+"""Unified request/response contracts for the skill-first stock analysis runtime.
 
-These models are the new canonical contract layer for agent-facing execution.
-Legacy imports from `src.schemas.analysis_contract` remain available during the
-migration window, but new code should import from this module.
+These models are the canonical contract layer for agent-facing execution.
 """
 
 from __future__ import annotations

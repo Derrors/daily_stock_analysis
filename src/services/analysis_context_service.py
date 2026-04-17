@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 from data_provider import DataFetcherManager, is_hk_stock_code, is_us_stock_code
 from src.config import get_config
-from src.schemas.analysis_contract import AnalysisRequest, DataCompleteness
+from src.stock_analysis_skill.contracts import AnalysisRequest, DataCompleteness
 from src.search_service import SearchService
 from src.stock_analyzer import StockTrendAnalyzer
 from src.utils.analysis_runtime_contract import apply_component_completeness

@@ -19,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.schemas.analysis_contract import (  # noqa: E402
+from src.stock_analysis_skill.contracts import (  # noqa: E402
     AnalysisContextMeta,
     AnalysisExecution,
     AnalysisFeatures,

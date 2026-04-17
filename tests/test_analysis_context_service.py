@@ -1,4 +1,4 @@
-from src.schemas.analysis_contract import AnalysisRequest
+from src.stock_analysis_skill.contracts import AnalysisRequest
 from src.services.analysis_context_service import AnalysisContextService
 
 

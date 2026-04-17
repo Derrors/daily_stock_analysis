@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from src.schemas.analysis_contract import AnalysisRequest as LegacyAnalysisRequest
 from src.stock_analysis_skill.contracts import AnalysisMode, AnalysisRequest
 from src.stock_analysis_skill.service import resolve_report_type
-
-
-def test_contract_import_compatibility() -> None:
-    request = LegacyAnalysisRequest.minimal("600519")
-    assert request.stock.input == "600519"
 
 
 def test_resolve_report_type_mapping() -> None:

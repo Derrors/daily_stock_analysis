@@ -2,7 +2,7 @@ from argparse import Namespace
 from types import SimpleNamespace
 
 from scripts.run_stock_analysis import _build_request_from_args, _preflight_request, _resolve_report_type
-from src.schemas.analysis_contract import AnalysisMode, AnalysisRequest, OutputFormat
+from src.stock_analysis_skill.contracts import AnalysisMode, AnalysisRequest, OutputFormat
 
 
 def test_build_request_from_args_defaults() -> None:
