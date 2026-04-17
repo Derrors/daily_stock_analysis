@@ -718,33 +718,33 @@ class Config:
         return None
 
     @classmethod
-    def _resolve_legacy_gemini_model_fallback(cls) -> str:
-        """Resolve GEMINI_MODEL_FALLBACK compatibility value.
+    def _resolve_gemini_model_fallback(cls) -> str:
+        """Resolve Gemini default fallback model for managed-env compatibility.
 
-        LITELLM_FALLBACK_MODELS is the canonical cross-provider setting. The
-        Gemini-specific value is still accepted so older deployments keep their
-        previous behavior.
+        Canonical fallback configuration is LITELLM_FALLBACK_MODELS.
+        GEMINI_MODEL_FALLBACK is now ignored during runtime resolution.
         """
         explicit = os.getenv('GEMINI_MODEL_FALLBACK')
         if explicit is not None:
             logging.getLogger(__name__).warning(
-                "GEMINI_MODEL_FALLBACK is deprecated; prefer LITELLM_FALLBACK_MODELS for model fallback configuration",
+                "GEMINI_MODEL_FALLBACK is retired and ignored; use LITELLM_FALLBACK_MODELS instead",
             )
-            return explicit.strip()
         return 'gemini-2.5-flash'
 
     @classmethod
     def _resolve_agent_skill_dir(cls) -> Optional[str]:
-        """Resolve custom Agent skill directory with legacy strategy alias support."""
+        """Resolve custom Agent skill directory.
+
+        AGENT_STRATEGY_DIR is retired and no longer participates in runtime
+        resolution.
+        """
         skill_dir = os.getenv('AGENT_SKILL_DIR')
         if skill_dir:
             return skill_dir
-        legacy_strategy_dir = os.getenv('AGENT_STRATEGY_DIR')
-        if legacy_strategy_dir:
+        if os.getenv('AGENT_STRATEGY_DIR'):
             logging.getLogger(__name__).warning(
-                "AGENT_STRATEGY_DIR is deprecated; use AGENT_SKILL_DIR instead",
+                "AGENT_STRATEGY_DIR is retired and ignored; use AGENT_SKILL_DIR",
             )
-            return legacy_strategy_dir
         return None
 
     # 单例实例存储
@@ -884,7 +884,7 @@ class Config:
 
         # LITELLM_FALLBACK_MODELS: comma-separated list of fallback models
         _fallback_str = os.getenv('LITELLM_FALLBACK_MODELS', '')
-        gemini_model_fallback = cls._resolve_legacy_gemini_model_fallback()
+        gemini_model_fallback = cls._resolve_gemini_model_fallback()
         if _fallback_str.strip():
             litellm_fallback_models = [m.strip() for m in _fallback_str.split(',') if m.strip()]
         else:
@@ -1604,7 +1604,8 @@ class Config:
         """Resolve the historical auto-weight toggle.
 
         The skill-first runtime no longer applies backtest-driven auto-weighting,
-        so this flag is kept only for compatibility with older configs.
+        so AGENT_SKILL_AUTOWEIGHT is retained as a compatibility no-op.
+        AGENT_STRATEGY_AUTOWEIGHT is retired and ignored.
         """
         explicit = os.getenv('AGENT_SKILL_AUTOWEIGHT')
         if explicit is not None:
@@ -1613,12 +1614,10 @@ class Config:
             )
             return explicit.lower() == 'true'
 
-        legacy = os.getenv('AGENT_STRATEGY_AUTOWEIGHT')
-        if legacy is not None:
+        if os.getenv('AGENT_STRATEGY_AUTOWEIGHT') is not None:
             logging.getLogger(__name__).warning(
-                "AGENT_STRATEGY_AUTOWEIGHT is deprecated; use AGENT_SKILL_AUTOWEIGHT instead (both are currently no-op compatibility flags)",
+                "AGENT_STRATEGY_AUTOWEIGHT is retired and ignored; use AGENT_SKILL_AUTOWEIGHT if needed",
             )
-            return legacy.lower() == 'true'
 
         return True
 

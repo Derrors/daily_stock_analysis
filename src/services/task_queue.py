@@ -69,6 +69,7 @@ class TaskInfo:
     message: Optional[str] = None
     # Canonical internal payload. Compatibility payload remains in `result`
     # for callers that still read TaskInfo.result directly.
+    # `runtime_payload` is the API-facing canonical alias for this compat blob.
     unified_result: Optional[Dict[str, Any]] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -112,6 +113,7 @@ class TaskInfo:
             "original_query": self.original_query,
             "selection_source": self.selection_source,
             "result": self.get_preferred_result(),
+            "runtime_payload": self.result,
             "legacy_result": self.result,
             "unified_response": self.unified_result,
         }

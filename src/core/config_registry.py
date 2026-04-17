@@ -414,8 +414,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "display_order": 20,
     },
     "GEMINI_MODEL_FALLBACK": {
-        "title": "Gemini Fallback Model",
-        "description": "Deprecated Gemini-only fallback knob. Still works for compatibility when the primary model is Gemini, but new setups should use LITELLM_FALLBACK_MODELS instead.",
+        "title": "Gemini Fallback Model (Retired)",
+        "description": "Retired Gemini-only fallback knob. Runtime ignores this key; use LITELLM_FALLBACK_MODELS instead.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -949,8 +949,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "display_order": 20,
     },
     "AGENT_SKILLS": {
-        "title": "Agent Strategies",
-        "description": "Comma-separated list of active agent strategies. Internally these map to skill ids. Leave empty to use the primary default strategy/skill declared in metadata (built-in default: bull_trend). When set to specific values (not 'all'), scheduled tasks will automatically use the Agent pipeline.",
+        "title": "Agent Skills",
+        "description": "Comma-separated list of active agent skills. Leave empty to use the primary default skill declared in metadata (built-in default: bull_trend). When set to specific values (not 'all'), scheduled tasks automatically use the Agent pipeline.",
         "category": "agent",
         "data_type": "string",
         "ui_control": "text",
@@ -963,8 +963,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "display_order": 30,
     },
     "AGENT_SKILL_DIR": {
-        "title": "Agent Strategy Dir",
-        "description": "Directory containing agent strategy definitions (implemented as YAML or SKILL.md skill bundles). Canonical key: AGENT_SKILL_DIR; legacy AGENT_STRATEGY_DIR is still accepted with a deprecation warning.",
+        "title": "Agent Skill Dir",
+        "description": "Directory containing agent skill definitions (YAML or SKILL.md bundles).",
         "category": "agent",
         "data_type": "string",
         "ui_control": "text",

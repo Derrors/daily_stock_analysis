@@ -19,6 +19,7 @@ def test_task_info_exposes_unified_response_without_removing_legacy_result() -> 
 
     assert payload["result"] == unified
     assert payload["unified_response"] == unified
+    assert payload["runtime_payload"] == legacy
     assert payload["legacy_result"] == legacy
     assert task.get_preferred_result() == unified
     assert task.result == legacy
@@ -35,5 +36,6 @@ def test_task_info_prefers_embedded_unified_response_when_field_missing() -> Non
 
     assert task.get_preferred_result() == unified
     assert payload["result"] == unified
+    assert payload["runtime_payload"] == legacy
     assert payload["legacy_result"] == legacy
     assert payload["unified_response"] is None

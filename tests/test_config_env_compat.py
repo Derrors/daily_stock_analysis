@@ -388,7 +388,7 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_agent_strategy_dir_warns_and_maps_to_agent_skill_dir(
+    def test_agent_strategy_dir_warns_and_is_ignored(
         self,
         _mock_parse_yaml,
         _mock_setup_env,
@@ -401,12 +401,12 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             with self.assertLogs("src.config", level="WARNING") as captured:
                 config = Config._load_from_env()
 
-        self.assertEqual(config.agent_skill_dir, "./strategies")
-        self.assertTrue(any("AGENT_STRATEGY_DIR is deprecated" in message for message in captured.output))
+        self.assertIsNone(config.agent_skill_dir)
+        self.assertTrue(any("AGENT_STRATEGY_DIR is retired and ignored" in message for message in captured.output))
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_legacy_agent_strategy_autoweight_warns_and_maps_to_skill_flag(
+    def test_legacy_agent_strategy_autoweight_warns_and_is_ignored(
         self,
         _mock_parse_yaml,
         _mock_setup_env,
@@ -419,19 +419,19 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             with self.assertLogs("src.config", level="WARNING") as captured:
                 config = Config._load_from_env()
 
-        self.assertFalse(config.agent_skill_autoweight)
-        self.assertTrue(any("AGENT_STRATEGY_AUTOWEIGHT is deprecated" in message for message in captured.output))
+        self.assertTrue(config.agent_skill_autoweight)
+        self.assertTrue(any("AGENT_STRATEGY_AUTOWEIGHT is retired and ignored" in message for message in captured.output))
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_gemini_model_fallback_warns_but_still_populates_legacy_fallback(
+    def test_gemini_model_fallback_warns_and_is_ignored_for_runtime_resolution(
         self,
         _mock_parse_yaml,
         _mock_setup_env,
     ) -> None:
         env = {
             "GEMINI_API_KEY": "test-key",
-            "GEMINI_MODEL_FALLBACK": "gemini-2.5-flash",
+            "GEMINI_MODEL_FALLBACK": "gemini-2.0-flash-exp",
         }
 
         with patch.dict(os.environ, env, clear=True):
@@ -440,7 +440,7 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
         self.assertEqual(config.gemini_model_fallback, "gemini-2.5-flash")
         self.assertEqual(config.litellm_fallback_models, ["gemini/gemini-2.5-flash"])
-        self.assertTrue(any("GEMINI_MODEL_FALLBACK is deprecated" in message for message in captured.output))
+        self.assertTrue(any("GEMINI_MODEL_FALLBACK is retired and ignored" in message for message in captured.output))
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
