@@ -74,13 +74,12 @@ docs: 更新 README 部署说明
 
 ### CI 自动检查
 
-提交 PR 后，CI 会自动运行以下检查：
+提交 PR 后，当前仓库主线依赖的核心检查为 backend gate：
 
 | 检查项 | 说明 | 必须通过 |
 |--------|------|:--------:|
-| backend-gate | `scripts/ci_gate.sh`（py_compile + flake8 严重错误 + 本地核心脚本 + offline pytest） | ✅ |
-| docker-build | Docker 镜像构建与关键模块导入 smoke | ✅ |
-| network-smoke | 定时/手动执行 `pytest -m network` + `test.sh quick`（非阻断） | ❌（观测项） |
+| backend-gate | `scripts/ci_gate.sh`（保留运行时模块的 py_compile + flake8 严重错误 + 确定性本地检查 `./test.sh code` / `./test.sh yfinance` + offline pytest） | ✅ |
+| network-smoke | 定时/手动执行 `pytest -m network` + `test.sh quick`（非阻断观测项） | ❌（观测项） |
 
 **本地运行检查：**
 
@@ -90,6 +89,11 @@ pip install -r requirements.txt
 pip install flake8 pytest
 ./scripts/ci_gate.sh
 
+# 或按阶段单独执行
+./scripts/ci_gate.sh syntax
+./scripts/ci_gate.sh flake8
+./scripts/ci_gate.sh deterministic
+./scripts/ci_gate.sh offline-tests
 ```
 
 ## 📋 优先贡献方向

@@ -32,3 +32,38 @@ Derive default OpenAI-compatible base URL from the same effective precedence cha
 - **Notes**: Tightened `_resolve_openai_compatible_base_url()` so `OPENAI_API_KEYS` suppresses the AIHubmix default base URL unless `OPENAI_BASE_URL` is explicitly set.
 
 ---
+
+## [ERR-20260417-002] project-doc-checks-should-use-venv-python
+
+**Logged**: 2026-04-17T19:18:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tooling
+
+### Summary
+A quick doc-validation shell used bare `python`, but this project host environment does not expose `python`; validation should use the project virtualenv interpreter.
+
+### Error
+```
+/bin/bash: line 1: python: command not found
+```
+
+### Context
+- Operation attempted: lightweight validation while cleaning Phase E.7 docs
+- Command: `python - <<'PY' ...`
+- Trigger case: host shell only had project `.venv/bin/python` available
+
+### Suggested Fix
+For repo-local validation commands, prefer `.venv/bin/python` explicitly instead of assuming bare `python` exists on the host.
+
+### Metadata
+- Reproducible: yes
+- Related Files: docs/CHANGELOG.md, docs/CONTRIBUTING_EN.md, TASKS.md
+- See Also: TOOLS.md note about preferring project-local runtime environments when validating this repo
+
+### Resolution
+- **Resolved**: 2026-04-17T19:19:00+08:00
+- **Commit/PR**: pending
+- **Notes**: Re-ran the validation with `.venv/bin/python` and confirmed the rewritten `Unreleased` section no longer contains the retired doc/runtime cues.
+
+---

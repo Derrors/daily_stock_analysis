@@ -12,49 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 <!-- 每条独立一行追加到本段末尾，无需分类标题，合并时冲突最小 -->
 
-- [改进] 仓库主形态正式收敛为面向 Agent 的 stock-analysis skill-first 结构：新增 `SKILL.md`、`references/`、`src/stock_analysis_skill/` 以及 `run_stock_analysis.py` / `run_market_analysis.py` / `resolve_strategy.py` / `doctor.py` 等脚本入口，统一合同层 canonical path 为 `src.stock_analysis_skill.contracts`。
-- [改进] 新增最小可用主链：股票分析、市场分析、策略解析与确定性 Markdown 渲染均已通过新的 skill facade 暴露；`run_stock_analysis.py` 缺少模型配置时现在会显式 fail-fast 返回 `preflight_failed`，避免无意义执行链路。
-- [改进] 删除旧产品壳与外围模块：移除 FastAPI API、Docker、认证、回测、历史、组合管理、导入解析、图片导入和系统配置等非 skill 核心能力，并同步清理对应测试与文档。
-- [文档] README 与 `docs/README_EN.md` 已重写为 skill-first 口径，并删除过时的部署、FAQ、full-guide、API spec 与 image-extract 文档，避免仓库说明继续误导为产品化系统。
-- [测试] 新增 skill-first 测试集（contracts / stock entry / market dry-run / strategy resolution / markdown renderer），同时完成一轮 73 项 skill + agent 侧回归验证，全部通过。
-- [改进] 进入 Phase E（语义收口与兼容层减脂）：报告输出主入口已统一到 `src.report_output` / `ReportOutputService`，`src.notification` 继续保留为兼容层，不再作为新代码推荐入口。
-- [改进] strategy / skill 双命名进一步收口：对外继续保留 strategy 口径，内部实现优先使用 skill 口径；`SkillResolver` 成为内部主名，`StrategyResolver` 继续作为兼容别名保留。
-- [改进] LiteLLM env-key 主路径语义从 `legacy_env` 收口为 `managed_env`：`analyzer` 与 `agent llm adapter` 现已优先使用 `get_managed_api_keys_for_model()` / `get_managed_litellm_params()`，旧 helper 名保留兼容别名。
-
+- [改进] 仓库主形态继续收敛为面向 Agent 的 stock-analysis skill-first 结构：`SKILL.md`、`references/`、`src/stock_analysis_skill/` 与脚本入口（`run_stock_analysis.py` / `run_market_analysis.py` / `resolve_strategy.py` / `doctor.py`）构成当前推荐使用面；旧产品壳、旧服务总入口与历史外围能力已从主线剥离。
+- [改进] 主分析链已完成内核内迁与兼容层减脂：同步分析编排、异步任务入口与 analyzer 执行主循环现已优先落到 `src/stock_analysis_skill/*`；`AnalysisService`、`src/core/pipeline.py`、`src/analyzer.py` 等旧入口继续保留兼容 facade / delegate 语义，避免外部调用方断裂。
+- [改进] 报告输出、strategy/skill 双命名与 LiteLLM env-key 语义已进一步收口：`src.report_output` / `ReportOutputService` 成为首选入口；内部优先采用 skill 命名与 `managed_env` 语义，旧 helper / 别名继续保留兼容层。
+- [修复] `AGENT_MAX_STEPS` 在 orchestrator 多 Agent 模式下明确为“默认作为各子 Agent 的步数上限而非硬覆盖”；高默认值 Agent 会被封顶、低默认值 Agent 保持原值，用户主动调高（>10）时再统一覆盖所有子 Agent，减少不必要的 LLM 调用膨胀与超步数误报（fixes #1026）。
+- [修复] Specialist（Skill）Agent 失败不再中断整个分析管线，改为与 intel/risk 一致的优雅降级策略；同时超步数错误信息新增 `AGENT_MAX_STEPS` 调整提示，便于自助排障。
 - [修复] 大盘复盘链路接入 `REPORT_LANGUAGE`：`REPORT_LANGUAGE=en` 时，A 股/合并复盘的 Prompt、章节标题、模板兜底文案与通知包装标题统一改为英文，避免出现英文正文外包中文标题的问题。
-- [修复] `AGENT_MAX_STEPS` 在 orchestrator 多 Agent 模式下统一明确为“默认作为各子 Agent 的步数上限而非硬覆盖；TechnicalAgent 等高默认值 Agent 会被封顶、低默认值 Agent 保持原值；当用户主动调高（>10）时，再统一覆盖所有子 Agent 采用全局值”，同时修复用户设置 12 但 TechnicalAgent 仍以默认 6 步运行并报 "Agent exceeded max steps" 的问题（fixes #1026）
-- [修复] Specialist（Skill）Agent 失败不再中断整个分析管线，改为与 intel/risk 相同的优雅降级策略
-- [改进] Agent 超步数错误信息增加 AGENT_MAX_STEPS 调整提示，帮助用户自助排查
-- [改进] 项目边界收缩到 Agent / skill 后端：移除内置 Bot 运行时代码与直接测试，主链不再启动 Bot Stream 客户端；同步收口 README、环境模板与前端系统配置文案中的 Bot 交互描述。
-
-- [修复] `AGENT_MAX_STEPS` 在 orchestrator 多 Agent 模式下改为作为各子 Agent 的步数上限而非硬覆盖；TechnicalAgent 等高默认值 Agent 会被封顶，低默认值 Agent 保持原值，减少不必要的 LLM 调用膨胀与配额消耗。
-- [修复] **MiniMax-M2.7 模型连接测试支持** — 修复 LLM 通道连接测试在 MiniMax-M2.7 模型下返回 "Empty response" 的问题；增加了 `max_tokens` 上限（8→256）以容纳 MiniMax 思考过程，并添加 `content_blocks` 格式解析逻辑统一处理 MiniMax 响应格式差异。
-- [修复] 移除 `HistoryItem` 与 `ReportSummary` 响应 Schema 中 `sentiment_score` 的 `ge=0/le=100` 约束（fixes #942）——历史库中存储的超范围负值或大于 100 的情绪评分不再触发 Pydantic ValidationError，历史列表与详情接口恢复正常返回。
-- [改进] Agent IntelAgent 新增公司公告搜索维度（上交所/深交所/cninfo）与主力资金流工具（get_capital_flow），修复 Agent 模式下公告和资金流数据经常缺失的问题
-- [修复] webui_frontend.py 在 static/index.html 存在但 static/assets/ 缺失时发出明确警告，避免用户因 CSS/JS 资源缺失导致页面元素异常变大却无从排查
-- [修复] `StockAnalysisPipeline` 搜索服务与社交舆情服务改为可选降级初始化：任一服务初始化异常时记录 warning 并以禁用状态继续运行，避免外部依赖抖动阻塞主分析链路与 SSE 进度回调。
-- [文档] DEPLOY.md 和 deploy-webui-cloud.md 新增"UI 元素异常变大/布局错乱"排查步骤（重建 Docker 镜像或手动执行 npm run build）
-- [文档] 补充飞书 Webhook 配置说明：强调 `FEISHU_WEBHOOK_URL` 是群通知必填项、`FEISHU_WEBHOOK_SECRET` 与飞书机器人「签名校验」必须两端同时启用或同时关闭、`FEISHU_APP_SECRET` 仅用于应用/Stream Bot 模式不可替代 Webhook；同步完善英文指南并在 `.env.example` 为相关配置项补充内联说明注释
-
-- [新功能] 集成 Longbridge OpenAPI 作为美股/港股可选数据源；配置 `LONGBRIDGE_*` 后优先使用长桥获取日线与实时行情，YFinance / AkShare 兜底；未配置时行为与此前一致。长桥联调请使用 `tests/longbridge_live_smoke.py`（手动脚本，不参与 pytest 收集）。
-- [文档] 澄清 README（中/英/繁）中长桥「首选 / 兜底 / 未配置不调用」的边界；`docs/README_EN.md` / `docs/README_CHT.md` 顶部导航与完整指南链接改为 `./` 相对路径，避免在文档子目录下解析错误；`LONGBRIDGE_PRINT_QUOTE_PACKAGES` 与代码及 `.env.example` 对齐为未设置时默认关闭。
-- [修复] 港股名称获取失败问题 — 修复当主数据源字段缺失时无法正确回退到备用字段获取港股名称的问题（fixes #940）
-- [修复] SSE 任务流断开时 CancelledError 被静默吞掉问题 — 修复 SSE 流中断时异常未向上抛出导致故障无日志可查的问题，现在正确 re-raise CancelledError（fixes #967）
-- [修复] Agent SSE 流清理阶段静默吞掉后台执行器异常 — 流结束时后台任务异常现在正确记录并上报，避免错误无法感知（fixes #969）
-- [文档] FAQ 补充 Ollama `OllamaException / APIConnectionError` 连接失败排障条目（Q12c），覆盖服务未启动、URL 配置错误、模型前缀缺失、模型未下载、远程防火墙等 5 个检查点
-- [修复] 技能加载异常被静默吞没问题 — 在 ask.py、skills/aggregator.py、skills/router.py 的静默 except 块补充 logger.warning 日志，确保技能列表为空时有日志可查（fixes #970）
-- [修复] SQLite 主写入链路现在对 `stock_daily(code,date)` 使用批量原子 upsert，并在文件型 SQLite 连接上默认启用 `WAL`、`busy_timeout` 与有限写入重试，降低批量分析和并发回写场景下的锁竞争与吞吐抖动，返回值中的“新增数”改为按本次真正插入窗口计算（并发场景不再把并行写入行误算入当前调用）。
-- [修复] 优化多 Agent 与单 Agent 的预算护栏语义：当后续阶段/步骤剩余预算低于最小阈值（首阶段除外）时会主动跳过并进行降级处理；若当前已完成阶段可支持构建降级报告，则返回 `success=True` 并携带非空内容；否则返回 `success=False`、`content=""`；`run_agent_loop` 预算过低时当前仍返回失败降级语义（`success=False`、`content=""`），`AgentExecutor` 保持统一下游契约。
-
-
-- [新功能] tushare支持港股查询 — 配置了tushare凭证的用户会调用hk_daily接口获取数据，如果用户tushare权限不够依然会出现数据查询异常的情况，和改造前直接抛出不支持的异常流程相同。
-- [改进] TushareFetcher `get_chip_distribution` 对港股直接返回 `None`，不调用 `cyq_chips`（港股暂不支持筹码分布）。
-- [测试] 补充 `get_chip_distribution` 获取筹码分布的单元测试。
-- [改进] TushareFetcher `_normalize_data` 对港股（`hk_daily`）不再对 `vol`/`amount` 做 A 股手→股、千元→元 的缩放，与 Tushare 港股字段语义一致。
-- [测试] 补充 `TushareFetcher._normalize_data` 港股与 A 股/ETF 单位处理的单元测试。
-- [新功能] 集成 Anspire Search 作为可选语义搜索后端; 配置 `ANSPIRE_*` 可使用Anspire Search获取实时行情及新闻资讯，未配置时行为与此前一致。Anspire Search请使用 `tests/test_anspire_search.py`（手动脚本）。
-- [修复] GitHub Actions `daily_analysis.yml` 未注入 `REPORT_LANGUAGE` 环境变量，导致用户在 Secrets/Variables 中配置后不生效（fixes #1013）
-- [修复] `GET /api/v1/analysis/status/{task_id}` 从数据库回填已完成任务时缺少 `current_price` / `change_pct`，导致首页报告股票名旁不显示实时价格（fixes #983）
+- [改进] 配置最小化审计（Phase E.5）已完成：`LITELLM_CONFIG > LLM_CHANNELS > managed_env` 的加载优先级已在 runtime、registry 与 `.env.example` 对齐；OpenAI-compatible key 优先级统一为 `OPENAI_API_KEYS > AIHUBMIX_KEY > OPENAI_API_KEY`；`OPENAI_BASE_URL` 显式优先，且仅在 `AIHUBMIX_KEY` 真正成为有效来源时才默认注入 `https://aihubmix.com/v1`。
+- [改进] 已弱化配置已显式降为 compat shell / no-op：`REALTIME_SOURCE_PRIORITY` 会统一归一化回 tushare-only 当前口径；`AGENT_SKILL_AUTOWEIGHT` / `AGENT_STRATEGY_AUTOWEIGHT` 会保留兼容 warning，但不再暗示运行时仍有真实自动加权主路径。
+- [改进] 数据 / 搜索兼容债清理（Phase E.6）已完成：retired 搜索源 Anspire / MiniMax / SearXNG 的旧配置改为显式 compat warning；`SearXNGSearchProvider` 已从运行时代码中物理删除，不再进入 provider 列表。
+- [文档] README、`docs/README_EN.md`、`.env.example` 与 `docs/CHANGELOG.md` 的当前口径已继续收紧到 skill-first 仓库现状：当前数据源边界为 Tushare + 新闻搜索源（Bocha / Tavily / Brave / SerpAPI），不再把旧 WebUI / Docker / retired provider 说明混在未发布主线描述中。
+- [测试] 关键回归矩阵已覆盖 skill contract、主分析链、任务队列、agent/orchestrator、配置兼容、LLM channel 与搜索兼容路径；近期多轮全量/定点验证持续通过，其中 E.5/E.6 收口提交前矩阵为 `130 passed, 4 subtests passed`。
 
 ## [3.12.0] - 2026-04-01
 

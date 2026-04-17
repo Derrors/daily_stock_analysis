@@ -57,7 +57,18 @@ The current minimal skill test suite is:
 - Phase B: done
 - Phase C: minimal mainline done
 - Phase D: structural slimming done
-- Phase E: in progress (semantic alignment + compatibility-surface reduction)
+- Phase E: semantic alignment + compatibility-surface reduction in progress
+- Phase F: mainline internalization and contract regression completed
 
 This repository no longer treats FastAPI/Web/Docker as its primary product shape.
 Current work is focused on naming alignment, report-output semantics, and shrinking compatibility-only runtime surfaces.
+
+## Compatibility-only remnants
+
+A small number of legacy facades / re-exports still exist to avoid breaking old imports during migration. They are not the recommended integration surface for new work.
+
+For new integrations, prefer:
+- scripts under `scripts/*`
+- canonical modules under `src.stock_analysis_skill.*`
+
+REST/API-oriented integration notes such as `docs/openclaw-skill-integration.md` are historical compatibility references only, not the current mainline recommendation.

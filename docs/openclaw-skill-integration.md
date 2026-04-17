@@ -1,178 +1,116 @@
-# openclaw Skill 集成指南
+# openclaw Skill 集成说明（历史 / compatibility-only）
 
-本文档说明如何通过 [openclaw](https://github.com/openclaw/openclaw) Skill 调用 daily_stock_analysis 的 REST API，实现在 openclaw 对话中触发股票分析的能力。
+> **重要说明**
+>
+> 本文档保留为**历史兼容参考**，不是 `daily_stock_analysis` 当前主线仓库的推荐接入方式。
+>
+> 当前仓库已经收敛为 **Agent-first / skill-first** 代码库，推荐入口是：
+> - `scripts/run_stock_analysis.py`
+> - `scripts/run_market_analysis.py`
+> - `scripts/resolve_strategy.py`
+> - `src.stock_analysis_skill.*`
+>
+> 仓库主线**不再把长期运行的 REST API / Web / Docker 产品壳**作为推荐目标形态。因此，过去基于 `main.py --serve-only`、长期暴露 `/api/...` 接口、再由 openclaw 通过 HTTP 调用的方案，应视为**旧架构或自维护兼容层**，而不是当前默认路径。
 
-## 概述
+## 这份文档适用于谁
 
-- **集成方式**：openclaw Skill 通过 HTTP 调用 daily_stock_analysis（DSA）REST API
-- **适用场景**：已部署 DSA API 服务，希望在 openclaw 对话中触发分析（如「帮我分析茅台」「analyze AAPL」）
+仅适用于以下场景：
 
-## 前置条件
+1. 你手里已经有一套**旧版或自维护 fork**，仍然暴露 HTTP API；
+2. 你明确打算在仓库外层自己维护一层 compatibility service，再让 openclaw 通过 HTTP 调用；
+3. 你需要理解历史集成思路，以便迁移老系统。
 
-1. **daily_stock_analysis 必须已运行**：执行 `python main.py --serve-only` 或通过 Docker 部署，使 API 长期可用
-2. **openclaw 需具备 HTTP 调用能力**：如 `system.run` 执行 curl，或内置 HTTP 工具（如 api-tester 等）
-3. **说明**：建议通过本地或 Docker 方式长期运行 DSA；如需定时任务或消息投递，由仓库外层调度器负责。
+如果你是在**当前主线仓库上做新接入**，请不要再把 HTTP API 作为第一选择。
 
-## 核心 API 参考
+## 当前推荐接入方式
 
-| 接口 | 方法 | 用途 |
-|------|------|------|
-| `/api/v1/analysis/analyze` | POST | 触发分析（主入口） |
-| `/api/v1/analysis/status/{task_id}` | GET | 异步任务状态 |
-| `/api/v1/agent/chat` | POST | Agent 策略问股（需 `AGENT_MODE=true`） |
-| `/api/health` | GET | 健康检查 |
+### 方案 A：脚本入口（推荐）
 
-### 触发分析请求体
+让 openclaw Skill 直接调用仓库脚本，而不是先起一个长期运行的 API 服务。
 
-```json
-{
-  "stock_code": "600519",
-  "report_type": "detailed",
-  "force_refresh": true,
-  "async_mode": false
-}
-```
+推荐脚本：
 
-- `stock_code`：股票代码（必填）
-- `report_type`：`simple` | `detailed` | `brief`
-- `force_refresh`：布尔值，是否强制刷新（忽略缓存）
-- `async_mode`：布尔值，`false` 时同步返回，`true` 时返回 202 + `task_id` 需轮询
+- `scripts/run_stock_analysis.py`
+- `scripts/run_market_analysis.py`
+- `scripts/resolve_strategy.py`
+- `scripts/doctor.py`
 
-**注意**：`force_refresh`、`async_mode` 为布尔类型，非字符串。
+适用特点：
 
-### 响应示例（同步模式）
+- 更贴近当前仓库主线
+- 不需要额外维护 API 契约与服务进程
+- 更适合 Agent / Skill / 本地自动化工作流
 
-```json
-{
-  "query_id": "abc123def456",
-  "stock_code": "600519",
-  "stock_name": "贵州茅台",
-  "report": {
-    "summary": {
-      "analysis_summary": "...",
-      "operation_advice": "持有",
-      "trend_prediction": "看多",
-      "sentiment_score": 75
-    },
-    "strategy": {
-      "ideal_buy": "1850",
-      "stop_loss": "1780",
-      "take_profit": "1950"
-    }
-  },
-  "created_at": "2026-03-13T10:00:00"
-}
-```
+### 方案 B：直接 import canonical modules（推荐）
 
-## 重要限制与说明
+如果你的运行环境允许 Python 级集成，优先使用：
 
-- **仅支持股票代码**：API 不接受中文名称（如「茅台」），需在 Skill 侧解析或提示用户提供代码（如 600519、AAPL）
-- **同步模式耗时**：`async_mode: false` 时，单次分析约 2–5 分钟，需确保 openclaw 或 HTTP 客户端超时足够
-- **异步模式**：`async_mode: true` 返回 202 + `task_id`，需轮询 `GET /api/v1/analysis/status/{task_id}` 直至 `status: completed`
+- `src.stock_analysis_skill.contracts`
+- `src.stock_analysis_skill.service`
+- `src.stock_analysis_skill.analyzers.stock`
+- `src.stock_analysis_skill.analyzers.market`
+- `src.stock_analysis_skill.analyzers.strategy`
+- `src.stock_analysis_skill.renderers.markdown`
 
-## 股票代码格式
+适用特点：
 
-| 类型 | 格式 | 示例 |
-|------|------|------|
-| A股 | 6位数字 | `600519`、`000001`、`300750` |
-| 北交所 | 8/4/92 开头 6 位 | `920748`、`838163`、`430047` |
-| 港股 | hk + 5位数字 | `hk00700`、`hk09988` |
-| 美股 | 1-5 字母（可选 .X 后缀） | `AAPL`、`TSLA`、`BRK.B` |
-| 美股指数 | SPX/DJI/IXIC 等 | `SPX`、`DJI`、`NASDAQ`、`VIX` |
+- 契约更稳定
+- 不需要额外 HTTP 层
+- 更适合后续继续跟随 skill-first 主线演进
 
-## 配置方式
+## 历史 HTTP 集成方案的现状
 
-在 `~/.openclaw/openclaw.json` 中配置：
+过去的思路是：
 
-```json
-{
-  "skills": {
-    "entries": {
-      "daily-stock-analysis": {
-        "enabled": true,
-        "env": {
-          "DSA_BASE_URL": "http://localhost:8000"
-        }
-      }
-    }
-  }
-}
-```
+- 启动 `daily_stock_analysis` 的 API 服务
+- 由 openclaw Skill 通过 HTTP 请求 `/api/...` 端点
+- 在对话中触发股票分析
 
-- 本地部署：`http://localhost:8000` 或 `http://127.0.0.1:8000`
-- 远程部署：替换为实际 URL
-- **建议**：`DSA_BASE_URL` 勿以 `/` 结尾
+这条路径现在有几个问题：
 
-## 错误响应格式
+1. **不再是当前主线推荐形态**：仓库已从产品壳系统收敛为 skill/library/scripts。
+2. **历史接口文档可能失真**：旧接口、旧 payload、旧部署方式不再保证与当前主线同步演进。
+3. **维护成本更高**：你需要自己维护进程、部署、鉴权、超时、接口兼容与错误处理。
 
-| 状态码 | error 字段 | 说明 |
-|--------|-------------|------|
-| 400 | `validation_error` | 参数错误（如缺少 stock_code） |
-| 409 | `duplicate_task` | 该股票正在分析中，拒绝重复提交 |
-| 500 | `internal_error` / `analysis_failed` | 分析过程发生错误 |
+因此，如果你仍使用 HTTP 集成，请把它视为**自维护兼容层**。
 
-## 完整 SKILL.md 示例
+## 若你必须继续用 HTTP 集成
 
-将以下内容保存到 `~/.openclaw/skills/daily-stock-analysis/SKILL.md`：
+请按下面原则处理，而不是依赖旧文档里的具体接口细节：
 
-```markdown
----
-name: daily-stock-analysis
-description: 调用 daily_stock_analysis API 进行股票智能分析。当用户询问「分析茅台」「analyze AAPL」「帮我看看 600519」等时使用。仅支持股票代码，不支持中文名称。
-metadata:
-  {"openclaw": {"requires": {"env": ["DSA_BASE_URL"]}, "primaryEnv": "DSA_BASE_URL"}}
----
+1. **先核实你的 fork / 服务实际暴露了哪些端点**；
+2. **以你当前部署代码为准**，不要默认历史 `/api/v1/analysis/analyze`、`/api/v1/agent/chat` 等契约仍与主线一致；
+3. **把 API 契约文档内收**到你的兼容层仓库或部署文档里；
+4. **把 openclaw Skill 当成 HTTP 客户端**，不要再假设主仓库会持续为该方案优化。
 
-## 触发条件
+## 迁移建议
 
-当用户请求分析某只股票时（如「分析茅台」「analyze AAPL」「帮我看看 600519」），使用本 Skill。
+如果你手里已有旧的 HTTP Skill：
 
-## 工作流程
+### 迁移方向 1：HTTP → 脚本调用
 
-1. **提取股票代码**：从用户消息中识别股票代码（如 600519、AAPL、hk00700）。若用户仅提供中文名称（如「茅台」），需提示用户提供股票代码，或使用常见映射（茅台→600519）。
-2. **调用 API**：向 `{DSA_BASE_URL}/api/v1/analysis/analyze` 发送 POST 请求，请求体：
-   ```json
-   {"stock_code": "<提取的代码>", "report_type": "detailed", "force_refresh": true, "async_mode": false}
-   ```
-3. **等待响应**：同步模式下分析约需 2–5 分钟，请确保 HTTP 客户端超时足够（建议 ≥300 秒）。
-4. **解析结果**：从响应的 `report.summary` 中提取 `operation_advice`、`trend_prediction`、`analysis_summary`，从 `report.strategy` 中提取 `ideal_buy`、`stop_loss`、`take_profit`，以简洁格式呈现给用户。
-5. **错误处理**：
-   - 连接失败：提示检查 DSA 是否运行、DSA_BASE_URL 是否正确
-   - 400：检查 stock_code 格式
-   - 409：该股票正在分析中，可稍后重试或查询任务状态
-   - 500：提示查看 DSA 日志排查
+把 Skill 的执行逻辑改成直接调用：
 
-## 股票代码格式
+- `python scripts/run_stock_analysis.py ...`
+- `python scripts/run_market_analysis.py ...`
+- `python scripts/resolve_strategy.py ...`
 
-- A股：6位数字（600519、000001）
-- 港股：hk + 5位数字（hk00700）
-- 美股：1–5 字母（AAPL、TSLA、BRK.B）
-- 美股指数：SPX、DJI、IXIC 等
-```
+### 迁移方向 2：HTTP → Python import
 
-## Agent 策略问股（可选）
+如果 Skill 运行环境就是 Python 工程环境，改为直接复用 `src.stock_analysis_skill.*` 的 contracts / service / analyzers / renderers。
 
-若 daily_stock_analysis 已启用 `AGENT_MODE=true`，可调用 Agent 策略问股接口，支持多轮对话与多种策略（缠论、均线金叉等）：
+### 迁移方向 3：保留 HTTP，但明确自维护
 
-```bash
-# 将 {DSA_BASE_URL} 替换为实际配置的 API 地址（如 http://localhost:8000）
-curl -X POST {DSA_BASE_URL}/api/v1/agent/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message": "用缠论分析 600519", "session_id": "optional-session-id"}'
-```
+如果你必须保留 HTTP：
 
-响应包含 `content`（分析结论）和 `session_id`（用于多轮对话）。
+- 在仓库外层维护你的 compat service
+- 固定自己的 API 契约版本
+- 不再把本仓库 README / docs 视为该接口的权威文档
 
-## 故障排查
+## 总结
 
-| 现象 | 可能原因 | 处理建议 |
-|------|----------|----------|
-| 连接失败 | DSA 未运行、端口错误、防火墙 | 确认 `python main.py --serve-only` 已启动，检查 `DSA_BASE_URL` |
-| 400 错误 | stock_code 格式错误或缺失 | 检查代码格式（见上文表格），确保请求体包含 `stock_code` |
-| 500 错误 | AI 配置、数据源、网络问题 | 查看 DSA 日志，确认 GEMINI_API_KEY 等已配置 |
-| Agent 400 | Agent 模式未启用 | 在 DSA 的 `.env` 中设置 `AGENT_MODE=true` |
-| 分析超时 | 同步模式等待时间过长 | 增加 HTTP 客户端超时，或改用 `async_mode: true` 轮询状态 |
+一句话：
 
-## 认证说明
-
-默认情况下 DSA API 无需认证。若在 `.env` 中启用了 `ADMIN_AUTH_ENABLED=true`，则需在 Skill 调用时携带登录后获得的 Cookie，具体方式取决于 openclaw 的 HTTP 工具能力（当前 API 仅支持 Cookie 认证，不支持 Bearer Token）。
+- **当前主线推荐**：脚本入口 + canonical Python modules
+- **历史兼容方案**：自维护 HTTP / API service
+- **不要再把本文件理解为当前默认接入手册**

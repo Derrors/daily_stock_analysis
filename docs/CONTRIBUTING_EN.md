@@ -76,12 +76,11 @@ docs: update README deployment section
 
 ### CI Checks
 
-After opening a PR, CI will automatically run the following PR checks:
+After opening a PR, the repository currently relies on the backend validation gate:
 
 | Check | Description | Required |
 |-------|-------------|:--------:|
-| `backend-gate` | `scripts/ci_gate.sh` — py_compile + flake8 critical errors + `./test.sh code` + `./test.sh yfinance` + offline pytest | ✅ |
-| `docker-build` | Docker image build and key module import smoke test | ✅ |
+| `backend-gate` | `scripts/ci_gate.sh` — Python syntax checks for the retained runtime modules, flake8 critical errors only, deterministic local checks (`./test.sh code` + `./test.sh yfinance`), and offline pytest (`python -m pytest tests -m "not network"`) | ✅ |
 
 **Running checks locally:**
 
@@ -91,6 +90,11 @@ pip install -r requirements.txt
 pip install flake8 pytest
 ./scripts/ci_gate.sh
 
+# Or run phases separately
+./scripts/ci_gate.sh syntax
+./scripts/ci_gate.sh flake8
+./scripts/ci_gate.sh deterministic
+./scripts/ci_gate.sh offline-tests
 ```
 
 ### Documentation Sync Rule

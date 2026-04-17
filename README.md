@@ -22,12 +22,16 @@
 - **Markdown 输出**：面向 Agent 的确定性文本渲染
 - **数据源边界**：Tushare + 新闻搜索源（Bocha / Tavily / Brave / SerpAPI）
 
-### 已移除 / 正在移除的产品壳
+### 已从主线移除的产品壳
 - FastAPI API
 - Web UI
 - Docker 部署包装
 - 登录认证 / 系统配置后台
 - 组合管理、回测、历史页面等产品外围能力
+
+### 兼容但不推荐作为当前入口的残留面
+- 少量 legacy facade / re-export 仍保留，用于避免旧调用方或过渡期 import 直接炸掉
+- 这些兼容层不代表仓库当前推荐用法；新接入应优先走 `scripts/*` 与 `src.stock_analysis_skill.*`
 
 ---
 
@@ -186,9 +190,9 @@ python scripts/resolve_strategy.py --list
 - `references/data-sources.md`
 - `references/output-format.md`
 - `references/strategies.md`
-- `docs/openclaw-skill-integration.md`
 - `docs/LLM_CONFIG_GUIDE.md`
 - `docs/TUSHARE_STOCK_LIST_GUIDE.md`
+- `docs/openclaw-skill-integration.md`（历史 / compatibility-only 参考，不是当前主线推荐接入方式）
 
 ---
 
