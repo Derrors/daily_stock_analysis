@@ -18,8 +18,6 @@ from src.agent.skills.defaults import (
 
 logger = logging.getLogger(__name__)
 
-_MIN_BACKTEST_SAMPLES = 30
-
 _SIGNAL_SCORES: Dict[str, float] = {
     "strong_buy": 5.0,
     "buy": 4.0,
@@ -43,7 +41,6 @@ class SkillAggregator:
     def aggregate(
         self,
         ctx: AgentContext,
-        min_samples: int = _MIN_BACKTEST_SAMPLES,
     ) -> Optional[AgentOpinion]:
         skill_opinions = [op for op in ctx.opinions if is_skill_agent_name(op.agent_name)]
         if not skill_opinions:
@@ -65,7 +62,6 @@ class SkillAggregator:
             skill_id = extract_skill_id(op.agent_name) or op.agent_name
             weight = self._compute_weight(
                 op,
-                min_samples,
                 perf_weight=perf_weights.get(skill_id),
             )
             weights.append(weight)
@@ -119,10 +115,8 @@ class SkillAggregator:
     def _compute_weight(
         self,
         opinion: AgentOpinion,
-        min_samples: int,
         perf_weight: Optional[float] = None,
     ) -> float:
-        _ = min_samples
         base_weight = opinion.confidence
         if perf_weight is not None:
             return base_weight * perf_weight
