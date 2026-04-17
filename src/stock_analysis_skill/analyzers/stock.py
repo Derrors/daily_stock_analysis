@@ -7,6 +7,7 @@ from typing import Optional
 
 from src.services.analysis_service import AnalysisService as LegacyAnalysisService
 from src.stock_analysis_skill.contracts import AnalysisMode, AnalysisRequest, AnalysisResponse, QuerySource
+from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
 
 MODE_TO_REPORT_TYPE = {
     AnalysisMode.QUICK: "brief",
@@ -22,21 +23,37 @@ def _resolve_report_type(mode: AnalysisMode) -> str:
 
 
 class StockSkillAnalyzer:
-    """Thin wrapper over the current stock-analysis mainline."""
+    """Thin wrapper over the canonical stock-analysis runtime."""
 
-    def __init__(self, analysis_service: Optional[LegacyAnalysisService] = None):
+    def __init__(
+        self,
+        analysis_service: Optional[LegacyAnalysisService] = None,
+        runtime: Optional[StockAnalysisMainlineRuntime] = None,
+    ):
+        self.runtime = runtime or StockAnalysisMainlineRuntime()
         self.analysis_service = analysis_service or LegacyAnalysisService()
+        self._analysis_service_override = analysis_service is not None
 
     @property
     def last_error(self) -> Optional[str]:
-        return getattr(self.analysis_service, "last_error", None)
+        return getattr(self.runtime, "last_error", None) or getattr(self.analysis_service, "last_error", None)
 
     def analyze(self, request: AnalysisRequest) -> Optional[AnalysisResponse]:
-        return self.analysis_service.analyze_stock_unified(
-            stock_code=request.stock.code or request.stock.input,
-            report_type=_resolve_report_type(request.mode),
+        stock_code = request.stock.code or request.stock.input
+        report_type = _resolve_report_type(request.mode)
+        query_source = self._normalize_query_source(request.context.query_source)
+        if self._analysis_service_override:
+            return self.analysis_service.analyze_stock_unified(
+                stock_code=stock_code,
+                report_type=report_type,
+                force_refresh=request.execution.force_refresh,
+                query_source=query_source,
+            )
+        return self.runtime.analyze_stock_unified(
+            stock_code=stock_code,
+            report_type=report_type,
             force_refresh=request.execution.force_refresh,
-            query_source=self._normalize_query_source(request.context.query_source),
+            query_source=query_source,
         )
 
     @staticmethod

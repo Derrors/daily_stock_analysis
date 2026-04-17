@@ -32,6 +32,10 @@
 - [-] Phase E.4 Agent 兼容层审计：盘点 `src/agent/*` 中的 legacy/compat wrapper，删无用、聚合有用兼容层
 - [-] Phase E.5 配置最小化审计 v2：继续盘 `src/config.py` 里仅为旧入口保留的 LLM / runtime fallback 逻辑
 - [-] Phase E.6 数据/搜索兼容债清理：继续抽离已下线 provider 的 compat 语义，收紧主路径说明
+- [x] Phase F.1 主链真相源内迁设计：明确 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 与 `src/stock_analysis_skill/*` 的目标边界
+- [-] Phase F.2 同步主链内迁：把股票分析主执行链逐步迁入 `src/stock_analysis_skill/*`，旧入口退为兼容壳
+- [-] Phase F.3 异步主链对齐：把 `AnalysisTaskQueue -> AnalysisService -> StockAnalysisPipeline` 的调用关系对齐到新的 skill runtime 主链
+- [ ] Phase F.4 回归与契约校验：按同步/异步/agent/script 四条链重跑回归，确认不存在双真相源
 
 ## Proposed Phases
 
@@ -62,6 +66,12 @@
 - 清理 Agent 侧 legacy wrapper / compat layer
 - 二次审计 config / provider fallback / 已下线搜索源兼容逻辑
 - 清洁测试噪音与工具脚本历史包袱
+
+### Phase F - 主链真相源内迁（高风险）
+- 把 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 中仍然承担“业务真相源”的执行链逐步迁入 `src/stock_analysis_skill/*`
+- 明确 `StockAnalysisSkillService`、`AnalysisService`、`StockAnalysisPipeline` 的最终边界，避免继续形成双真相源
+- 对齐同步主链、异步任务链、脚本入口与 agent 调用链
+- 迁移过程中旧入口只允许退化为兼容壳，不允许继续增长新业务逻辑
 
 ## Key Design Decisions（已确认）
 - [x] 新仓库**完全放弃** FastAPI / Web / Docker 服务形态，只保留 skill + library + scripts
@@ -96,3 +106,12 @@
 - Phase E 第二批第二刀已完成：`AgentMemory` 中 `get_strategy_performance` / `compute_strategy_weights` 已改成对 `skill` 版本的别名，`SkillRouter.select_strategies` 也已改成对 `select_skills` 的别名，`src/agent/factory.py` 中单 Agent 路径的旧 `legacy single-agent` 表述已收口；相关定点验证 `112 passed + 4 subtests passed`，随后全量 pytest 仍为 **808 passed + 96 subtests passed**
 - Phase E 第二批第三刀已完成：`llm_models_source` 的 env-key 路径已从 `legacy_env` 语义收口为 `managed_env`（`agent_model_service` 仍兼容识别旧值）；`Config._managed_env_keys_to_model_list()` 成为主名，旧 `_legacy_keys_to_model_list()` 保留兼容别名；`get_managed_api_keys_for_model()` / `get_managed_litellm_params()` 成为 analyzer 与 agent llm-adapter 的主用 helper，旧 `get_api_keys_for_model()` / `extra_litellm_params()` 保留兼容别名；定点验证 `98 passed`，全量 pytest 仍为 **808 passed + 96 subtests passed**
 - Phase E 第二批第四刀已完成：README / `docs/README_EN.md` 的迁移状态已从 Phase D 更新到 Phase E；`src/services/__init__.py` 明确不再作为旧产品壳的全量服务总入口；`src/notification.py` 与 `src/report_output.py` 的注释已进一步强调“新代码优先走报告输出语义，notification 仅是兼容层”；`docs/CHANGELOG.md` 的 Unreleased 已补齐本轮语义收口条目。该刀仅涉及文档/注释与说明口径，已通过 `py_compile` 快速校验，无新增行为回归风险。
+- 你已明确选择高风险路线「方案 1：主链内迁」。按当前规则，这一轮必须先把 Phase F 拆成单独里程碑并暂停确认，避免在未锁边界的情况下直接动 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 造成双真相源或调用链断裂。
+- Phase F.1 设计冻结文档已落地：`reports/plan/2026-04-17-daily-stock-analysis-mainline-internalization-plan.md`。
+- Phase F.2 第一刀已完成：新增 `src/stock_analysis_skill/runtime/stock_pipeline.py` 与 `runtime/__init__.py`，把同步股票分析服务编排抽到 canonical skill runtime；`StockSkillAnalyzer` 默认改为直接走 `StockAnalysisMainlineRuntime`，`AnalysisService` 已退化为 compat facade（内部转发到新 runtime），`src/stock_analysis_skill/pipeline.py` 也已切到新 runtime alias；当前 `src/core/pipeline.py` 仍保留为低层执行器，尚未退成纯壳，因此 Phase F.2 仍处于进行中。
+- Phase F.2 第一刀验证结果：定点验证 `45 passed`，随后全量 `pytest` 通过 `808 passed + 96 subtests passed`。
+- Phase F.2 第二刀已完成：`AnalysisService` 的历史依赖与注释已进一步收薄，当前语义已经明确为 compat facade，而不是服务层真相源；定点验证继续为 `45 passed`，全量 `pytest` 仍为 `808 passed + 96 subtests passed`。
+- Phase F.2 第三刀已完成：同步编排入口 `process_single_stock/run/_save_local_report/_generate_aggregate_report` 已抽到 `src/stock_analysis_skill/runtime/pipeline_batch.py`；`src/core/pipeline.StockAnalysisPipeline` 现改为继承 `StockAnalysisBatchRuntimeMixin`，更明确地退化为“低层执行器 + compat shell”形态。该刀的定点验证为 `82 passed`，随后全量 `pytest` 仍为 `808 passed + 96 subtests passed`。
+- Phase F.3 第一刀已完成：`AnalysisTaskQueue` 的真调用入口已从 `AnalysisService` 对齐到 `StockAnalysisSkillService`，但任务结果字典契约保持不变；同时补了 runtime/test-stub 兼容修复（`runtime/__init__.py` 轻量化、`task_queue.py` 对 `normalize_stock_code` 提供测试兜底、`stock_pipeline.py` 对 `data_provider` 顶层导入改为延迟兜底）。该刀的定点验证为 `48 passed`，随后全量 `pytest` 仍为 `808 passed + 96 subtests passed`。
+- Phase F.3 第二刀已完成：`TaskInfo` 现在内部优先持有 `unified_result`，同时继续保留 legacy `result` dict 作为兼容字段；`TaskInfo.to_dict()` 已新增只增不破的 `unified_response` 输出字段；新增测试 `tests/test_task_queue_payload_contract.py` 覆盖这层 payload 兼容关系。该刀的定点验证为 `49 passed`，随后全量 `pytest` 为 **810 passed + 96 subtests passed**。
+- Phase F.3 第三刀已完成：任务队列读取侧现在默认把 `result` 映射到 canonical payload（优先 `unified_result`，其次 legacy dict 内嵌的 `unified_response`，最后才回退到 legacy `result` 本体），同时新增 `legacy_result` 字段显式保留旧 payload；这使 task queue 的对外读取面开始向 skill-first contract 倾斜，但仍保持向后兼容。该刀的定点验证为 `32 passed`，随后全量 `pytest` 为 **810 passed + 96 subtests passed**。

@@ -26,7 +26,11 @@ from typing import Optional, Dict, List, Any, TYPE_CHECKING, Tuple, Literal
 if TYPE_CHECKING:
     from asyncio import Queue as AsyncQueue
 
-from data_provider.base import canonical_stock_code, normalize_stock_code
+from data_provider.base import canonical_stock_code
+try:
+    from data_provider.base import normalize_stock_code
+except ImportError:  # pragma: no cover - test stubs may only expose canonical_stock_code
+    normalize_stock_code = canonical_stock_code
 from src.utils.analysis_metadata import SELECTION_SOURCES
 
 logger = logging.getLogger(__name__)
@@ -63,6 +67,9 @@ class TaskInfo:
     status: TaskStatus = TaskStatus.PENDING
     progress: int = 0
     message: Optional[str] = None
+    # Canonical internal payload. Legacy result dict remains in `result` for
+    # callers that still read TaskInfo.result directly.
+    unified_result: Optional[Dict[str, Any]] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     report_type: str = "detailed"
@@ -72,6 +79,22 @@ class TaskInfo:
     original_query: Optional[str] = None
     selection_source: Optional[str] = None
     
+    def get_preferred_result(self) -> Optional[Dict[str, Any]]:
+        """Return the preferred task payload for current callers.
+
+        Preference order:
+        1. unified_result (canonical skill/runtime payload)
+        2. unified_response embedded inside the legacy result dict
+        3. legacy result dict
+        """
+        if self.unified_result is not None:
+            return self.unified_result
+        if isinstance(self.result, dict):
+            embedded = self.result.get("unified_response")
+            if isinstance(embedded, dict):
+                return embedded
+        return self.result
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert task info into an API-friendly dictionary."""
         return {
@@ -88,6 +111,9 @@ class TaskInfo:
             "error": self.error,
             "original_query": self.original_query,
             "selection_source": self.selection_source,
+            "result": self.get_preferred_result(),
+            "legacy_result": self.result,
+            "unified_response": self.unified_result,
         }
     
     def copy(self) -> 'TaskInfo':
@@ -99,6 +125,7 @@ class TaskInfo:
             status=self.status,
             progress=self.progress,
             message=self.message,
+            unified_result=self.unified_result,
             result=self.result,
             error=self.error,
             report_type=self.report_type,
@@ -555,24 +582,29 @@ class AnalysisTaskQueue:
         self._broadcast_event("task_started", task.to_dict())
         
         try:
-            # 导入分析服务（延迟导入避免循环依赖）
-            from src.services.analysis_service import AnalysisService
-            
+            # 导入 canonical skill service（延迟导入避免循环依赖）
+            from src.stock_analysis_skill.service import StockAnalysisSkillService
+
             # 执行分析
-            service = AnalysisService()
+            service = StockAnalysisSkillService()
 
             def _on_progress(progress: int, message: str) -> None:
                 self.update_task_progress(task_id, progress, message)
 
-            result = service.analyze_stock(
+            legacy_result = service.analyze_stock_payload(
                 stock_code=stock_code,
                 report_type=report_type,
                 force_refresh=force_refresh,
                 query_id=task_id,
                 progress_callback=_on_progress,
             )
-            
-            if result:
+            unified_result = (
+                legacy_result.get("unified_response")
+                if isinstance(legacy_result, dict)
+                else None
+            )
+
+            if legacy_result:
                 # 更新任务状态为完成
                 with self._data_lock:
                     task = self._tasks.get(task_id)
@@ -580,9 +612,13 @@ class AnalysisTaskQueue:
                         task.status = TaskStatus.COMPLETED
                         task.progress = 100
                         task.completed_at = datetime.now()
-                        task.result = result
+                        task.unified_result = unified_result
+                        task.result = legacy_result
                         task.message = "分析完成"
-                        task.stock_name = result.get("stock_name", task.stock_name)
+                        if isinstance(unified_result, dict):
+                            stock_payload = unified_result.get("stock") or {}
+                            task.stock_name = stock_payload.get("name") or task.stock_name
+                        task.stock_name = legacy_result.get("stock_name", task.stock_name)
                         
                         # 从分析中集合移除
                         dedupe_key = _dedupe_stock_code_key(task.stock_code)
@@ -595,7 +631,7 @@ class AnalysisTaskQueue:
                 # 清理过期任务
                 self._cleanup_old_tasks()
                 
-                return result
+                return legacy_result
             else:
                 # 分析返回空结果
                 raise Exception(service.last_error or "分析返回空结果")

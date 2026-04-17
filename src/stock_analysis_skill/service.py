@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 """Skill-first service entry for stock analysis.
 
-This module provides a stable agent-facing service wrapper while the legacy
-implementation is being migrated out of product-shell modules.
+This module is the canonical service surface. During Phase F it progressively
+absorbs both the synchronous mainline and the async task-entry path from older
+product-shell modules.
 """
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from src.services.analysis_service import AnalysisService as LegacyAnalysisService
+from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
 
 from .analyzers.market import MarketSkillAnalyzer
 from .analyzers.stock import StockSkillAnalyzer
@@ -40,15 +42,18 @@ def resolve_report_type(mode: AnalysisMode) -> str:
 
 
 class StockAnalysisSkillService:
-    """Agent-facing stock/market/strategy service.
+    """Canonical agent-facing stock/market/strategy service.
 
-    During migration this service keeps legacy execution paths behind a new
-    skill-first facade so scripts and agents no longer couple directly to the
-    old product-shell layout.
+    Scripts and agents should depend on this service instead of the historical
+    `AnalysisService -> StockAnalysisPipeline` chain.
     """
 
     def __init__(self, analysis_service: Optional[LegacyAnalysisService] = None):
-        self.stock_analyzer = StockSkillAnalyzer(analysis_service=analysis_service)
+        self.mainline_runtime = StockAnalysisMainlineRuntime()
+        self.stock_analyzer = StockSkillAnalyzer(
+            analysis_service=analysis_service,
+            runtime=self.mainline_runtime,
+        )
         self.market_analyzer = MarketSkillAnalyzer()
         self.skill_resolver = SkillResolver()
         self.strategy_resolver = self.skill_resolver  # backward-compatible alias
@@ -56,13 +61,36 @@ class StockAnalysisSkillService:
     @property
     def last_error(self) -> Optional[str]:
         return (
-            self.stock_analyzer.last_error
+            self.mainline_runtime.last_error
+            or self.stock_analyzer.last_error
             or self.market_analyzer.last_error
         )
 
     def analyze_request(self, request: AnalysisRequest) -> Optional[AnalysisResponse]:
-        """Execute the stock-analysis mainline through the new facade."""
+        """Execute the stock-analysis mainline through the canonical facade."""
         return self.stock_analyzer.analyze(request)
+
+    def analyze_stock_payload(
+        self,
+        stock_code: str,
+        *,
+        report_type: str = "detailed",
+        force_refresh: bool = False,
+        query_id: Optional[str] = None,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
+    ) -> Optional[dict[str, Any]]:
+        """Compatibility payload entry for async task/runtime callers.
+
+        This keeps the task queue on the canonical skill service while preserving
+        the current legacy result-dict contract for task state storage/events.
+        """
+        return self.mainline_runtime.analyze_stock(
+            stock_code=stock_code,
+            report_type=report_type,
+            force_refresh=force_refresh,
+            query_id=query_id,
+            progress_callback=progress_callback,
+        )
 
     def analyze_market(self, request: MarketAnalysisRequest) -> Optional[MarketAnalysisResponse]:
         """Execute market analysis through the new facade."""
