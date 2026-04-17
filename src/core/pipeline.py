@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A股自选股智能分析系统 - 核心分析流水线
+A股自选股智能分析系统 - 低层分析执行器兼容层
 ===================================
 
 职责：
-1. 管理整个分析流程
-2. 协调数据获取、存储、搜索、分析、报告输出等模块
-3. 实现并发控制和异常处理
-4. 提供股票分析的核心功能
+1. 提供数据获取、趋势分析、LLM 分析等低层执行能力
+2. 保留 `StockAnalysisPipeline` 旧类名与测试 patch 点
+3. 通过 `StockAnalysisBatchRuntimeMixin` 承接已迁入 skill runtime 的同步编排入口
+
+新同步主链入口位于 `src.stock_analysis_skill.runtime`。
 """
 
 import logging
 import threading
-import time
-import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from typing import List, Dict, Any, Optional, Callable, Tuple
 
 import pandas as pd
@@ -55,12 +53,10 @@ logger = logging.getLogger(__name__)
 
 class StockAnalysisPipeline(StockAnalysisBatchRuntimeMixin):
     """
-    股票分析主流程调度器
-    
-    职责：
-    1. 管理整个分析流程
-    2. 协调数据获取、存储、搜索、分析、报告输出等模块
-    3. 实现并发控制和异常处理
+    低层股票分析执行器兼容类。
+
+    同步编排入口已迁入 `src.stock_analysis_skill.runtime.pipeline_batch`；
+    本类保留底层数据/分析能力与旧导入路径。
     """
     
     def __init__(

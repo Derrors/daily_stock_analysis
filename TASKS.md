@@ -35,7 +35,8 @@
 - [x] Phase F.1 主链真相源内迁设计：明确 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 与 `src/stock_analysis_skill/*` 的目标边界
 - [-] Phase F.2 同步主链内迁：把股票分析主执行链逐步迁入 `src/stock_analysis_skill/*`，旧入口退为兼容壳
 - [-] Phase F.3 异步主链对齐：把 `AnalysisTaskQueue -> AnalysisService -> StockAnalysisPipeline` 的调用关系对齐到新的 skill runtime 主链
-- [ ] Phase F.4 回归与契约校验：按同步/异步/agent/script 四条链重跑回归，确认不存在双真相源
+- [x] Phase F.4 Analyzer 内核拆分：逐步拆 `src/analyzer.py`，优先迁出纯函数/结果归一化/后处理逻辑，避免与 F.2/F.3 混成一次高风险爆破
+- [x] Phase F.5 回归与契约校验：按同步/异步/agent/script 四条链重跑回归，确认不存在双真相源
 
 ## Proposed Phases
 
@@ -115,3 +116,6 @@
 - Phase F.3 第一刀已完成：`AnalysisTaskQueue` 的真调用入口已从 `AnalysisService` 对齐到 `StockAnalysisSkillService`，但任务结果字典契约保持不变；同时补了 runtime/test-stub 兼容修复（`runtime/__init__.py` 轻量化、`task_queue.py` 对 `normalize_stock_code` 提供测试兜底、`stock_pipeline.py` 对 `data_provider` 顶层导入改为延迟兜底）。该刀的定点验证为 `48 passed`，随后全量 `pytest` 仍为 `808 passed + 96 subtests passed`。
 - Phase F.3 第二刀已完成：`TaskInfo` 现在内部优先持有 `unified_result`，同时继续保留 legacy `result` dict 作为兼容字段；`TaskInfo.to_dict()` 已新增只增不破的 `unified_response` 输出字段；新增测试 `tests/test_task_queue_payload_contract.py` 覆盖这层 payload 兼容关系。该刀的定点验证为 `49 passed`，随后全量 `pytest` 为 **810 passed + 96 subtests passed**。
 - Phase F.3 第三刀已完成：任务队列读取侧现在默认把 `result` 映射到 canonical payload（优先 `unified_result`，其次 legacy dict 内嵌的 `unified_response`，最后才回退到 legacy `result` 本体），同时新增 `legacy_result` 字段显式保留旧 payload；这使 task queue 的对外读取面开始向 skill-first contract 倾斜，但仍保持向后兼容。该刀的定点验证为 `32 passed`，随后全量 `pytest` 为 **810 passed + 96 subtests passed**。
+- F.2/F.3 收尾阶段又补了一刀低风险空心化：`src/core/pipeline.py` 的顶部说明与类说明已收口到“低层分析执行器兼容层”，并删除了随同步编排迁出而失效的高层调度语义；针对 pipeline / skill / task queue 相关定点验证为 `59 passed`，全量 `pytest` 仍维持 **810 passed + 96 subtests passed**。
+- Phase F.4 已继续推进到核心拆分第四刀：在 `_call_litellm()` 主体迁入 `src/stock_analysis_skill/analysis/litellm_caller.py` 的基础上，进一步将 `analyze()` 主循环迁入 `src/stock_analysis_skill/analysis/execution.py`；`src/analyzer.py` 中 `analyze()` 已退为 compat delegate，并通过依赖注入继续复用 `is_available/_format_prompt/_call_litellm/_parse_response/_build_market_snapshot/_check_content_integrity/_build_integrity_retry_prompt/_apply_placeholder_fill` 等既有 patch 面，保证测试与旧调用方不炸。该刀定点验证为 `45 passed`，随后全量 `pytest` 仍维持 **810 passed + 96 subtests passed**。
+- Phase F.5 已完成两组契约级回归矩阵并收口：第一组覆盖同步主链 / 异步任务链 / script / skill contract / market analyzer（`57 passed`）；第二组覆盖 agent/orchestrator/skill service/script entry/renderers（`121 passed`）；其后再次全量 `pytest` 仍为 **810 passed + 96 subtests passed**。当前可视为 Phase F 已完成“内核内迁 + 契约回归”验收。
