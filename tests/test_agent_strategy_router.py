@@ -63,11 +63,11 @@ class TestSkillRouter(unittest.TestCase):
     )
     @patch("src.config.get_config", return_value=SimpleNamespace(agent_skills=[]))
     def test_manual_mode_falls_back_to_defaults_when_no_skills_configured(self, _mock_config, _mock_available, _mock):
-        from src.agent.skills.router import SkillRouter, _DEFAULT_SKILLS
+        from src.agent.skills.router import SkillRouter
         router = SkillRouter()
         ctx = AgentContext()
         result = router.select_skills(ctx)
-        self.assertEqual(result, list(_DEFAULT_SKILLS[:3]))
+        self.assertEqual(result, ["bull_trend", "shrink_pullback"])
 
     def test_detect_regime_bullish(self):
         from src.agent.skills.router import SkillRouter

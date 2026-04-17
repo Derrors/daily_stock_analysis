@@ -146,5 +146,3 @@ class SkillRouter:
             available_skill_ids=available or None,
         )
 
-
-_DEFAULT_SKILLS = tuple(get_default_router_skill_ids())
