@@ -610,11 +610,8 @@ class AgentOrchestrator:
         if context:
             ctx.stock_code = context.get("stock_code", "")
             ctx.stock_name = context.get("stock_name", "")
-            requested_skills = context.get("skills")
-            if requested_skills is None:
-                requested_skills = context.get("strategies", [])
+            requested_skills = context.get("skills", [])
             ctx.meta["skills_requested"] = requested_skills or []
-            ctx.meta["strategies_requested"] = requested_skills or []
             ctx.meta["report_language"] = normalize_report_language(context.get("report_language", "zh"))
 
             # Pre-populate data fields that the caller already has

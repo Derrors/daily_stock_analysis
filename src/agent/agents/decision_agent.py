@@ -157,7 +157,7 @@ new decision_type values.
             parts.append("")
 
         # Skill meta
-        requested_skills = ctx.meta.get("skills_requested") or ctx.meta.get("strategies_requested")
+        requested_skills = ctx.meta.get("skills_requested")
         if requested_skills:
             parts.append(f"## Skills: {', '.join(requested_skills)}")
             parts.append("")

@@ -25,7 +25,7 @@ class TestSkillRouter(unittest.TestCase):
         from src.agent.skills.router import SkillRouter
         router = SkillRouter()
         ctx = AgentContext(query="test")
-        ctx.meta["strategies_requested"] = ["chan_theory", "wave_theory"]
+        ctx.meta["skills_requested"] = ["chan_theory", "wave_theory"]
         result = router.select_skills(ctx)
         self.assertEqual(result, ["chan_theory", "wave_theory"])
 
@@ -33,7 +33,7 @@ class TestSkillRouter(unittest.TestCase):
         from src.agent.skills.router import SkillRouter
         router = SkillRouter()
         ctx = AgentContext()
-        ctx.meta["strategies_requested"] = ["a", "b", "c", "d", "e"]
+        ctx.meta["skills_requested"] = ["a", "b", "c", "d", "e"]
         result = router.select_skills(ctx, max_count=2)
         self.assertEqual(len(result), 2)
 

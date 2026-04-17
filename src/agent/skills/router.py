@@ -30,7 +30,7 @@ class SkillRouter:
         ctx: AgentContext,
         max_count: int = 3,
     ) -> List[str]:
-        requested_skills = ctx.meta.get("skills_requested") or ctx.meta.get("strategies_requested", [])
+        requested_skills = ctx.meta.get("skills_requested", [])
         if requested_skills:
             logger.info("[SkillRouter] user-requested skills: %s", requested_skills)
             return requested_skills[:max_count]
