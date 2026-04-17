@@ -138,4 +138,10 @@ class SkillAggregator:
         return 1.0
 
 
-StrategyAggregator = SkillAggregator
+class StrategyAggregator(SkillAggregator):
+    """Compatibility wrapper for legacy strategy-oriented callers.
+
+    Canonical runtime code should prefer ``SkillAggregator``.
+    """
+
+

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Focused tests for StrategyAggregator consensus behavior."""
+"""Focused tests for canonical SkillAggregator behavior and strategy compat import."""
 
 import os
 import sys
@@ -16,13 +16,13 @@ except ModuleNotFoundError:
 from src.agent.protocols import AgentContext, AgentOpinion
 
 
-class TestStrategyAggregator(unittest.TestCase):
-    """Test StrategyAggregator consensus logic."""
+class TestSkillAggregator(unittest.TestCase):
+    """Test canonical SkillAggregator consensus logic."""
 
     def test_no_strategy_opinions_returns_none(self):
-        from src.agent.strategies.aggregator import StrategyAggregator
+        from src.agent.skills.aggregator import SkillAggregator
 
-        agg = StrategyAggregator()
+        agg = SkillAggregator()
         ctx = AgentContext()
         ctx.add_opinion(AgentOpinion(agent_name="technical", signal="buy", confidence=0.8))
 
@@ -31,9 +31,9 @@ class TestStrategyAggregator(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_single_strategy_consensus(self):
-        from src.agent.strategies.aggregator import StrategyAggregator
+        from src.agent.skills.aggregator import SkillAggregator
 
-        agg = StrategyAggregator()
+        agg = SkillAggregator()
         ctx = AgentContext()
         ctx.add_opinion(AgentOpinion(agent_name="strategy_bull_trend", signal="buy", confidence=0.7))
 
@@ -44,9 +44,9 @@ class TestStrategyAggregator(unittest.TestCase):
         self.assertEqual(result.signal, "buy")
 
     def test_mixed_signals_produce_hold(self):
-        from src.agent.strategies.aggregator import StrategyAggregator
+        from src.agent.skills.aggregator import SkillAggregator
 
-        agg = StrategyAggregator()
+        agg = SkillAggregator()
         ctx = AgentContext()
         ctx.add_opinion(AgentOpinion(agent_name="strategy_a", signal="buy", confidence=0.6))
         ctx.add_opinion(AgentOpinion(agent_name="strategy_b", signal="sell", confidence=0.6))
@@ -55,6 +55,15 @@ class TestStrategyAggregator(unittest.TestCase):
 
         self.assertIsNotNone(result)
         self.assertEqual(result.signal, "hold")
+
+    def test_strategy_aggregator_is_explicit_compat_wrapper(self):
+        from src.agent.skills.aggregator import SkillAggregator
+        from src.agent.strategies.aggregator import StrategyAggregator
+
+        agg = StrategyAggregator()
+
+        self.assertIsInstance(agg, SkillAggregator)
+        self.assertEqual(type(agg).__name__, "StrategyAggregator")
 
 
 if __name__ == "__main__":
