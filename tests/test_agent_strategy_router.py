@@ -26,7 +26,7 @@ class TestSkillRouter(unittest.TestCase):
         router = SkillRouter()
         ctx = AgentContext(query="test")
         ctx.meta["strategies_requested"] = ["chan_theory", "wave_theory"]
-        result = router.select_strategies(ctx)
+        result = router.select_skills(ctx)
         self.assertEqual(result, ["chan_theory", "wave_theory"])
 
     def test_user_requested_capped_at_max(self):
@@ -34,7 +34,7 @@ class TestSkillRouter(unittest.TestCase):
         router = SkillRouter()
         ctx = AgentContext()
         ctx.meta["strategies_requested"] = ["a", "b", "c", "d", "e"]
-        result = router.select_strategies(ctx, max_count=2)
+        result = router.select_skills(ctx, max_count=2)
         self.assertEqual(len(result), 2)
 
     @patch("src.agent.skills.router.SkillRouter._get_routing_mode", return_value="manual")
@@ -50,7 +50,7 @@ class TestSkillRouter(unittest.TestCase):
         from src.agent.skills.router import SkillRouter
         router = SkillRouter()
         ctx = AgentContext()
-        result = router.select_strategies(ctx)
+        result = router.select_skills(ctx)
         self.assertEqual(result, ["chan_theory", "wave_theory"])
 
     @patch("src.agent.skills.router.SkillRouter._get_routing_mode", return_value="manual")
@@ -66,7 +66,7 @@ class TestSkillRouter(unittest.TestCase):
         from src.agent.skills.router import SkillRouter, _DEFAULT_SKILLS
         router = SkillRouter()
         ctx = AgentContext()
-        result = router.select_strategies(ctx)
+        result = router.select_skills(ctx)
         self.assertEqual(result, list(_DEFAULT_SKILLS[:3]))
 
     def test_detect_regime_bullish(self):

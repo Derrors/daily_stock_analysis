@@ -64,9 +64,6 @@ class SkillRouter:
         logger.info("[SkillRouter] using default skills: %s", default_skills)
         return default_skills
 
-    # Compatibility alias for legacy strategy-based callers.
-    select_strategies = select_skills
-
     def _detect_regime(self, ctx: AgentContext) -> Optional[str]:
         for op in ctx.opinions:
             if op.agent_name != "technical":
