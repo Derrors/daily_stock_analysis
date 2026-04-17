@@ -1979,17 +1979,6 @@ def get_managed_litellm_params(model: str, config: Config) -> Dict[str, Any]:
             params["extra_headers"] = {"APP-Code": "GPIJ3886"}
     return params
 
-
-def get_api_keys_for_model(model: str, config: Config) -> List[str]:
-    """Backward-compatible alias for `get_managed_api_keys_for_model()`."""
-    return get_managed_api_keys_for_model(model, config)
-
-
-def extra_litellm_params(model: str, config: Config) -> Dict[str, Any]:
-    """Backward-compatible alias for `get_managed_litellm_params()`."""
-    return get_managed_litellm_params(model, config)
-
-
 if __name__ == "__main__":
     # 测试配置加载
     config = get_config()

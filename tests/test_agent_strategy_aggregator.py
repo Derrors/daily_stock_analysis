@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Focused tests for canonical SkillAggregator behavior and strategy compat import."""
+"""Focused tests for canonical SkillAggregator behavior."""
 
 import os
 import sys
@@ -56,20 +56,6 @@ class TestSkillAggregator(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result.signal, "hold")
 
-    def test_strategy_aggregator_is_explicit_compat_wrapper(self):
-        from src.agent.skills.aggregator import SkillAggregator
-        from src.agent.strategies.aggregator import StrategyAggregator
-
-        agg = StrategyAggregator()
-
-        self.assertIsInstance(agg, SkillAggregator)
-        self.assertEqual(type(agg).__name__, "StrategyAggregator")
-
-    def test_legacy_strategy_module_still_exposes_skill_aggregator_compatibly(self):
-        from src.agent.skills.aggregator import SkillAggregator as CanonicalSkillAggregator
-        from src.agent.strategies.aggregator import SkillAggregator as LegacySkillAggregator
-
-        self.assertIs(LegacySkillAggregator, CanonicalSkillAggregator)
 
 
 if __name__ == "__main__":

@@ -114,5 +114,3 @@ Return **only** a JSON object:
             raw_data=parsed,
         )
 
-
-StrategyAgent = SkillAgent

@@ -137,11 +137,3 @@ class SkillAggregator:
         _ = (agent_name, min_samples)
         return 1.0
 
-
-class StrategyAggregator(SkillAggregator):
-    """Compatibility wrapper for legacy strategy-oriented callers.
-
-    Canonical runtime code should prefer ``SkillAggregator``.
-    """
-
-

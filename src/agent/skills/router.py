@@ -150,6 +150,4 @@ class SkillRouter:
         )
 
 
-StrategyRouter = SkillRouter
-_DEFAULT_STRATEGIES = tuple(get_default_router_skill_ids())
-_DEFAULT_SKILLS = _DEFAULT_STRATEGIES
+_DEFAULT_SKILLS = tuple(get_default_router_skill_ids())
