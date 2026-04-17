@@ -9,7 +9,7 @@
 
 使用方式：
     直接从子模块导入，例如:
-    from src.services.analysis_service import AnalysisService
+    from src.services.analysis_context_service import AnalysisContextService
 
 说明：
     `src.services` 目前只保留仍有明确主链价值的服务出口。
@@ -20,7 +20,6 @@
 def __getattr__(name: str):
     """延迟导入：仅在通过 src.services.X 访问时才加载对应子模块。"""
     _lazy_map = {
-        "AnalysisService": "src.services.analysis_service",
         "AnalysisContextService": "src.services.analysis_context_service",
         "StockService": "src.services.stock_service",
     }
@@ -32,7 +31,6 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    "AnalysisService",
     "AnalysisContextService",
     "StockService",
 ]

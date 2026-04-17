@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
-from src.services.analysis_service import AnalysisService as LegacyAnalysisService
 from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
 
 from .analyzers.market import MarketSkillAnalyzer
@@ -48,12 +47,9 @@ class StockAnalysisSkillService:
     `AnalysisService -> StockAnalysisPipeline` chain.
     """
 
-    def __init__(self, analysis_service: Optional[LegacyAnalysisService] = None):
+    def __init__(self):
         self.mainline_runtime = StockAnalysisMainlineRuntime()
-        self.stock_analyzer = StockSkillAnalyzer(
-            analysis_service=analysis_service,
-            runtime=self.mainline_runtime,
-        )
+        self.stock_analyzer = StockSkillAnalyzer(runtime=self.mainline_runtime)
         self.market_analyzer = MarketSkillAnalyzer()
         self.skill_resolver = SkillResolver()
 
