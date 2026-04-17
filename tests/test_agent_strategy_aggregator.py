@@ -65,6 +65,12 @@ class TestSkillAggregator(unittest.TestCase):
         self.assertIsInstance(agg, SkillAggregator)
         self.assertEqual(type(agg).__name__, "StrategyAggregator")
 
+    def test_legacy_strategy_module_still_exposes_skill_aggregator_compatibly(self):
+        from src.agent.skills.aggregator import SkillAggregator as CanonicalSkillAggregator
+        from src.agent.strategies.aggregator import SkillAggregator as LegacySkillAggregator
+
+        self.assertIs(LegacySkillAggregator, CanonicalSkillAggregator)
+
 
 if __name__ == "__main__":
     unittest.main()
