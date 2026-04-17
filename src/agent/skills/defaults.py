@@ -273,24 +273,9 @@ def get_primary_default_skill_id(
     return defaults[0] if defaults else ""
 
 
-def _build_regime_skill_ids(skills: Iterable[object]) -> Dict[str, List[str]]:
-    regime_map: Dict[str, List[str]] = {}
-    for skill in _sort_skill_pool(skills):
-        skill_id = str(getattr(skill, "name", "")).strip()
-        if not skill_id:
-            continue
-        for regime in getattr(skill, "market_regimes", None) or []:
-            regime_name = str(regime).strip().lower()
-            if not regime_name:
-                continue
-            regime_map.setdefault(regime_name, []).append(skill_id)
-    return regime_map
-
-
 DEFAULT_ACTIVE_SKILL_IDS: tuple[str, ...] = tuple(get_default_active_skill_ids())
 DEFAULT_ROUTER_SKILL_IDS: tuple[str, ...] = tuple(get_default_router_skill_ids())
 PRIMARY_DEFAULT_SKILL_ID = get_primary_default_skill_id()
-REGIME_SKILL_IDS: Dict[str, List[str]] = _build_regime_skill_ids(_load_builtin_skill_catalog())
 
 
 def build_skill_agent_name(skill_id: str) -> str:
