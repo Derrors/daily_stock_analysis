@@ -13,9 +13,8 @@ A股自选股智能分析系统 - 配置管理模块
 import json
 import logging
 import os
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional
 from urllib.parse import urlparse
 from dotenv import load_dotenv, dotenv_values
 from dataclasses import dataclass, field
@@ -529,9 +528,6 @@ class Config:
     agent_event_monitor_interval_minutes: int = 5  # Polling interval for event monitor background checks
     agent_event_alert_rules_json: str = ""  # JSON array of serialized EventMonitor rules
 
-    # 历史邮件路由元数据（兼容保留；当前主链不再负责邮件投递）
-    stock_email_groups: List[Tuple[List[str], List[str]]] = field(default_factory=list)
-
     # 报告类型：simple(精简) 或 full(完整)
     report_type: str = "simple"
     report_language: str = "zh"
@@ -565,13 +561,6 @@ class Config:
     # 是否保存分析上下文快照（用于历史回溯）
     save_context_snapshot: bool = True
 
-    # === 回测配置 ===
-    backtest_enabled: bool = True
-    backtest_eval_window_days: int = 10
-    backtest_min_age_days: int = 14
-    backtest_engine_version: str = "v1"
-    backtest_neutral_band_pct: float = 2.0
-    
     # === 日志配置 ===
     log_dir: str = "./logs"  # 日志文件目录
     log_level: str = "INFO"  # 日志级别
@@ -628,14 +617,6 @@ class Config:
     # 基本面缓存最大条目数（避免长时间运行内存增长）
     fundamental_cache_max_entries: int = 256
 
-    # === Portfolio PR2: import/risk/fx settings ===
-    portfolio_risk_concentration_alert_pct: float = 35.0
-    portfolio_risk_drawdown_alert_pct: float = 15.0
-    portfolio_risk_stop_loss_alert_pct: float = 10.0
-    portfolio_risk_stop_loss_near_ratio: float = 0.8
-    portfolio_risk_lookback_days: int = 180
-    portfolio_fx_update_enabled: bool = True
-
     # === 流控配置（防封禁关键参数）===
     # Akshare 请求间隔范围（秒）
     akshare_sleep_min: float = 2.0
@@ -649,12 +630,6 @@ class Config:
     retry_base_delay: float = 1.0
     retry_max_delay: float = 30.0
     
-    # 企业微信（回调模式）
-    wecom_corpid: Optional[str] = None              # 企业 ID
-    wecom_token: Optional[str] = None               # 回调 Token
-    wecom_encoding_aes_key: Optional[str] = None    # 消息加解密密钥
-    wecom_agent_id: Optional[str] = None            # 应用 AgentId
-
     # === 配置校验模式 ===
     # CONFIG_VALIDATE_MODE=warn (default): log all issues but always continue startup
     # CONFIG_VALIDATE_MODE=strict: exit(1) when any "error" severity issue is found
@@ -664,7 +639,7 @@ class Config:
     _VALID_AGENT_ARCH = {"single", "multi"}
     _VALID_ORCHESTRATOR_MODES = {"quick", "standard", "full", "specialist"}
     _VALID_SKILL_ROUTING = {"auto", "manual"}
-    _WEBUI_RUNTIME_ENV_FILE_PRIORITY_KEYS = frozenset(
+    _RUNTIME_DOTENV_PRIORITY_KEYS = frozenset(
         {
             "STOCK_LIST",
             "RUN_IMMEDIATELY",
@@ -727,7 +702,7 @@ class Config:
         
         加载优先级：
         1. 大多数配置保持系统环境变量优先
-        2. WebUI 可写的运行期关键键优先复用持久化 `.env`，但保留启动时显式进程环境变量的 override
+        2. 运行期可热更新的关键键优先复用持久化 `.env`，但保留启动时显式进程环境变量的 override
         3. 代码中的默认值
         """
         cls._capture_bootstrap_runtime_env_overrides()
@@ -1067,7 +1042,6 @@ class Config:
                 minimum=1,
             ),
             agent_event_alert_rules_json=os.getenv('AGENT_EVENT_ALERT_RULES_JSON', ''),
-            stock_email_groups=cls._parse_stock_email_groups(),
             report_type=cls._parse_report_type(os.getenv('REPORT_TYPE', 'simple')),
             report_language=cls._parse_report_language(report_language_raw),
             report_summary_only=os.getenv('REPORT_SUMMARY_ONLY', 'false').lower() == 'true',
@@ -1105,16 +1079,6 @@ class Config:
                 minimum=0.0,
             ),
             save_context_snapshot=os.getenv('SAVE_CONTEXT_SNAPSHOT', 'true').lower() == 'true',
-            backtest_enabled=os.getenv('BACKTEST_ENABLED', 'true').lower() == 'true',
-            backtest_eval_window_days=parse_env_int(os.getenv('BACKTEST_EVAL_WINDOW_DAYS'), 10, field_name='BACKTEST_EVAL_WINDOW_DAYS', minimum=1),
-            backtest_min_age_days=parse_env_int(os.getenv('BACKTEST_MIN_AGE_DAYS'), 14, field_name='BACKTEST_MIN_AGE_DAYS', minimum=1),
-            backtest_engine_version=os.getenv('BACKTEST_ENGINE_VERSION', 'v1'),
-            backtest_neutral_band_pct=parse_env_float(
-                os.getenv('BACKTEST_NEUTRAL_BAND_PCT'),
-                2.0,
-                field_name='BACKTEST_NEUTRAL_BAND_PCT',
-                minimum=0.0,
-            ),
             log_dir=os.getenv('LOG_DIR', './logs'),
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
             max_workers=parse_env_int(os.getenv('MAX_WORKERS'), 3, field_name='MAX_WORKERS', minimum=1),
@@ -1135,11 +1099,6 @@ class Config:
                 os.getenv('MARKET_REVIEW_REGION', 'cn')
             ),
             trading_day_check_enabled=os.getenv('TRADING_DAY_CHECK_ENABLED', 'true').lower() != 'false',
-            # 企业微信回调
-            wecom_corpid=os.getenv('WECOM_CORPID'),
-            wecom_token=os.getenv('WECOM_TOKEN'),
-            wecom_encoding_aes_key=os.getenv('WECOM_ENCODING_AES_KEY'),
-            wecom_agent_id=os.getenv('WECOM_AGENT_ID'),
             # 实时行情增强数据配置
             enable_realtime_quote=os.getenv('ENABLE_REALTIME_QUOTE', 'true').lower() == 'true',
             enable_realtime_technical_indicators=os.getenv(
@@ -1182,37 +1141,6 @@ class Config:
                 field_name='FUNDAMENTAL_CACHE_MAX_ENTRIES',
                 minimum=1,
             ),
-            portfolio_risk_concentration_alert_pct=parse_env_float(
-                os.getenv('PORTFOLIO_RISK_CONCENTRATION_ALERT_PCT'),
-                35.0,
-                field_name='PORTFOLIO_RISK_CONCENTRATION_ALERT_PCT',
-                minimum=0.0,
-            ),
-            portfolio_risk_drawdown_alert_pct=parse_env_float(
-                os.getenv('PORTFOLIO_RISK_DRAWDOWN_ALERT_PCT'),
-                15.0,
-                field_name='PORTFOLIO_RISK_DRAWDOWN_ALERT_PCT',
-                minimum=0.0,
-            ),
-            portfolio_risk_stop_loss_alert_pct=parse_env_float(
-                os.getenv('PORTFOLIO_RISK_STOP_LOSS_ALERT_PCT'),
-                10.0,
-                field_name='PORTFOLIO_RISK_STOP_LOSS_ALERT_PCT',
-                minimum=0.0,
-            ),
-            portfolio_risk_stop_loss_near_ratio=parse_env_float(
-                os.getenv('PORTFOLIO_RISK_STOP_LOSS_NEAR_RATIO'),
-                0.8,
-                field_name='PORTFOLIO_RISK_STOP_LOSS_NEAR_RATIO',
-                minimum=0.0,
-            ),
-            portfolio_risk_lookback_days=parse_env_int(
-                os.getenv('PORTFOLIO_RISK_LOOKBACK_DAYS'),
-                180,
-                field_name='PORTFOLIO_RISK_LOOKBACK_DAYS',
-                minimum=1,
-            ),
-            portfolio_fx_update_enabled=os.getenv('PORTFOLIO_FX_UPDATE_ENABLED', 'true').lower() == 'true'
         )
     
     @classmethod
@@ -1433,40 +1361,6 @@ class Config:
         return model_list
 
     @classmethod
-    def _parse_stock_email_groups(cls) -> List[Tuple[List[str], List[str]]]:
-        """
-        Parse STOCK_GROUP_N and EMAIL_GROUP_N from environment.
-        Returns [(stocks, emails), ...] ordered by group index.
-        Stock codes are canonicalized via normalize_stock_code so that
-        runtime routing matches the same equivalence used in validation.
-        """
-        from data_provider.base import normalize_stock_code
-
-        groups: dict = {}
-        stock_re = re.compile(r'^STOCK_GROUP_(\d+)$', re.IGNORECASE)
-        email_re = re.compile(r'^EMAIL_GROUP_(\d+)$', re.IGNORECASE)
-        for key in os.environ:
-            m = stock_re.match(key)
-            if m:
-                idx = int(m.group(1))
-                val = os.environ[key].strip()
-                groups.setdefault(idx, {})['stocks'] = [
-                    normalize_stock_code(c.strip())
-                    for c in val.split(',') if c.strip()
-                ]
-            m = email_re.match(key)
-            if m:
-                idx = int(m.group(1))
-                val = os.environ[key].strip()
-                groups.setdefault(idx, {})['emails'] = [e.strip() for e in val.split(',') if e.strip()]
-        result = []
-        for idx in sorted(groups.keys()):
-            g = groups[idx]
-            if 'stocks' in g and 'emails' in g and g['stocks'] and g['emails']:
-                result.append((g['stocks'], g['emails']))
-        return result
-
-    @classmethod
     def _parse_report_type(cls, value: str) -> str:
         """Parse REPORT_TYPE, fallback to simple for invalid values (supports brief)."""
         v = (value or 'simple').strip().lower()
@@ -1514,7 +1408,7 @@ class Config:
         env_value = os.getenv(key)
         file_value = cls._get_env_file_value(key)
 
-        should_prefer_file = prefer_env_file or key in cls._WEBUI_RUNTIME_ENV_FILE_PRIORITY_KEYS
+        should_prefer_file = prefer_env_file or key in cls._RUNTIME_DOTENV_PRIORITY_KEYS
         if should_prefer_file and file_value is not None:
             if env_value is not None and cls._has_bootstrap_runtime_env_override(key):
                 return env_value
@@ -1546,7 +1440,7 @@ class Config:
             return
 
         explicit_overrides = set()
-        for key in cls._WEBUI_RUNTIME_ENV_FILE_PRIORITY_KEYS:
+        for key in cls._RUNTIME_DOTENV_PRIORITY_KEYS:
             env_value = os.environ.get(key)
             if env_value is None:
                 continue
@@ -1750,43 +1644,11 @@ class Config:
                 message="未配置自选股列表 (STOCK_LIST)",
                 field="STOCK_LIST",
             ))
-        elif self.stock_email_groups:
-            from data_provider.base import normalize_stock_code
-            configured_stock_set = {
-                normalize_stock_code(code)
-                for code in self.stock_list
-                if (code or "").strip()
-            }
-            missing_group_stocks_dict: Dict[str, None] = {}
-            for stocks, _emails in self.stock_email_groups:
-                for stock in stocks:
-                    raw = (stock or "").strip()
-                    if not raw:
-                        continue
-                    normalized_stock = normalize_stock_code(stock)
-                    if normalized_stock in configured_stock_set:
-                        continue
-                    if normalized_stock in missing_group_stocks_dict:
-                        continue
-                    missing_group_stocks_dict[normalized_stock] = None
-            missing_group_stocks = list(missing_group_stocks_dict.keys())
-            if missing_group_stocks:
-                issues.append(ConfigIssue(
-                    severity="warning",
-                    message=(
-                        "检测到 STOCK_GROUP_N 中存在未包含在 STOCK_LIST 内的股票："
-                        f"{', '.join(missing_group_stocks[:6])}。"
-                        "STOCK_GROUP_N 仅用于邮件路由，不会扩大分析范围；"
-                        "请先将这些股票加入 STOCK_LIST。"
-                    ),
-                    field="STOCK_GROUP_N",
-                ))
-
         # --- Data sources (informational only) ---
         if not self.tushare_token:
             issues.append(ConfigIssue(
                 severity="info",
-                message="未配置 Tushare Token，将使用其他数据源",
+                message="未配置 Tushare Token，A 股/港股主分析链的行情与基本面能力会受限",
                 field="TUSHARE_TOKEN",
             ))
 

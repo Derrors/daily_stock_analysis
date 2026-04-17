@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for backward-compatible config env aliases and TickFlow loading."""
+"""Tests for backward-compatible config env aliases and skill runtime config loading."""
 
 import os
 import tempfile
@@ -239,10 +239,10 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self,
         _mock_parse_yaml,
     ) -> None:
-        """When process env explicitly sets a WEBUI-mutable key to a value
-        that differs from .env (e.g. via docker-compose ``environment:``),
-        the process env must win because ``_capture_bootstrap_runtime_env_overrides``
-        runs before dotenv loads and the mismatch proves an intentional override.
+        """When process env explicitly sets a runtime-priority key to a value
+        that differs from .env, the process env must win because
+        ``_capture_bootstrap_runtime_env_overrides`` runs before dotenv loads
+        and the mismatch proves an intentional override.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             env_path = Path(temp_dir) / ".env"
@@ -286,7 +286,7 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self,
         _mock_parse_yaml,
     ) -> None:
-        """When a WEBUI-mutable key exists only in process env (not in .env),
+        """When a runtime-priority key exists only in process env (not in .env),
         it IS a genuine explicit override and must be honoured.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -334,52 +334,21 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_stock_email_groups_support_case_insensitive_env_names(
+    def test_legacy_stock_group_env_is_ignored_by_skill_runtime(
         self,
         _mock_parse_yaml,
         _mock_setup_env,
     ) -> None:
         env = {
             "STOCK_LIST": "600519,300750",
-            "Stock_Group_1": "600519",
-            "Email_Group_1": "user1@example.com",
-            "stock_group_2": "300750",
-            "email_group_2": "user2@example.com",
-        }
-
-        with patch.dict(os.environ, env, clear=True):
-            config = Config._load_from_env()
-
-        self.assertEqual(
-            config.stock_email_groups,
-            [
-                (["600519"], ["user1@example.com"]),
-                (["300750"], ["user2@example.com"]),
-            ],
-        )
-
-    @patch("src.config.setup_env")
-    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_stock_email_groups_normalize_codes_at_parse_time(
-        self,
-        _mock_parse_yaml,
-        _mock_setup_env,
-    ) -> None:
-        """STOCK_GROUP codes are canonicalized at parse time so that
-        runtime email routing matches the same equivalence used in
-        validate_structured()."""
-        env = {
-            "STOCK_LIST": "600519,HK00700",
-            "STOCK_GROUP_1": "SH600519,1810.HK",
+            "STOCK_GROUP_1": "600519",
             "EMAIL_GROUP_1": "user@example.com",
         }
 
         with patch.dict(os.environ, env, clear=True):
             config = Config._load_from_env()
 
-        stocks, emails = config.stock_email_groups[0]
-        self.assertEqual(stocks, ["600519", "HK01810"])
-        self.assertEqual(emails, ["user@example.com"])
+        self.assertFalse(hasattr(config, "stock_email_groups"))
 
 
 if __name__ == "__main__":

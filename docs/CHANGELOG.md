@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 <!-- 每条独立一行追加到本段末尾，无需分类标题，合并时冲突最小 -->
 
+- [改进] 仓库主形态正式收敛为面向 Agent 的 stock-analysis skill-first 结构：新增 `SKILL.md`、`references/`、`src/stock_analysis_skill/` 以及 `run_stock_analysis.py` / `run_market_analysis.py` / `resolve_strategy.py` / `doctor.py` 等脚本入口，统一合同层 canonical path 为 `src.stock_analysis_skill.contracts`。
+- [改进] 新增最小可用主链：股票分析、市场分析、策略解析与确定性 Markdown 渲染均已通过新的 skill facade 暴露；`run_stock_analysis.py` 缺少模型配置时现在会显式 fail-fast 返回 `preflight_failed`，避免无意义执行链路。
+- [改进] 删除旧产品壳与外围模块：移除 FastAPI API、Docker、认证、回测、历史、组合管理、导入解析、图片导入和系统配置等非 skill 核心能力，并同步清理对应测试与文档。
+- [文档] README 与 `docs/README_EN.md` 已重写为 skill-first 口径，并删除过时的部署、FAQ、full-guide、API spec 与 image-extract 文档，避免仓库说明继续误导为产品化系统。
+- [测试] 新增 skill-first 测试集（contracts / stock entry / market dry-run / strategy resolution / markdown renderer），同时完成一轮 73 项 skill + agent 侧回归验证，全部通过。
+
 - [修复] 大盘复盘链路接入 `REPORT_LANGUAGE`：`REPORT_LANGUAGE=en` 时，A 股/合并复盘的 Prompt、章节标题、模板兜底文案与通知包装标题统一改为英文，避免出现英文正文外包中文标题的问题。
 - [修复] `AGENT_MAX_STEPS` 在 orchestrator 多 Agent 模式下统一明确为“默认作为各子 Agent 的步数上限而非硬覆盖；TechnicalAgent 等高默认值 Agent 会被封顶、低默认值 Agent 保持原值；当用户主动调高（>10）时，再统一覆盖所有子 Agent 采用全局值”，同时修复用户设置 12 但 TechnicalAgent 仍以默认 6 步运行并报 "Agent exceeded max steps" 的问题（fixes #1026）
 - [修复] Specialist（Skill）Agent 失败不再中断整个分析管线，改为与 intel/risk 相同的优雅降级策略

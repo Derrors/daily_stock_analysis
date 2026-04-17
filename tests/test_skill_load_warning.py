@@ -43,24 +43,5 @@ class SkillRouterWarningTests(unittest.TestCase):
         self.assertTrue(any("Failed to get manual skills config" in line for line in cm.output))
 
 
-class SkillAggregatorDebugLogTests(unittest.TestCase):
-    """SkillAggregator helpers must log at debug level on failure."""
-
-    def test_backtest_factor_logs_debug_on_exception(self) -> None:
-        with patch("src.agent.skills.aggregator.SkillAggregator._use_backtest_autoweight", return_value=True):
-            with patch("src.services.backtest_service.BacktestService", side_effect=ImportError("no backtest")):
-                with self.assertLogs("src.agent.skills.aggregator", level=logging.DEBUG) as cm:
-                    result = SkillAggregator._backtest_factor("some_skill", 30)
-        self.assertEqual(result, 1.0)
-        self.assertTrue(any("backtest factor" in line.lower() for line in cm.output))
-
-    def test_use_backtest_autoweight_logs_debug_on_exception(self) -> None:
-        with patch("src.config.get_config", side_effect=RuntimeError("cfg error")):
-            with self.assertLogs("src.agent.skills.aggregator", level=logging.DEBUG) as cm:
-                result = SkillAggregator._use_backtest_autoweight()
-        self.assertTrue(result)
-        self.assertTrue(any("backtest autoweight" in line.lower() for line in cm.output))
-
-
 if __name__ == "__main__":
     unittest.main()

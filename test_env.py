@@ -81,7 +81,7 @@ def test_config():
     print(f"  Gemini 主模型: {config.gemini_model}")
     print(f"  Gemini 备选模型: {config.gemini_model_fallback}")
     
-    print(f"  企业微信 Webhook: {'已配置 ✓' if config.wechat_webhook_url else '未配置 ✗'}")
+    print("  内置通知推送: 已下线（由外部 Agent / 调用方负责投递）")
     
     print_section("配置验证")
     issues = config.validate_structured()
@@ -314,50 +314,11 @@ def test_llm():
 
 
 def test_notification():
-    """测试通知推送"""
-    print_header("5. 通知推送测试")
-    
-    from src.notification import NotificationService
-    from src.config import get_config
-    
-    config = get_config()
-    service = NotificationService()
-    
+    """确认内置通知推送已退出 skill runtime。"""
+    print_header("5. 通知推送状态")
     print_section("配置检查")
-    if service.is_available():
-        print(f"  ✓ 企业微信 Webhook 已配置")
-        webhook_preview = config.wechat_webhook_url[:50] + "..." if len(config.wechat_webhook_url) > 50 else config.wechat_webhook_url
-        print(f"    URL: {webhook_preview}")
-    else:
-        print(f"  ✗ 企业微信 Webhook 未配置")
-        return False
-    
-    print_section("发送测试消息")
-    
-    test_message = f"""## 🧪 系统测试消息
-
-这是一条来自 **A股自选股智能分析系统** 的测试消息。
-
-- 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-- 测试目的: 验证企业微信 Webhook 配置
-
-如果您收到此消息，说明通知功能配置正确 ✓"""
-    
-    print(f"  正在发送...")
-    
-    try:
-        success = service.send_to_wechat(test_message)
-        
-        if success:
-            print(f"  ✓ 消息发送成功，请检查企业微信")
-        else:
-            print(f"  ✗ 消息发送失败")
-        
-        return success
-        
-    except Exception as e:
-        print(f"  ✗ 发送异常: {e}")
-        return False
+    print("  ✓ 内置通知推送已下线；报告文本由 skill 生成，消息投递交给外部调用方。")
+    return True
 
 
 def run_all_tests():

@@ -54,7 +54,7 @@ class SkillAggregator:
         perf_weights = (
             memory.compute_skill_weights(
                 skill_ids,
-                use_backtest=self._use_backtest_autoweight(),
+                use_backtest=False,
             )
             if memory.enabled
             else {}
@@ -125,36 +125,17 @@ class SkillAggregator:
         base_weight = opinion.confidence
         if perf_weight is not None:
             return base_weight * perf_weight
-        return base_weight * self._backtest_factor(opinion.agent_name, min_samples)
+        return base_weight * self._compatibility_factor(opinion.agent_name, min_samples)
 
     @staticmethod
-    def _backtest_factor(agent_name: str, min_samples: int) -> float:
-        if not SkillAggregator._use_backtest_autoweight():
-            return 1.0
+    def _compatibility_factor(agent_name: str, min_samples: int) -> float:
+        """Return neutral weighting for compatibility.
 
-        skill_id = extract_skill_id(agent_name) or agent_name
-        try:
-            from src.services.backtest_service import BacktestService
-
-            service = BacktestService()
-            summary = service.get_skill_summary(skill_id)
-            if summary and summary.get("total_evaluations", 0) >= min_samples:
-                win_rate = summary.get("win_rate", 0.5)
-                return 0.5 + win_rate
-        except Exception:
-            logger.debug("Failed to compute backtest factor for %s", agent_name, exc_info=True)
+        Backtest-driven skill auto-weighting was removed with the deleted
+        backtest subsystem. Keep the method so callers do not need to branch.
+        """
+        _ = (agent_name, min_samples)
         return 1.0
-
-    @staticmethod
-    def _use_backtest_autoweight() -> bool:
-        try:
-            from src.config import get_config
-
-            config = get_config()
-            return getattr(config, "agent_skill_autoweight", True)
-        except Exception:
-            logger.debug("Failed to get backtest autoweight config, defaulting to True", exc_info=True)
-            return True
 
 
 StrategyAggregator = SkillAggregator

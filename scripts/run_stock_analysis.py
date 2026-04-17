@@ -26,7 +26,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import get_config  # noqa: E402
-from src.schemas.analysis_contract import (  # noqa: E402
+from src.stock_analysis_skill.contracts import (  # noqa: E402
     AnalysisContextMeta,
     AnalysisExecution,
     AnalysisFeatures,
@@ -39,17 +39,17 @@ from src.schemas.analysis_contract import (  # noqa: E402
     SelectionSource,
     StockTarget,
 )
-from src.services.analysis_service import AnalysisService  # noqa: E402
+from src.stock_analysis_skill.service import (  # noqa: E402
+    StockAnalysisSkillService,
+    resolve_report_type,
+)
 from src.utils.analysis_runtime_contract import build_full_analysis_preflight_error  # noqa: E402
 
 
-MODE_TO_REPORT_TYPE = {
-    AnalysisMode.QUICK: "brief",
-    AnalysisMode.STANDARD: "simple",
-    AnalysisMode.DEEP: "full",
-    AnalysisMode.STRATEGY: "full",
-    AnalysisMode.CONTEXT_ONLY: "simple",
-}
+def _resolve_report_type(request_or_mode: AnalysisRequest | AnalysisMode) -> str:
+    """Backward-compatible helper export for legacy tests/callers."""
+    mode = request_or_mode.mode if isinstance(request_or_mode, AnalysisRequest) else request_or_mode
+    return resolve_report_type(mode)
 
 
 def _parse_market(value: Optional[str]) -> Optional[str]:
@@ -113,10 +113,6 @@ def _build_request_from_args(args: argparse.Namespace) -> AnalysisRequest:
             selection_source=_parse_selection_source(args.selection_source),
         ),
     )
-
-
-def _resolve_report_type(request: AnalysisRequest) -> str:
-    return MODE_TO_REPORT_TYPE.get(request.mode, "simple")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -202,13 +198,8 @@ def main() -> int:
         print(json.dumps(preflight_error, ensure_ascii=False), file=sys.stderr)
         return 3
 
-    service = AnalysisService()
-    response = service.analyze_stock_unified(
-        stock_code=request.stock.code or request.stock.input,
-        report_type=_resolve_report_type(request),
-        force_refresh=request.execution.force_refresh,
-        query_source=request.context.query_source,
-    )
+    service = StockAnalysisSkillService()
+    response = service.analyze_request(request)
 
     if response is None:
         print(

@@ -435,11 +435,11 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertTrue(resp.success)
         mock_public_instances.assert_not_called()
 
-    def test_search_service_adds_public_searxng_provider_when_enabled(self):
+    def test_search_service_does_not_add_public_searxng_provider_after_runtime_descope(self):
         service = SearchService(searxng_public_instances_enabled=True)
 
-        self.assertTrue(service.is_available)
-        self.assertTrue(any(provider.name == "SearXNG" for provider in service._providers))
+        self.assertFalse(service.is_available)
+        self.assertFalse(any(provider.name == "SearXNG" for provider in service._providers))
 
 
 if __name__ == "__main__":

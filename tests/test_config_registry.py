@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Tests for config_registry after notification descope."""
+"""Tests for config_registry after skill-runtime config minimization."""
 import unittest
 
 from src.core.config_registry import build_schema_response, get_field_definition
 
 
-class TestRegistryAfterNotificationDescope(unittest.TestCase):
+class TestRegistryAfterSkillRuntimeMinimization(unittest.TestCase):
     def test_notification_fields_are_not_registered(self):
         for key in (
             "WECHAT_WEBHOOK_URL",
@@ -37,25 +37,21 @@ class TestRegistryAfterNotificationDescope(unittest.TestCase):
             self.assertEqual(field.get("category"), "system")
             self.assertNotEqual(field.get("display_order"), 9000)
 
-    def test_notification_category_has_no_channel_fields(self):
+    def test_notification_category_is_removed(self):
         schema = build_schema_response()
-        notification_cat = next((c for c in schema["categories"] if c["category"] == "notification"), None)
-        if notification_cat is None:
-            self.assertIsNone(notification_cat)
-            return
-        field_keys = {f["key"] for f in notification_cat["fields"]}
-        self.assertTrue(
-            field_keys.isdisjoint(
-                {
-                    "WECHAT_WEBHOOK_URL",
-                    "FEISHU_WEBHOOK_URL",
-                    "TELEGRAM_BOT_TOKEN",
-                    "EMAIL_SENDER",
-                    "DISCORD_WEBHOOK_URL",
-                    "SLACK_BOT_TOKEN",
-                }
-            )
-        )
+        categories = {c["category"] for c in schema["categories"]}
+        self.assertNotIn("notification", categories)
+
+    def test_removed_legacy_fields_fall_back_to_inferred_metadata(self):
+        for key in (
+            "PYTDX_HOST",
+            "PYTDX_PORT",
+            "PYTDX_SERVERS",
+            "BACKTEST_ENABLED",
+            "BACKTEST_EVAL_WINDOW_DAYS",
+        ):
+            field = get_field_definition(key)
+            self.assertEqual(field.get("display_order"), 9000)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@
 
 使用方式：
     直接从子模块导入，例如:
-    from src.services.history_service import HistoryService
+    from src.services.analysis_service import AnalysisService
 """
 
 
@@ -18,8 +18,6 @@ def __getattr__(name: str):
     _lazy_map = {
         "AnalysisService": "src.services.analysis_service",
         "AnalysisContextService": "src.services.analysis_context_service",
-        "BacktestService": "src.services.backtest_service",
-        "HistoryService": "src.services.history_service",
         "StockService": "src.services.stock_service",
     }
     if name in _lazy_map:
@@ -32,7 +30,5 @@ def __getattr__(name: str):
 __all__ = [
     "AnalysisService",
     "AnalysisContextService",
-    "BacktestService",
-    "HistoryService",
     "StockService",
 ]
