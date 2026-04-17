@@ -193,27 +193,6 @@ class AgentMemory:
         return max(0.0, min(1.0, adjusted))
 
     # -----------------------------------------------------------------
-    # Skill performance
-    # -----------------------------------------------------------------
-
-    def get_skill_performance(self, skill_id: str) -> Dict[str, Any]:
-        """Return neutral skill-performance data.
-
-        Backtest-driven skill auto-weighting has been removed from the skill-first
-        rewrite. Keep this method as a compatibility surface so callers can still
-        ask for skill performance without importing deleted backtest modules.
-        """
-        _ = skill_id
-        return {
-            "available": False,
-            "win_rate": 0.5,
-            "total_evaluations": 0,
-            "avg_return": 0.0,
-            "direction_accuracy": 0.5,
-            "sufficient_samples": False,
-        }
-
-    # -----------------------------------------------------------------
     # Auto-weighting
     # -----------------------------------------------------------------
 

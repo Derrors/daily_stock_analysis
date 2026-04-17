@@ -308,6 +308,3 @@ def extract_skill_id(agent_name: Optional[str]) -> Optional[str]:
 def is_skill_agent_name(agent_name: Optional[str]) -> bool:
     return extract_skill_id(agent_name) is not None
 
-
-def is_skill_consensus_name(agent_name: Optional[str]) -> bool:
-    return agent_name == SKILL_CONSENSUS_AGENT_NAME

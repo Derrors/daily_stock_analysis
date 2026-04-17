@@ -122,18 +122,9 @@ class SkillAggregator:
         min_samples: int,
         perf_weight: Optional[float] = None,
     ) -> float:
+        _ = min_samples
         base_weight = opinion.confidence
         if perf_weight is not None:
             return base_weight * perf_weight
-        return base_weight * self._compatibility_factor(opinion.agent_name, min_samples)
-
-    @staticmethod
-    def _compatibility_factor(agent_name: str, min_samples: int) -> float:
-        """Return neutral weighting for compatibility.
-
-        Backtest-driven skill auto-weighting was removed with the deleted
-        backtest subsystem. Keep the method so callers do not need to branch.
-        """
-        _ = (agent_name, min_samples)
-        return 1.0
+        return base_weight
 
