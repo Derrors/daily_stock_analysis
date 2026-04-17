@@ -67,8 +67,8 @@ class TaskInfo:
     status: TaskStatus = TaskStatus.PENDING
     progress: int = 0
     message: Optional[str] = None
-    # Canonical internal payload. Legacy result dict remains in `result` for
-    # callers that still read TaskInfo.result directly.
+    # Canonical internal payload. Compatibility payload remains in `result`
+    # for callers that still read TaskInfo.result directly.
     unified_result: Optional[Dict[str, Any]] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -84,8 +84,8 @@ class TaskInfo:
 
         Preference order:
         1. unified_result (canonical skill/runtime payload)
-        2. unified_response embedded inside the legacy result dict
-        3. legacy result dict
+        2. unified_response embedded inside the compatibility payload dict
+        3. compatibility payload dict
         """
         if self.unified_result is not None:
             return self.unified_result
@@ -591,7 +591,7 @@ class AnalysisTaskQueue:
             def _on_progress(progress: int, message: str) -> None:
                 self.update_task_progress(task_id, progress, message)
 
-            legacy_result = service.analyze_stock_payload(
+            runtime_payload = service.analyze_stock_payload(
                 stock_code=stock_code,
                 report_type=report_type,
                 force_refresh=force_refresh,
@@ -599,12 +599,12 @@ class AnalysisTaskQueue:
                 progress_callback=_on_progress,
             )
             unified_result = (
-                legacy_result.get("unified_response")
-                if isinstance(legacy_result, dict)
+                runtime_payload.get("unified_response")
+                if isinstance(runtime_payload, dict)
                 else None
             )
 
-            if legacy_result:
+            if runtime_payload:
                 # 更新任务状态为完成
                 with self._data_lock:
                     task = self._tasks.get(task_id)
@@ -613,12 +613,12 @@ class AnalysisTaskQueue:
                         task.progress = 100
                         task.completed_at = datetime.now()
                         task.unified_result = unified_result
-                        task.result = legacy_result
+                        task.result = runtime_payload
                         task.message = "分析完成"
                         if isinstance(unified_result, dict):
                             stock_payload = unified_result.get("stock") or {}
                             task.stock_name = stock_payload.get("name") or task.stock_name
-                        task.stock_name = legacy_result.get("stock_name", task.stock_name)
+                        task.stock_name = runtime_payload.get("stock_name", task.stock_name)
                         
                         # 从分析中集合移除
                         dedupe_key = _dedupe_stock_code_key(task.stock_code)
@@ -631,7 +631,7 @@ class AnalysisTaskQueue:
                 # 清理过期任务
                 self._cleanup_old_tasks()
                 
-                return legacy_result
+                return runtime_payload
             else:
                 # 分析返回空结果
                 raise Exception(service.last_error or "分析返回空结果")

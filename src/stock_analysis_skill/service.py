@@ -26,7 +26,7 @@ from .contracts import (
     StrategyResolutionResponse,
 )
 
-MODE_TO_REPORT_TYPE = {
+MODE_TO_PIPELINE_REPORT_TYPE = {
     AnalysisMode.QUICK: "brief",
     AnalysisMode.STANDARD: "simple",
     AnalysisMode.DEEP: "full",
@@ -36,8 +36,8 @@ MODE_TO_REPORT_TYPE = {
 
 
 def resolve_report_type(mode: AnalysisMode) -> str:
-    """Map unified analysis mode to the current legacy report type."""
-    return MODE_TO_REPORT_TYPE.get(mode, "simple")
+    """Map unified analysis mode to the runtime pipeline report type."""
+    return MODE_TO_PIPELINE_REPORT_TYPE.get(mode, "simple")
 
 
 class StockAnalysisSkillService:
@@ -74,10 +74,10 @@ class StockAnalysisSkillService:
         query_id: Optional[str] = None,
         progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> Optional[dict[str, Any]]:
-        """Compatibility payload entry for async task/runtime callers.
+        """Runtime payload entry for async task/runtime callers.
 
-        This keeps the task queue on the canonical skill service while preserving
-        the current legacy result-dict contract for task state storage/events.
+        Keeps task-queue writes on the canonical skill service while preserving
+        the existing compatibility payload shape for task storage/events.
         """
         return self.mainline_runtime.analyze_stock(
             stock_code=stock_code,

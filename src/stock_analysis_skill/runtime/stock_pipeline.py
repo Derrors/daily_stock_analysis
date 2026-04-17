@@ -57,7 +57,7 @@ class StockAnalysisMainlineRuntime:
         query_id: Optional[str] = None,
         progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Run the synchronous stock-analysis mainline and return the legacy payload."""
+        """Run the synchronous stock-analysis mainline and return runtime payload."""
         try:
             self.last_error = None
             if query_id is None:
@@ -90,13 +90,13 @@ class StockAnalysisMainlineRuntime:
                 report_type=rt.value,
                 query_source=QuerySource.API,
             )
-            legacy_response = self.build_legacy_analysis_response(
+            runtime_payload = self.build_runtime_payload(
                 result,
                 query_id=query_id,
                 report_type=rt.value,
             )
-            legacy_response["unified_response"] = unified_response.model_dump(mode="json")
-            return legacy_response
+            runtime_payload["unified_response"] = unified_response.model_dump(mode="json")
+            return runtime_payload
         except Exception as exc:
             self.last_error = str(exc)
             return None
@@ -289,7 +289,7 @@ class StockAnalysisMainlineRuntime:
             metadata=metadata_block,
         )
 
-    def build_legacy_analysis_response(
+    def build_runtime_payload(
         self,
         result: Any,
         *,

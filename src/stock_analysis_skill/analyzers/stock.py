@@ -8,7 +8,7 @@ from typing import Optional
 from src.stock_analysis_skill.contracts import AnalysisMode, AnalysisRequest, AnalysisResponse, QuerySource
 from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
 
-MODE_TO_REPORT_TYPE = {
+MODE_TO_PIPELINE_REPORT_TYPE = {
     AnalysisMode.QUICK: "brief",
     AnalysisMode.STANDARD: "simple",
     AnalysisMode.DEEP: "full",
@@ -18,7 +18,7 @@ MODE_TO_REPORT_TYPE = {
 
 
 def _resolve_report_type(mode: AnalysisMode) -> str:
-    return MODE_TO_REPORT_TYPE.get(mode, "simple")
+    return MODE_TO_PIPELINE_REPORT_TYPE.get(mode, "simple")
 
 
 class StockSkillAnalyzer:
