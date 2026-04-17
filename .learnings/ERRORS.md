@@ -102,3 +102,38 @@ Before running targeted pytest on inferred filenames, resolve the actual test pa
 - **Notes**: Switched to discovering the real aggregator test file name first (`tests/test_agent_strategy_aggregator.py`) before re-running the focused suite.
 
 ---
+
+## [ERR-20260417-004] delete-first-wrapper-removal-broke-test-imports
+
+**Logged**: 2026-04-17T21:22:30+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tests
+
+### Summary
+After removing internal compat wrappers (`_is_code_like` / `_normalize_code`) from `name_to_code_resolver`, targeted tests still imported those private symbols and failed during collection.
+
+### Error
+```
+ImportError: cannot import name '_is_code_like' from 'src.services.name_to_code_resolver'
+```
+
+### Context
+- Operation attempted: delete-first cleanup of internal compatibility wrappers
+- Command: `.venv/bin/python -m pytest tests/test_name_to_code_resolver.py tests/test_search_performance.py`
+- Trigger case: tests were coupled to deleted private helper names
+
+### Suggested Fix
+When deleting compatibility wrappers, first check tests for private-symbol imports and migrate them to canonical utilities (`src.services.stock_code_utils`) in the same change.
+
+### Metadata
+- Reproducible: yes
+- Related Files: src/services/name_to_code_resolver.py, tests/test_name_to_code_resolver.py
+- See Also: ERR-20260417-003
+
+### Resolution
+- **Resolved**: 2026-04-17T21:23:30+08:00
+- **Commit/PR**: pending
+- **Notes**: Updated tests to import/use `is_code_like` and `normalize_code` directly; reran focused suite with 22 passed.
+
+---
