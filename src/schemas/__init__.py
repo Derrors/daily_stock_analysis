@@ -1,68 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Shared schema exports for report and v2 analysis contracts."""
+"""Shared schema exports.
 
-from src.stock_analysis_skill.contracts import (
-    AnalysisContextMeta,
-    AnalysisExecution,
-    AnalysisFeatures,
-    AnalysisMode,
-    AnalysisOutput,
-    AnalysisRequest,
-    AnalysisResponse,
-    BatchAnalysisRequest,
-    BatchSharedOptions,
-    ChecklistStatus,
-    ConfidenceLevel,
-    DashboardBlock,
-    DashboardChecklistItem,
-    DataCompleteness,
-    DecisionAction,
-    DecisionBlock,
-    EvidenceBlock,
-    IntelBlock,
-    IntelNewsItem,
-    Market,
-    MetadataBlock,
-    OutputFormat,
-    OutputVerbosity,
-    QuerySource,
-    SelectionSource,
-    StockInfo,
-    StockTarget,
-    TrendBlock,
-    TrendStatus,
-)
+`src.schemas` now only exports report schema types.
+Analysis request/response contracts live in
+`src.stock_analysis_skill.contracts` and should be imported directly.
+"""
+
 from src.schemas.report_schema import AnalysisReportSchema
 
 __all__ = [
-    "AnalysisContextMeta",
-    "AnalysisExecution",
-    "AnalysisFeatures",
-    "AnalysisMode",
-    "AnalysisOutput",
     "AnalysisReportSchema",
-    "AnalysisRequest",
-    "AnalysisResponse",
-    "BatchAnalysisRequest",
-    "BatchSharedOptions",
-    "ChecklistStatus",
-    "ConfidenceLevel",
-    "DashboardBlock",
-    "DashboardChecklistItem",
-    "DataCompleteness",
-    "DecisionAction",
-    "DecisionBlock",
-    "EvidenceBlock",
-    "IntelBlock",
-    "IntelNewsItem",
-    "Market",
-    "MetadataBlock",
-    "OutputFormat",
-    "OutputVerbosity",
-    "QuerySource",
-    "SelectionSource",
-    "StockInfo",
-    "StockTarget",
-    "TrendBlock",
-    "TrendStatus",
 ]
