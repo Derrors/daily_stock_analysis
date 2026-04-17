@@ -391,14 +391,6 @@ class SkillManager:
         logger.info(f"Loaded {len(skills)} custom skills from {directory}")
         return len(skills)
 
-    def load_builtin_strategies(self) -> int:
-        """Compatibility wrapper for older call sites."""
-        return self.load_builtin_skills()
-
-    def load_custom_strategies(self, directory: Union[str, Path, None]) -> int:
-        """Compatibility wrapper for older call sites."""
-        return self.load_custom_skills(directory)
-
     def get(self, name: str) -> Optional[Skill]:
         """Get a skill by name."""
         return self._skills.get(name)

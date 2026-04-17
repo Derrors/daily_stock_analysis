@@ -6,7 +6,7 @@ Covers:
 - Config: agent_mode, agent_max_steps, agent_skills fields
 - _analyze_with_agent method
 - _agent_result_to_analysis_result conversion
-- YAML strategy loading (load_builtin_strategies)
+- YAML strategy loading (load_builtin_skills)
 """
 
 import json
@@ -493,13 +493,13 @@ class TestAgentResultConversion(unittest.TestCase):
 class TestPipelineSkillRegistration(unittest.TestCase):
     """Test built-in strategies load from YAML via SkillManager."""
 
-    def test_load_builtin_strategies(self):
-        """SkillManager.load_builtin_strategies() should load all YAML strategies."""
+    def test_load_builtin_skills(self):
+        """SkillManager.load_builtin_skills() should load all YAML strategies."""
         from src.agent.skills.base import SkillManager
 
         skill_manager = SkillManager()
         expected = _builtin_strategy_names()
-        count = skill_manager.load_builtin_strategies()
+        count = skill_manager.load_builtin_skills()
         self.assertEqual(count, len(expected))
 
         skills = skill_manager.list_skills()
@@ -1148,7 +1148,7 @@ class TestSkillActivation(unittest.TestCase):
         from src.agent.skills.defaults import get_default_active_skill_ids
 
         skill_manager = SkillManager()
-        count = skill_manager.load_builtin_strategies()
+        count = skill_manager.load_builtin_skills()
         self.assertEqual(count, len(_builtin_strategy_names()), "Should load all built-in strategies from YAML")
 
         default_ids = get_default_active_skill_ids(skill_manager.list_skills())

@@ -359,7 +359,7 @@ class TestBuiltinSkills(unittest.TestCase):
 
         manager = SkillManager()
         expected = _builtin_strategy_names()
-        count = manager.load_builtin_strategies()
+        count = manager.load_builtin_skills()
         self.assertEqual(count, len(expected), "Should load all built-in strategies from YAML")
 
         skills = manager.list_skills()
@@ -695,7 +695,7 @@ Use RESTful naming and consistent validation.
         from src.agent.skills.base import SkillManager
 
         manager = SkillManager()
-        manager.load_builtin_strategies()
+        manager.load_builtin_skills()
 
         # Verify dragon_head exists as builtin
         original = manager.get("dragon_head")
@@ -712,7 +712,7 @@ display_name: 自定义龙头策略
 description: 我自己的龙头策略
 instructions: 按照我的规则分析龙头股
 """)
-            manager.load_custom_strategies(tmpdir)
+            manager.load_custom_skills(tmpdir)
 
             overridden = manager.get("dragon_head")
             self.assertEqual(overridden.display_name, "自定义龙头策略")
@@ -726,7 +726,7 @@ instructions: 按照我的规则分析龙头股
         from src.agent.skills.base import SkillManager
 
         manager = SkillManager()
-        manager.load_builtin_strategies()
+        manager.load_builtin_skills()
         for skill in manager.list_skills():
             self.assertEqual(skill.source, "builtin",
                              f"Strategy {skill.name} should have source='builtin'")
