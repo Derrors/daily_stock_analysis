@@ -28,9 +28,6 @@ from src.analyzer import GeminiAnalyzer, AnalysisResult, fill_chip_structure_if_
 from src.data.stock_mapping import STOCK_NAME_MAP
 from src.report_output import ReportOutputService
 from src.stock_analysis_skill.runtime.pipeline_batch import StockAnalysisBatchRuntimeMixin
-
-# Compatibility alias for older tests/imports that still patch src.core.pipeline.NotificationService.
-NotificationService = ReportOutputService
 from src.report_language import (
     get_unknown_text,
     localize_confidence_level,
@@ -92,9 +89,7 @@ class StockAnalysisPipeline(StockAnalysisBatchRuntimeMixin):
         # 统一通过当前保留的数据源管理器获取数据
         self.trend_analyzer = StockTrendAnalyzer()  # 技术分析器
         self.analyzer = GeminiAnalyzer(config=self.config)
-        self.report_output_service = NotificationService(source_message=source_message)
-        self.report_service = self.report_output_service  # 兼容旧调用方/测试桩；新代码请优先使用 report_output_service。
-        self.notifier = self.report_output_service  # 兼容旧调用方/测试桩；新代码请优先使用 report_output_service。
+        self.report_output_service = ReportOutputService(source_message=source_message)
         
         # 初始化搜索服务（可选，初始化失败不应阻断主分析流程）
         try:

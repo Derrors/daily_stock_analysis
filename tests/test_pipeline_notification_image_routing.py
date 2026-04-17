@@ -34,35 +34,35 @@ class _FakeNotifier:
 class TestPipelineReportGenerationAfterDescope(unittest.TestCase):
     def test_generate_aggregate_report_still_uses_dashboard_for_simple(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeNotifier()
+        pipeline.report_output_service = _FakeNotifier()
         results = [SimpleNamespace(code="000001"), SimpleNamespace(code="600519")]
 
         report = pipeline._generate_aggregate_report(results, ReportType.SIMPLE)
 
         self.assertEqual(report, "report:000001,600519")
-        pipeline.notifier.generate_dashboard_report.assert_called_once_with(results)
-        pipeline.notifier.generate_brief_report.assert_not_called()
+        pipeline.report_output_service.generate_dashboard_report.assert_called_once_with(results)
+        pipeline.report_output_service.generate_brief_report.assert_not_called()
 
     def test_generate_aggregate_report_uses_brief_renderer_for_brief(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeNotifier()
+        pipeline.report_output_service = _FakeNotifier()
         results = [SimpleNamespace(code="000001")]
 
         report = pipeline._generate_aggregate_report(results, ReportType.BRIEF)
 
         self.assertEqual(report, "brief-report")
-        pipeline.notifier.generate_brief_report.assert_called_once_with(results)
-        pipeline.notifier.generate_dashboard_report.assert_not_called()
+        pipeline.report_output_service.generate_brief_report.assert_called_once_with(results)
+        pipeline.report_output_service.generate_dashboard_report.assert_not_called()
 
     def test_save_local_report_persists_generated_report(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
-        pipeline.notifier = _FakeNotifier()
+        pipeline.report_output_service = _FakeNotifier()
         results = [SimpleNamespace(code="000001")]
 
         pipeline._save_local_report(results, ReportType.SIMPLE)
 
-        pipeline.notifier.generate_dashboard_report.assert_called_once_with(results)
-        pipeline.notifier.save_report_to_file.assert_called_once_with("report:000001")
+        pipeline.report_output_service.generate_dashboard_report.assert_called_once_with(results)
+        pipeline.report_output_service.save_report_to_file.assert_called_once_with("report:000001")
 
 
 if __name__ == "__main__":

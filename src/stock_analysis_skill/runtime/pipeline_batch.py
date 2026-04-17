@@ -163,16 +163,7 @@ class StockAnalysisBatchRuntimeMixin:
         return results
 
     def _get_report_output_service(self):
-        """Return the preferred report-output service while preserving legacy test doubles."""
-        return getattr(
-            self,
-            "report_output_service",
-            getattr(self, "report_service", getattr(self, "notifier")),
-        )
-
-    def _get_report_service(self):
-        """Compatibility wrapper for older call sites/tests."""
-        return self._get_report_output_service()
+        return self.report_output_service
 
     def _save_local_report(
         self,

@@ -68,7 +68,7 @@ class TestPipelineSingleNotifyThreadSafety(unittest.TestCase):
     def test_process_single_stock_under_concurrency_does_not_send(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
         pipeline.fetch_and_save_stock_data = MagicMock(return_value=(True, None))
-        pipeline.notifier = _CriticalSectionTrackingNotifier()
+        pipeline.report_output_service = _CriticalSectionTrackingNotifier()
 
         notify_barrier = threading.Barrier(2)
 
@@ -101,10 +101,10 @@ class TestPipelineSingleNotifyThreadSafety(unittest.TestCase):
 
         self.assertEqual(len(results), 2)
         self.assertTrue(all(result is not None for result in results))
-        self.assertEqual(pipeline.notifier.generate_single_stock_report.call_count, 0)
-        self.assertEqual(pipeline.notifier.send.call_count, 0)
-        self.assertEqual(pipeline.notifier.max_inflight, 0)
-        self.assertEqual(pipeline.notifier.calls, [])
+        self.assertEqual(pipeline.report_output_service.generate_single_stock_report.call_count, 0)
+        self.assertEqual(pipeline.report_output_service.send.call_count, 0)
+        self.assertEqual(pipeline.report_output_service.max_inflight, 0)
+        self.assertEqual(pipeline.report_output_service.calls, [])
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ class TestPipelineSingleStockNotify(unittest.TestCase):
         pipeline.fetcher_manager = MagicMock()
         pipeline.db = MagicMock()
         pipeline.db.has_today_data.return_value = False
-        pipeline.notifier = _TrackingNotifier()
+        pipeline.report_output_service = _TrackingNotifier()
         pipeline._save_local_report = MagicMock()
         pipeline.config = SimpleNamespace(
             stock_list=["000001", "600519"],
@@ -105,17 +105,17 @@ class TestPipelineSingleStockNotify(unittest.TestCase):
 
         self.assertEqual(len(results), 2)
         self.assertEqual(len(worker_calls), 2)
-        self.assertEqual(pipeline.notifier.thread_names, [])
-        self.assertEqual(pipeline.notifier.max_inflight, 0)
-        self.assertEqual(pipeline.notifier.sent_reports, [])
-        self.assertEqual(pipeline.notifier.email_stock_codes, [])
+        self.assertEqual(pipeline.report_output_service.thread_names, [])
+        self.assertEqual(pipeline.report_output_service.max_inflight, 0)
+        self.assertEqual(pipeline.report_output_service.sent_reports, [])
+        self.assertEqual(pipeline.report_output_service.email_stock_codes, [])
         pipeline._save_local_report.assert_called_once()
 
     def test_process_single_stock_does_not_send(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
         pipeline.fetch_and_save_stock_data = MagicMock(return_value=(True, None))
         pipeline.analyze_stock = MagicMock(return_value=_make_result("600519"))
-        pipeline.notifier = _TrackingNotifier()
+        pipeline.report_output_service = _TrackingNotifier()
 
         result = pipeline.process_single_stock(
             code="600519",
@@ -125,14 +125,14 @@ class TestPipelineSingleStockNotify(unittest.TestCase):
         )
 
         self.assertIsNotNone(result)
-        pipeline.notifier.generate_brief_report.assert_not_called()
-        pipeline.notifier.send.assert_not_called()
+        pipeline.report_output_service.generate_brief_report.assert_not_called()
+        pipeline.report_output_service.send.assert_not_called()
 
     def test_process_single_stock_does_not_send_when_failed(self):
         pipeline = StockAnalysisPipeline.__new__(StockAnalysisPipeline)
         pipeline.fetch_and_save_stock_data = MagicMock(return_value=(True, None))
         pipeline.analyze_stock = MagicMock(return_value=_make_result("600519", success=False))
-        pipeline.notifier = _TrackingNotifier()
+        pipeline.report_output_service = _TrackingNotifier()
 
         result = pipeline.process_single_stock(
             code="600519",
@@ -143,8 +143,8 @@ class TestPipelineSingleStockNotify(unittest.TestCase):
 
         self.assertIsNotNone(result)
         self.assertFalse(result.success)
-        pipeline.notifier.generate_brief_report.assert_not_called()
-        pipeline.notifier.send.assert_not_called()
+        pipeline.report_output_service.generate_brief_report.assert_not_called()
+        pipeline.report_output_service.send.assert_not_called()
 
 
 if __name__ == "__main__":
