@@ -572,14 +572,6 @@ class AgentOrchestrator:
         )
         return builder.build_specialist_agents(ctx)
 
-    def _build_skill_agents(self, ctx: AgentContext) -> list:
-        """Compatibility wrapper for legacy imports."""
-        return self._build_specialist_agents(ctx)
-
-    def _build_strategy_agents(self, ctx: AgentContext) -> list:
-        """Compatibility wrapper for legacy tests/imports."""
-        return self._build_specialist_agents(ctx)
-
     # -----------------------------------------------------------------
     # Skill aggregation
     # -----------------------------------------------------------------
@@ -594,10 +586,6 @@ class AgentOrchestrator:
             prepare_agent=self._prepare_agent,
         )
         builder.aggregate_skill_opinions(ctx)
-
-    def _aggregate_strategy_opinions(self, ctx: AgentContext) -> None:
-        """Compatibility wrapper for legacy tests/imports."""
-        self._aggregate_skill_opinions(ctx)
 
     # -----------------------------------------------------------------
     # Helpers
