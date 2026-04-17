@@ -114,7 +114,7 @@ class StockAnalysisPipeline(StockAnalysisBatchRuntimeMixin):
         logger.info("已启用技术分析引擎（均线/趋势/量价指标）")
         # 打印实时行情/筹码配置状态
         if self.config.enable_realtime_quote:
-            logger.info(f"实时行情已启用 (优先级: {self.config.realtime_source_priority})")
+            logger.info(f"实时行情已启用 (数据源: {self.config.realtime_source_priority})")
         else:
             logger.info("实时行情已禁用，将使用历史收盘价")
         if self.config.enable_chip_distribution:

@@ -311,6 +311,55 @@ class LLMChannelConfigTestCase(unittest.TestCase):
             ["gpt4o", "openai/gpt-4o-mini"],
         )
 
+    @patch("src.config.setup_env")
+    @patch.object(
+        Config,
+        "_parse_litellm_yaml",
+        return_value=[
+            {
+                "model_name": "yaml-primary",
+                "litellm_params": {
+                    "model": "openai/gpt-4o-mini",
+                    "api_key": "yaml-key",
+                },
+            }
+        ],
+    )
+    def test_litellm_config_takes_priority_over_channels_and_managed_env(self, _mock_parse_yaml, _mock_setup_env) -> None:
+        env = {
+            "LITELLM_CONFIG": "/tmp/litellm.yaml",
+            "LLM_CHANNELS": "primary",
+            "LLM_PRIMARY_PROTOCOL": "openai",
+            "LLM_PRIMARY_API_KEY": "channel-key",
+            "LLM_PRIMARY_MODELS": "gpt-4o",
+            "OPENAI_API_KEY": "managed-env-key",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.llm_models_source, "litellm_config")
+        self.assertEqual(config.llm_model_list[0]["model_name"], "yaml-primary")
+        self.assertEqual(config.llm_channels, [])
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_llm_channels_take_priority_over_managed_env_model_list(self, _mock_parse_yaml, _mock_setup_env) -> None:
+        env = {
+            "LLM_CHANNELS": "primary",
+            "LLM_PRIMARY_PROTOCOL": "openai",
+            "LLM_PRIMARY_API_KEY": "channel-key",
+            "LLM_PRIMARY_MODELS": "gpt-4o",
+            "OPENAI_API_KEY": "managed-env-key",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.llm_models_source, "llm_channels")
+        self.assertEqual(config.llm_channels[0]["models"], ["openai/gpt-4o"])
+        self.assertEqual(config.llm_model_list[0]["litellm_params"]["api_key"], "channel-key")
+
 
 if __name__ == "__main__":
     unittest.main()

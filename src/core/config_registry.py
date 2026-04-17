@@ -118,7 +118,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     # ------------------------------------------------------------------
     "LITELLM_CONFIG": {
         "title": "Advanced Model Routing Config",
-        "description": "Path to an advanced model routing YAML file (expert use). When valid/parseable and yields a model_list, it takes priority over channels and legacy keys; otherwise channels/legacy are used as fallback.",
+        "description": "Path to an advanced model routing YAML file (expert use). Highest priority in model loading: valid YAML model_list > LLM_CHANNELS > managed_env provider keys.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -132,7 +132,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "LLM_CHANNELS": {
         "title": "LLM Channels",
-        "description": "Channel names (comma-separated). Managed by the channel editor above.",
+        "description": "Channel names (comma-separated). Secondary priority after LITELLM_CONFIG and ahead of managed_env provider keys. Managed by the channel editor above.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -415,7 +415,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "GEMINI_MODEL_FALLBACK": {
         "title": "Gemini Fallback Model",
-        "description": "Fallback Gemini model name (used when LITELLM_FALLBACK_MODELS is not set and primary is Gemini).",
+        "description": "Deprecated Gemini-only fallback knob. Still works for compatibility when the primary model is Gemini, but new setups should use LITELLM_FALLBACK_MODELS instead.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -443,7 +443,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "OPENAI_API_KEY": {
         "title": "OpenAI API Key",
-        "description": "API key for OpenAI-compatible service.",
+        "description": "Single API key for an OpenAI-compatible service. Precedence is lower than OPENAI_API_KEYS and lower than AIHUBMIX_KEY when AIHubmix is used as the compatible provider shortcut.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "password",
@@ -457,7 +457,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "OPENAI_API_KEYS": {
         "title": "OpenAI API Keys (Multi)",
-        "description": "Comma-separated OpenAI-compatible API keys for load balancing. Takes priority over AIHUBMIX_KEY and OPENAI_API_KEY.",
+        "description": "Comma-separated OpenAI-compatible API keys for load balancing. Highest priority within the OpenAI-compatible layer: OPENAI_API_KEYS > AIHUBMIX_KEY > OPENAI_API_KEY.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "password",
@@ -471,7 +471,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "OPENAI_BASE_URL": {
         "title": "OpenAI Base URL",
-        "description": "Base URL for OpenAI-compatible endpoint.",
+        "description": "Base URL for an OpenAI-compatible endpoint. When AIHUBMIX_KEY is set and this field is empty, runtime defaults to https://aihubmix.com/v1.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -796,7 +796,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "RUN_IMMEDIATELY": {
         "title": "Run Immediately",
-        "description": "Whether to run analysis immediately on startup (non-schedule mode).",
+        "description": "Whether to run analysis immediately on startup in non-schedule mode. When SCHEDULE_RUN_IMMEDIATELY is unset, schedule mode still falls back to this legacy flag for compatibility.",
         "category": "system",
         "data_type": "boolean",
         "ui_control": "switch",
@@ -824,7 +824,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "SCHEDULE_RUN_IMMEDIATELY": {
         "title": "Schedule Run Immediately",
-        "description": "Whether to run one analysis immediately on startup in schedule mode.",
+        "description": "Canonical startup flag for schedule mode. When unset, the runtime falls back to RUN_IMMEDIATELY for backward compatibility.",
         "category": "system",
         "data_type": "boolean",
         "ui_control": "switch",
@@ -964,7 +964,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_SKILL_DIR": {
         "title": "Agent Strategy Dir",
-        "description": "Directory containing agent strategy definitions (implemented as YAML or SKILL.md skill bundles).",
+        "description": "Directory containing agent strategy definitions (implemented as YAML or SKILL.md skill bundles). Canonical key: AGENT_SKILL_DIR; legacy AGENT_STRATEGY_DIR is still accepted with a deprecation warning.",
         "category": "agent",
         "data_type": "string",
         "ui_control": "text",
@@ -1084,7 +1084,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_SKILL_AUTOWEIGHT": {
         "title": "Auto-Weight Strategies",
-        "description": "Automatically weight strategy opinions by their historical backtest performance (internal skill runtime).",
+        "description": "Compatibility toggle kept for historical configs. The current skill-first runtime does not apply backtest-driven auto-weighting and treats this as a no-op.",
         "category": "agent",
         "data_type": "boolean",
         "ui_control": "switch",

@@ -522,7 +522,7 @@ class Config:
     agent_deep_research_budget: int = 30000  # Max token budget for deep research
     agent_deep_research_timeout: int = 180  # Max seconds for /research command before returning timeout
     agent_memory_enabled: bool = False  # Enable memory & calibration system
-    agent_skill_autoweight: bool = True  # Auto-weight skills by backtest performance
+    agent_skill_autoweight: bool = True  # Compatibility no-op; historical auto-weight flag
     agent_skill_routing: str = "auto"  # Skill routing: 'auto' (regime-based) or 'manual'
     agent_event_monitor_enabled: bool = False  # Enable periodic event-driven alert checks in schedule mode
     agent_event_monitor_interval_minutes: int = 5  # Polling interval for event monitor background checks
@@ -548,7 +548,7 @@ class Config:
     # Markdown 转图片（Issue #289）：仍保留长度阈值，供结果承载链路复用
     markdown_to_image_max_chars: int = 15000  # 超过此长度不转换，避免超大图片
 
-    # 实时行情预取（Issue #455）：设为 false 可禁用，避免 efinance/akshare_em 全市场拉取
+    # 实时行情预取（Issue #455）：设为 false 可禁用，避免在分析前额外触发实时行情预抓取
     prefetch_realtime_quotes: bool = True
 
     # === 数据库配置 ===
@@ -591,13 +591,8 @@ class Config:
     enable_chip_distribution: bool = True
     # 东财接口补丁开关
     enable_eastmoney_patch: bool = False
-    # 实时行情数据源优先级（逗号分隔）
-    # 推荐顺序：tencent > akshare_sina > efinance > akshare_em > tushare
-    # - tencent: 腾讯财经，有量比/换手率/市盈率等，单股查询稳定（推荐）
-    # - akshare_sina: 新浪财经，基本行情稳定，但无量比
-    # - efinance/akshare_em: 东财全量接口，数据最全但容易被封
-    # - tushare: Tushare Pro，需要2000积分，数据全面（付费用户可优先使用）
-    realtime_source_priority: str = "tencent,akshare_sina,efinance,akshare_em"
+    # 实时行情数据源：精简运行时统一归一化为 Tushare
+    realtime_source_priority: str = "tushare"
     # 实时行情缓存时间（秒）
     realtime_cache_ttl: int = 600
     # 熔断器冷却时间（秒）
@@ -677,6 +672,80 @@ class Config:
                 self.agent_skill_routing, self._VALID_SKILL_ROUTING,
             )
             object.__setattr__(self, "agent_skill_routing", "auto")
+
+    @classmethod
+    def _resolve_openai_compatible_keys(cls) -> List[str]:
+        """Resolve OpenAI-compatible keys with explicit precedence.
+
+        Precedence is:
+        1. OPENAI_API_KEYS (multi-key load balancing)
+        2. AIHUBMIX_KEY
+        3. OPENAI_API_KEY
+        """
+        multi_keys_raw = os.getenv('OPENAI_API_KEYS', '')
+        multi_keys = [k.strip() for k in multi_keys_raw.split(',') if k.strip()]
+        if multi_keys:
+            return multi_keys
+
+        aihubmix_key = os.getenv('AIHUBMIX_KEY', '').strip()
+        if aihubmix_key:
+            return [aihubmix_key]
+
+        openai_key = os.getenv('OPENAI_API_KEY', '').strip()
+        if openai_key:
+            return [openai_key]
+        return []
+
+    @classmethod
+    def _resolve_openai_compatible_base_url(cls) -> Optional[str]:
+        """Resolve OpenAI-compatible base URL.
+
+        OPENAI_BASE_URL always wins. The AIHubmix default base URL is injected only
+        when AIHUBMIX_KEY is the effective key source inside the OpenAI-compatible
+        precedence chain (OPENAI_API_KEYS > AIHUBMIX_KEY > OPENAI_API_KEY).
+        """
+        explicit = os.getenv('OPENAI_BASE_URL')
+        if explicit and explicit.strip():
+            return explicit.strip()
+
+        multi_keys_raw = os.getenv('OPENAI_API_KEYS', '')
+        multi_keys = [k.strip() for k in multi_keys_raw.split(',') if k.strip()]
+        if multi_keys:
+            return None
+
+        if os.getenv('AIHUBMIX_KEY'):
+            return 'https://aihubmix.com/v1'
+        return None
+
+    @classmethod
+    def _resolve_legacy_gemini_model_fallback(cls) -> str:
+        """Resolve GEMINI_MODEL_FALLBACK compatibility value.
+
+        LITELLM_FALLBACK_MODELS is the canonical cross-provider setting. The
+        Gemini-specific value is still accepted so older deployments keep their
+        previous behavior.
+        """
+        explicit = os.getenv('GEMINI_MODEL_FALLBACK')
+        if explicit is not None:
+            logging.getLogger(__name__).warning(
+                "GEMINI_MODEL_FALLBACK is deprecated; prefer LITELLM_FALLBACK_MODELS for model fallback configuration",
+            )
+            return explicit.strip()
+        return 'gemini-2.5-flash'
+
+    @classmethod
+    def _resolve_agent_skill_dir(cls) -> Optional[str]:
+        """Resolve custom Agent skill directory with legacy strategy alias support."""
+        skill_dir = os.getenv('AGENT_SKILL_DIR')
+        if skill_dir:
+            return skill_dir
+        legacy_strategy_dir = os.getenv('AGENT_STRATEGY_DIR')
+        if legacy_strategy_dir:
+            logging.getLogger(__name__).warning(
+                "AGENT_STRATEGY_DIR is deprecated; use AGENT_SKILL_DIR instead",
+            )
+            return legacy_strategy_dir
+        return None
 
     # 单例实例存储
     _instance: Optional['Config'] = None
@@ -784,15 +853,7 @@ class Config:
         if not anthropic_api_keys and _single_anthropic:
             anthropic_api_keys = [_single_anthropic]
 
-        # OPENAI_API_KEYS > AIHUBMIX_KEY > OPENAI_API_KEY
-        _openai_keys_raw = os.getenv('OPENAI_API_KEYS', '')
-        openai_api_keys = [k.strip() for k in _openai_keys_raw.split(',') if k.strip()]
-        if not openai_api_keys:
-            _aihubmix = os.getenv('AIHUBMIX_KEY', '').strip()
-            _single_openai = os.getenv('OPENAI_API_KEY', '').strip()
-            _fallback_key = _aihubmix or _single_openai
-            if _fallback_key:
-                openai_api_keys = [_fallback_key]
+        openai_api_keys = cls._resolve_openai_compatible_keys()
 
         # DEEPSEEK_API_KEYS > DEEPSEEK_API_KEY (independent from OpenAI-compatible layer)
         _deepseek_keys_raw = os.getenv('DEEPSEEK_API_KEYS', '')
@@ -823,13 +884,13 @@ class Config:
 
         # LITELLM_FALLBACK_MODELS: comma-separated list of fallback models
         _fallback_str = os.getenv('LITELLM_FALLBACK_MODELS', '')
+        gemini_model_fallback = cls._resolve_legacy_gemini_model_fallback()
         if _fallback_str.strip():
             litellm_fallback_models = [m.strip() for m in _fallback_str.split(',') if m.strip()]
         else:
             # Backward compat: use gemini_model_fallback when primary is gemini
-            _gemini_fallback = os.getenv('GEMINI_MODEL_FALLBACK', 'gemini-2.5-flash').strip()
-            if litellm_model.startswith('gemini/') and _gemini_fallback:
-                _fb = f'gemini/{_gemini_fallback}' if '/' not in _gemini_fallback else _gemini_fallback
+            if litellm_model.startswith('gemini/') and gemini_model_fallback:
+                _fb = f'gemini/{gemini_model_fallback}' if '/' not in gemini_model_fallback else gemini_model_fallback
                 litellm_fallback_models = [_fb]
             else:
                 litellm_fallback_models = []
@@ -858,10 +919,10 @@ class Config:
         # Priority 3: managed env keys → auto-build model_list (compat-preserving path)
         if not llm_model_list:
             llm_model_list = cls._managed_env_keys_to_model_list(
-                gemini_api_keys, anthropic_api_keys, openai_api_keys,
-                os.getenv('OPENAI_BASE_URL') or (
-                    'https://aihubmix.com/v1' if os.getenv('AIHUBMIX_KEY') else None
-                ),
+                gemini_api_keys,
+                anthropic_api_keys,
+                openai_api_keys,
+                cls._resolve_openai_compatible_base_url(),
                 deepseek_api_keys,
             )
             if llm_model_list:
@@ -953,7 +1014,7 @@ class Config:
             deepseek_api_keys=deepseek_api_keys,
             gemini_api_key=os.getenv('GEMINI_API_KEY'),
             gemini_model=os.getenv('GEMINI_MODEL', 'gemini-3-flash-preview'),
-            gemini_model_fallback=os.getenv('GEMINI_MODEL_FALLBACK', 'gemini-2.5-flash'),
+            gemini_model_fallback=gemini_model_fallback,
             gemini_temperature=parse_env_float(os.getenv('GEMINI_TEMPERATURE'), 0.7, field_name='GEMINI_TEMPERATURE'),
             gemini_request_delay=parse_env_float(os.getenv('GEMINI_REQUEST_DELAY'), 2.0, field_name='GEMINI_REQUEST_DELAY', minimum=0.0),
             gemini_max_retries=parse_env_int(os.getenv('GEMINI_MAX_RETRIES'), 5, field_name='GEMINI_MAX_RETRIES', minimum=0),
@@ -962,16 +1023,11 @@ class Config:
             anthropic_model=os.getenv('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20241022'),
             anthropic_temperature=parse_env_float(os.getenv('ANTHROPIC_TEMPERATURE'), 0.7, field_name='ANTHROPIC_TEMPERATURE'),
             anthropic_max_tokens=parse_env_int(os.getenv('ANTHROPIC_MAX_TOKENS'), 8192, field_name='ANTHROPIC_MAX_TOKENS', minimum=1),
-            # AIHubmix is the preferred OpenAI-compatible provider (one key, all models, no VPN required).
-            # Within the OpenAI-compatible layer: AIHUBMIX_KEY takes priority over OPENAI_API_KEY.
-            # Overall provider fallback order: Gemini > Anthropic > OpenAI-compatible (incl. AIHubmix).
-            # base_url is auto-set to aihubmix.com/v1 when AIHUBMIX_KEY is used and no explicit
-            # OPENAI_BASE_URL override is provided.
-            # Model names match upstream (e.g. gemini-3.1-pro-preview, gpt-4o, gpt-4o-free, deepseek-chat).
-            openai_api_key=os.getenv('AIHUBMIX_KEY') or os.getenv('OPENAI_API_KEY') or None,
-            openai_base_url=os.getenv('OPENAI_BASE_URL') or (
-                'https://aihubmix.com/v1' if os.getenv('AIHUBMIX_KEY') else None
-            ),  # noqa: E501
+            # AIHubmix is treated as an OpenAI-compatible provider. The compatibility
+            # resolution order is centralized in `_resolve_openai_compatible_keys()` so
+            # OPENAI_API_KEYS > AIHUBMIX_KEY > OPENAI_API_KEY stays explicit.
+            openai_api_key=openai_api_keys[0] if openai_api_keys else None,
+            openai_base_url=cls._resolve_openai_compatible_base_url(),
             openai_model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
             openai_vision_model=os.getenv('OPENAI_VISION_MODEL') or None,
             openai_temperature=parse_env_float(os.getenv('OPENAI_TEMPERATURE'), 0.7, field_name='OPENAI_TEMPERATURE'),
@@ -1003,7 +1059,7 @@ class Config:
                 minimum=1,
             ),
             agent_skills=[s.strip() for s in os.getenv('AGENT_SKILLS', '').split(',') if s.strip()],
-            agent_skill_dir=os.getenv('AGENT_SKILL_DIR') or os.getenv('AGENT_STRATEGY_DIR'),
+            agent_skill_dir=cls._resolve_agent_skill_dir(),
             agent_arch=os.getenv('AGENT_ARCH', 'single').lower(),
             agent_orchestrator_mode=os.getenv('AGENT_ORCHESTRATOR_MODE', 'standard').lower(),
             agent_orchestrator_timeout_s=parse_env_int(
@@ -1026,10 +1082,7 @@ class Config:
                 minimum=30,
             ),
             agent_memory_enabled=os.getenv('AGENT_MEMORY_ENABLED', 'false').lower() == 'true',
-            agent_skill_autoweight=(
-                os.getenv('AGENT_SKILL_AUTOWEIGHT')
-                or os.getenv('AGENT_STRATEGY_AUTOWEIGHT', 'true')
-            ).lower() == 'true',
+            agent_skill_autoweight=cls._resolve_agent_skill_autoweight(),
             agent_skill_routing=(
                 os.getenv('AGENT_SKILL_ROUTING')
                 or os.getenv('AGENT_STRATEGY_ROUTING', 'auto')
@@ -1563,6 +1616,29 @@ class Config:
                 explicit,
             )
         return 'tushare'
+
+    @classmethod
+    def _resolve_agent_skill_autoweight(cls) -> bool:
+        """Resolve the historical auto-weight toggle.
+
+        The skill-first runtime no longer applies backtest-driven auto-weighting,
+        so this flag is kept only for compatibility with older configs.
+        """
+        explicit = os.getenv('AGENT_SKILL_AUTOWEIGHT')
+        if explicit is not None:
+            logging.getLogger(__name__).warning(
+                "AGENT_SKILL_AUTOWEIGHT is retained for compatibility only and is currently a no-op in the skill-first runtime",
+            )
+            return explicit.lower() == 'true'
+
+        legacy = os.getenv('AGENT_STRATEGY_AUTOWEIGHT')
+        if legacy is not None:
+            logging.getLogger(__name__).warning(
+                "AGENT_STRATEGY_AUTOWEIGHT is deprecated; use AGENT_SKILL_AUTOWEIGHT instead (both are currently no-op compatibility flags)",
+            )
+            return legacy.lower() == 'true'
+
+        return True
 
     @classmethod
     def reset_instance(cls) -> None:

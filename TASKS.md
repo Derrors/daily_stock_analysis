@@ -30,8 +30,8 @@
 - [x] Phase E.2 测试与工具清洁：收口 `test_env.py` / benchmark mark / 非阻塞 warning，降低回归噪音
 - [x] Phase E.3 命名统一：继续收口 `strategy` / `skill` 双命名，明确“对外策略、对内 skill”或单一口径
 - [x] Phase E.4 Agent 兼容层审计：盘点 `src/agent/*` 中的 legacy/compat wrapper，删无用、聚合有用兼容层
-- [-] Phase E.5 配置最小化审计 v2：继续盘 `src/config.py` 里仅为旧入口保留的 LLM / runtime fallback 逻辑
-- [-] Phase E.6 数据/搜索兼容债清理：继续抽离已下线 provider 的 compat 语义，收紧主路径说明
+- [x] Phase E.5 配置最小化审计 v2：继续盘 `src/config.py` 里仅为旧入口保留的 LLM / runtime fallback 逻辑
+- [x] Phase E.6 数据/搜索兼容债清理：继续抽离已下线 provider 的 compat 语义，收紧主路径说明
 - [x] Phase F.1 主链真相源内迁设计：明确 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 与 `src/stock_analysis_skill/*` 的目标边界
 - [x] Phase F.2 同步主链内迁：把股票分析主执行链逐步迁入 `src/stock_analysis_skill/*`，旧入口退为兼容壳
 - [x] Phase F.3 异步主链对齐：把 `AnalysisTaskQueue -> AnalysisService -> StockAnalysisPipeline` 的调用关系对齐到新的 skill runtime 主链
@@ -120,3 +120,5 @@
 - Phase F.4 已继续推进到核心拆分第四刀：在 `_call_litellm()` 主体迁入 `src/stock_analysis_skill/analysis/litellm_caller.py` 的基础上，进一步将 `analyze()` 主循环迁入 `src/stock_analysis_skill/analysis/execution.py`；`src/analyzer.py` 中 `analyze()` 已退为 compat delegate，并通过依赖注入继续复用 `is_available/_format_prompt/_call_litellm/_parse_response/_build_market_snapshot/_check_content_integrity/_build_integrity_retry_prompt/_apply_placeholder_fill` 等既有 patch 面，保证测试与旧调用方不炸。该刀定点验证为 `45 passed`，随后全量 `pytest` 仍维持 **810 passed + 96 subtests passed**。
 - Phase F.5 已完成两组契约级回归矩阵并收口：第一组覆盖同步主链 / 异步任务链 / script / skill contract / market analyzer（`57 passed`）；第二组覆盖 agent/orchestrator/skill service/script entry/renderers（`121 passed`）；其后再次全量 `pytest` 仍为 **810 passed + 96 subtests passed**。当前可视为 Phase F 已完成“内核内迁 + 契约回归”验收。
 - Phase E.4 已完成多刀低风险兼容层减脂：① `src/agent/strategies/*` 已收口为 strategy-first legacy bridge，public surface 优先保留 `Strategy*`；② `src/agent/orchestrator.py` 底部与 `src/agent/orchestration/result_resolver.py` 重复的一批 dashboard/result helper 已删除，改为直接复用 resolver 实现，仅保留风险 override 相关独有 helper；③ `src/agent/skills/router.py` 已删除无人使用的 `_get_available_ids()` 死 helper；④ `src/agent/factory.py` 的 `build_executor` 从裸 alias 改为显式兼容 wrapper；⑤ `src/agent/memory.py` 的 strategy 兼容入口从裸 alias 改为显式 wrapper。当前 E.4 定点验证已覆盖 strategy compat（`59 passed`）、orchestrator/runtime/result 路径（`64 passed`）、agent/router/pipeline（`83 passed`）与 memory/factory（`51 passed`）。
+- Phase E.5 已完成配置最小化审计 v2：① `GEMINI_MODEL_FALLBACK` 与 `AGENT_STRATEGY_DIR` 已从静默 fallback 改为显式 resolver + deprecation warning；② `OPENAI_API_KEYS / AIHUBMIX_KEY / OPENAI_API_KEY / OPENAI_BASE_URL` 的优先级与默认 base_url 注入逻辑已统一到同一套 runtime resolver，并补充兼容测试锁死；③ `LITELLM_CONFIG / LLM_CHANNELS / managed_env` 的加载优先级已在 runtime、registry 与 `.env.example` 对齐，并新增优先级测试；④ `REALTIME_SOURCE_PRIORITY` 与 `AGENT_SKILL_AUTOWEIGHT`/`AGENT_STRATEGY_AUTOWEIGHT` 已明确为兼容壳/no-op 并补 warning 测试，`src/core/pipeline.py` 的实时行情日志也已从“优先级”收口为“数据源”。
+- Phase E.6 已完成数据/搜索兼容债清理：① `src/search_service.py` 中 retired 搜索源（Anspire / MiniMax / SearXNG）配置从 info 提升为显式 warning；② 已物理删除不再进入运行时 provider 列表的 `SearXNGSearchProvider` 实现，仅保留 `SearchService` 构造参数级 compat warning；③ `tests/test_search_searxng.py` 已收缩为 retired-provider compat 测试，不再为已下线 provider 维护整套 failover 行为测试；④ `src/config.py` 与 `.env.example` 中实时行情区域的旧多数据源说明已收紧到 tushare-only 当前口径。

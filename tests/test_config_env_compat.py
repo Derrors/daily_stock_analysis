@@ -35,6 +35,24 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_realtime_source_priority_warns_and_normalizes_to_tushare(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "REALTIME_SOURCE_PRIORITY": "tencent,akshare_sina",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            with self.assertLogs("src.config", level="WARNING") as captured:
+                config = Config._load_from_env()
+
+        self.assertEqual(config.realtime_source_priority, "tushare")
+        self.assertTrue(any("REALTIME_SOURCE_PRIORITY" in message for message in captured.output))
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_schedule_run_immediately_falls_back_to_legacy_run_immediately(
         self,
         _mock_parse_yaml,
@@ -349,6 +367,137 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             config = Config._load_from_env()
 
         self.assertFalse(hasattr(config, "stock_email_groups"))
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_agent_skill_autoweight_warns_that_flag_is_currently_no_op(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "AGENT_SKILL_AUTOWEIGHT": "false",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            with self.assertLogs("src.config", level="WARNING") as captured:
+                config = Config._load_from_env()
+
+        self.assertFalse(config.agent_skill_autoweight)
+        self.assertTrue(any("currently a no-op" in message for message in captured.output))
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_agent_strategy_dir_warns_and_maps_to_agent_skill_dir(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "AGENT_STRATEGY_DIR": "./strategies",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            with self.assertLogs("src.config", level="WARNING") as captured:
+                config = Config._load_from_env()
+
+        self.assertEqual(config.agent_skill_dir, "./strategies")
+        self.assertTrue(any("AGENT_STRATEGY_DIR is deprecated" in message for message in captured.output))
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_legacy_agent_strategy_autoweight_warns_and_maps_to_skill_flag(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "AGENT_STRATEGY_AUTOWEIGHT": "false",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            with self.assertLogs("src.config", level="WARNING") as captured:
+                config = Config._load_from_env()
+
+        self.assertFalse(config.agent_skill_autoweight)
+        self.assertTrue(any("AGENT_STRATEGY_AUTOWEIGHT is deprecated" in message for message in captured.output))
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_gemini_model_fallback_warns_but_still_populates_legacy_fallback(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "GEMINI_API_KEY": "test-key",
+            "GEMINI_MODEL_FALLBACK": "gemini-2.5-flash",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            with self.assertLogs("src.config", level="WARNING") as captured:
+                config = Config._load_from_env()
+
+        self.assertEqual(config.gemini_model_fallback, "gemini-2.5-flash")
+        self.assertEqual(config.litellm_fallback_models, ["gemini/gemini-2.5-flash"])
+        self.assertTrue(any("GEMINI_MODEL_FALLBACK is deprecated" in message for message in captured.output))
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_openai_api_keys_take_priority_over_aihubmix_and_single_openai_key(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "OPENAI_API_KEYS": "key-a,key-b",
+            "AIHUBMIX_KEY": "aihubmix-key",
+            "OPENAI_API_KEY": "openai-key",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.openai_api_keys, ["key-a", "key-b"])
+        self.assertEqual(config.openai_api_key, "key-a")
+        self.assertIsNone(config.openai_base_url)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_aihubmix_key_sets_default_openai_compatible_base_url_when_no_override(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "AIHUBMIX_KEY": "aihubmix-key",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.openai_api_keys, ["aihubmix-key"])
+        self.assertEqual(config.openai_api_key, "aihubmix-key")
+        self.assertEqual(config.openai_base_url, "https://aihubmix.com/v1")
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_explicit_openai_base_url_overrides_aihubmix_default_base_url(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        env = {
+            "AIHUBMIX_KEY": "aihubmix-key",
+            "OPENAI_BASE_URL": "https://proxy.example.com/v1",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.openai_api_keys, ["aihubmix-key"])
+        self.assertEqual(config.openai_api_key, "aihubmix-key")
+        self.assertEqual(config.openai_base_url, "https://proxy.example.com/v1")
 
 
 if __name__ == "__main__":
