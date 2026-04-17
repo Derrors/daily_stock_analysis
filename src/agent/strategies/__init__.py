@@ -2,15 +2,13 @@
 """
 Compatibility re-exports for the legacy strategy namespace.
 
-Provides:
-- :class:`StrategyAgent` — legacy alias of :class:`SkillAgent`
-- :class:`StrategyRouter` — legacy alias of :class:`SkillRouter`
-- :class:`StrategyAggregator` — legacy alias of :class:`SkillAggregator`
+New code should import from ``src.agent.skills`` directly. This package stays
+only as an import bridge for older tests/callers.
 """
 
-from src.agent.strategies.strategy_agent import StrategyAgent
-from src.agent.strategies.router import StrategyRouter
-from src.agent.strategies.aggregator import StrategyAggregator
+from src.agent.skills.aggregator import StrategyAggregator
+from src.agent.skills.router import StrategyRouter
+from src.agent.skills.skill_agent import StrategyAgent
 
 __all__ = [
     "StrategyAgent",

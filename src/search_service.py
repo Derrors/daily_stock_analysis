@@ -2126,7 +2126,7 @@ class SearchService:
         serpapi_keys: Optional[List[str]] = None,
         minimax_keys: Optional[List[str]] = None,
         searxng_base_urls: Optional[List[str]] = None,
-        searxng_public_instances_enabled: bool = True,
+        searxng_public_instances_enabled: bool = False,
         news_max_age_days: int = 3,
         news_strategy_profile: str = "short",
     ):
@@ -2141,7 +2141,7 @@ class SearchService:
             serpapi_keys: SerpAPI Key 列表
             minimax_keys: 兼容保留参数，当前运行时不再启用
             searxng_base_urls: 兼容保留参数，当前运行时不再启用
-            searxng_public_instances_enabled: 兼容保留参数，当前运行时不再启用
+            searxng_public_instances_enabled: 兼容保留参数，默认关闭，当前运行时不再启用
             news_max_age_days: 新闻最大时效（天）
             news_strategy_profile: 新闻窗口策略档位（ultra_short/short/medium/long）
         """

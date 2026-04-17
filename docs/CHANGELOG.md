@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [改进] 删除旧产品壳与外围模块：移除 FastAPI API、Docker、认证、回测、历史、组合管理、导入解析、图片导入和系统配置等非 skill 核心能力，并同步清理对应测试与文档。
 - [文档] README 与 `docs/README_EN.md` 已重写为 skill-first 口径，并删除过时的部署、FAQ、full-guide、API spec 与 image-extract 文档，避免仓库说明继续误导为产品化系统。
 - [测试] 新增 skill-first 测试集（contracts / stock entry / market dry-run / strategy resolution / markdown renderer），同时完成一轮 73 项 skill + agent 侧回归验证，全部通过。
+- [改进] 进入 Phase E（语义收口与兼容层减脂）：报告输出主入口已统一到 `src.report_output` / `ReportOutputService`，`src.notification` 继续保留为兼容层，不再作为新代码推荐入口。
+- [改进] strategy / skill 双命名进一步收口：对外继续保留 strategy 口径，内部实现优先使用 skill 口径；`SkillResolver` 成为内部主名，`StrategyResolver` 继续作为兼容别名保留。
+- [改进] LiteLLM env-key 主路径语义从 `legacy_env` 收口为 `managed_env`：`analyzer` 与 `agent llm adapter` 现已优先使用 `get_managed_api_keys_for_model()` / `get_managed_litellm_params()`，旧 helper 名保留兼容别名。
 
 - [修复] 大盘复盘链路接入 `REPORT_LANGUAGE`：`REPORT_LANGUAGE=en` 时，A 股/合并复盘的 Prompt、章节标题、模板兜底文案与通知包装标题统一改为英文，避免出现英文正文外包中文标题的问题。
 - [修复] `AGENT_MAX_STEPS` 在 orchestrator 多 Agent 模式下统一明确为“默认作为各子 Agent 的步数上限而非硬覆盖；TechnicalAgent 等高默认值 Agent 会被封顶、低默认值 Agent 保持原值；当用户主动调高（>10）时，再统一覆盖所有子 Agent 采用全局值”，同时修复用户设置 12 但 TechnicalAgent 仍以默认 6 步运行并报 "Agent exceeded max steps" 的问题（fixes #1026）

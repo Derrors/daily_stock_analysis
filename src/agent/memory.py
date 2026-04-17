@@ -215,9 +215,8 @@ class AgentMemory:
             "sufficient_samples": False,
         }
 
-    def get_strategy_performance(self, strategy_id: str) -> Dict[str, Any]:
-        """Compatibility wrapper for legacy strategy-based callers."""
-        return self.get_skill_performance(strategy_id)
+    # Compatibility alias for legacy strategy-based callers.
+    get_strategy_performance = get_skill_performance
 
     # -----------------------------------------------------------------
     # Auto-weighting
@@ -238,13 +237,8 @@ class AgentMemory:
             return {sid: 1.0 for sid in skill_ids}
         return {sid: 1.0 for sid in skill_ids}
 
-    def compute_strategy_weights(
-        self,
-        strategy_ids: List[str],
-        use_backtest: bool = True,
-    ) -> Dict[str, float]:
-        """Compatibility wrapper for legacy strategy-based callers."""
-        return self.compute_skill_weights(strategy_ids, use_backtest=use_backtest)
+    # Compatibility alias for legacy strategy-based callers.
+    compute_strategy_weights = compute_skill_weights
 
     # -----------------------------------------------------------------
     # Internal

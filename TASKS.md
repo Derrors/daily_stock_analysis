@@ -26,6 +26,12 @@
 - [x] 汇报结果并给出 commit message 建议
 - [x] 配置层减脂：收口 `.env.example` / `src/config.py` / `src/core/config_registry.py` 的旧产品壳字段与文案
 - [x] 复跑配置相关测试与当前 skill+agent 回归，确认配置收口未破坏现有主链
+- [x] Phase E.1 语义收口：将 `notification/notifier` 语义统一到报告输出口径，保留必要兼容层
+- [x] Phase E.2 测试与工具清洁：收口 `test_env.py` / benchmark mark / 非阻塞 warning，降低回归噪音
+- [x] Phase E.3 命名统一：继续收口 `strategy` / `skill` 双命名，明确“对外策略、对内 skill”或单一口径
+- [-] Phase E.4 Agent 兼容层审计：盘点 `src/agent/*` 中的 legacy/compat wrapper，删无用、聚合有用兼容层
+- [-] Phase E.5 配置最小化审计 v2：继续盘 `src/config.py` 里仅为旧入口保留的 LLM / runtime fallback 逻辑
+- [-] Phase E.6 数据/搜索兼容债清理：继续抽离已下线 provider 的 compat 语义，收紧主路径说明
 
 ## Proposed Phases
 
@@ -49,6 +55,13 @@
 - 清理旧 Web/UI/API/通知/部署壳
 - 清理与 skill 定位冲突的文档、脚本、配置、测试
 - 补齐 skill 文档与最小验证
+
+### Phase E - 语义收口与兼容层减脂
+- 统一报告输出 / notifier / notification 语义
+- 收口 strategy vs skill 双命名
+- 清理 Agent 侧 legacy wrapper / compat layer
+- 二次审计 config / provider fallback / 已下线搜索源兼容逻辑
+- 清洁测试噪音与工具脚本历史包袱
 
 ## Key Design Decisions（已确认）
 - [x] 新仓库**完全放弃** FastAPI / Web / Docker 服务形态，只保留 skill + library + scripts
@@ -76,4 +89,10 @@
 - Phase D 第四刀已完成：删除 `main.py`、`system_config_service.py`、`import_parser.py`、`image_stock_extractor.py` 及对应测试；当前 13 项 skill 测试仍全部通过
 - Phase D 深层收口已完成：`AgentMemory` / `SkillAggregator` 中遗留的 backtest 自动加权逻辑已改为 neutral fallback；当前 skill + agent 侧回归扩大到 73 项 pytest，全部通过
 - CHANGELOG 已补充 skill-first rewrite、主链迁移、产品壳删除、文档重写与测试覆盖条目
-- 当前 diff 规模约为 96 个已跟踪文件变更（含大量删除），另有 `SKILL.md`、`references/`、`src/stock_analysis_skill/`、新脚本与新测试等未跟踪新增文件
+- 当前主线已经进入“结构完成、语义收口”的阶段；后续价值最高的工作不再是继续大删目录，而是统一命名、压缩兼容层、降低维护噪音
+- Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
+- Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
+- Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**
+- Phase E 第二批第二刀已完成：`AgentMemory` 中 `get_strategy_performance` / `compute_strategy_weights` 已改成对 `skill` 版本的别名，`SkillRouter.select_strategies` 也已改成对 `select_skills` 的别名，`src/agent/factory.py` 中单 Agent 路径的旧 `legacy single-agent` 表述已收口；相关定点验证 `112 passed + 4 subtests passed`，随后全量 pytest 仍为 **808 passed + 96 subtests passed**
+- Phase E 第二批第三刀已完成：`llm_models_source` 的 env-key 路径已从 `legacy_env` 语义收口为 `managed_env`（`agent_model_service` 仍兼容识别旧值）；`Config._managed_env_keys_to_model_list()` 成为主名，旧 `_legacy_keys_to_model_list()` 保留兼容别名；`get_managed_api_keys_for_model()` / `get_managed_litellm_params()` 成为 analyzer 与 agent llm-adapter 的主用 helper，旧 `get_api_keys_for_model()` / `extra_litellm_params()` 保留兼容别名；定点验证 `98 passed`，全量 pytest 仍为 **808 passed + 96 subtests passed**
+- Phase E 第二批第四刀已完成：README / `docs/README_EN.md` 的迁移状态已从 Phase D 更新到 Phase E；`src/services/__init__.py` 明确不再作为旧产品壳的全量服务总入口；`src/notification.py` 与 `src/report_output.py` 的注释已进一步强调“新代码优先走报告输出语义，notification 仅是兼容层”；`docs/CHANGELOG.md` 的 Unreleased 已补齐本轮语义收口条目。该刀仅涉及文档/注释与说明口径，已通过 `py_compile` 快速校验，无新增行为回归风险。

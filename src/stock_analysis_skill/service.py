@@ -13,7 +13,7 @@ from src.services.analysis_service import AnalysisService as LegacyAnalysisServi
 
 from .analyzers.market import MarketSkillAnalyzer
 from .analyzers.stock import StockSkillAnalyzer
-from .analyzers.strategy import StrategyResolver
+from .analyzers.strategy import SkillResolver
 from .renderers.markdown import SkillMarkdownRenderer
 from .contracts import (
     AnalysisMode,
@@ -50,7 +50,8 @@ class StockAnalysisSkillService:
     def __init__(self, analysis_service: Optional[LegacyAnalysisService] = None):
         self.stock_analyzer = StockSkillAnalyzer(analysis_service=analysis_service)
         self.market_analyzer = MarketSkillAnalyzer()
-        self.strategy_resolver = StrategyResolver()
+        self.skill_resolver = SkillResolver()
+        self.strategy_resolver = self.skill_resolver  # backward-compatible alias
 
     @property
     def last_error(self) -> Optional[str]:
@@ -68,8 +69,8 @@ class StockAnalysisSkillService:
         return self.market_analyzer.analyze(request)
 
     def resolve_strategy(self, query: str) -> StrategyResolutionResponse:
-        """Resolve a strategy resource by id or alias."""
-        return self.strategy_resolver.resolve(query)
+        """Resolve a user-facing strategy resource through the internal skill resolver."""
+        return self.skill_resolver.resolve(query)
 
     def render_stock_markdown(self, response: AnalysisResponse) -> str:
         return SkillMarkdownRenderer.render_stock(response)

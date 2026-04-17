@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from src.stock_analysis_skill.analyzers.strategy import StrategyResolver
+from src.stock_analysis_skill.analyzers.strategy import SkillResolver
 from src.stock_analysis_skill.contracts import MarketAnalysisRequest
 from src.stock_analysis_skill.service import StockAnalysisSkillService
 
@@ -17,8 +17,8 @@ MARKET_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "run_market_analysis.py"
 STRATEGY_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "resolve_strategy.py"
 
 
-def test_strategy_resolver_matches_alias() -> None:
-    resolver = StrategyResolver()
+def test_skill_resolver_matches_user_facing_strategy_alias() -> None:
+    resolver = SkillResolver()
     response = resolver.resolve("金叉")
     assert response.matched is True
     assert response.strategy is not None

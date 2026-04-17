@@ -56,6 +56,8 @@ The current minimal skill test suite is:
 - Phase A: done
 - Phase B: done
 - Phase C: minimal mainline done
-- Phase D: in progress
+- Phase D: structural slimming done
+- Phase E: in progress (semantic alignment + compatibility-surface reduction)
 
 This repository no longer treats FastAPI/Web/Docker as its primary product shape.
+Current work is focused on naming alignment, report-output semantics, and shrinking compatibility-only runtime surfaces.

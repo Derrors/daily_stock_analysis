@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Helpers for exposing configured Agent model deployments."""
+"""Helpers for exposing configured Agent model deployments.
+
+This module reports the current runtime deployment view. Channel/YAML routes are
+preferred; env-managed deployments remain supported as a compatibility path.
+"""
 
 from __future__ import annotations
 
@@ -19,9 +23,11 @@ _MANAGED_LEGACY_PROVIDERS = set(_PLACEHOLDER_TO_PROVIDER.values())
 
 def _get_models_source(config) -> str:
     source = getattr(config, "llm_models_source", "")
-    if source in {"litellm_config", "llm_channels", "legacy_env"}:
+    if source == "legacy_env":
+        return "managed_env"
+    if source in {"litellm_config", "llm_channels", "managed_env"}:
         return source
-    return "legacy_env"
+    return "managed_env"
 
 
 def _get_model_provider(model_name: str) -> str:
@@ -62,7 +68,7 @@ def _build_non_legacy_deployments(config) -> List[Dict[str, Any]]:
     return deployments
 
 
-def _build_legacy_deployments(config) -> List[Dict[str, Any]]:
+def _build_managed_env_deployments(config) -> List[Dict[str, Any]]:
     primary_model = get_effective_agent_primary_model(config)
     ordered_models = get_effective_agent_models_to_try(config)
     if not ordered_models:
@@ -85,7 +91,7 @@ def _build_legacy_deployments(config) -> List[Dict[str, Any]]:
         provider = _get_model_provider(model_name)
         deployment_count = placeholder_counts.get(provider, 0)
         if deployment_count <= 0:
-            # Legacy runtime still supports direct litellm calls for providers
+            # Managed-env runtime still supports direct litellm calls for providers
             # whose credentials/base are resolved from environment variables
             # instead of managed placeholder deployments.
             if provider in _MANAGED_LEGACY_PROVIDERS:
@@ -93,7 +99,7 @@ def _build_legacy_deployments(config) -> List[Dict[str, Any]]:
             deployment_count = 1
 
         api_base = getattr(config, "openai_base_url", None) if provider == "openai" else None
-        # Legacy runtime only load-balances the primary model via Router.
+        # Managed-env runtime only load-balances the primary model via Router.
         # Fallback models call litellm directly with the first configured key,
         # so they expose at most one reachable deployment per model.
         if model_name == primary_model:
@@ -104,12 +110,12 @@ def _build_legacy_deployments(config) -> List[Dict[str, Any]]:
         for index in deployment_indexes:
             deployments.append(
                 {
-                    "deployment_id": f"legacy:{provider}:{index}:{model_name}",
+                    "deployment_id": f"managed_env:{provider}:{index}:{model_name}",
                     "model": model_name,
                     "provider": provider,
-                    "source": "legacy_env",
+                    "source": "managed_env",
                     "api_base": api_base,
-                    "deployment_name": f"legacy_{provider}_{index + 1}",
+                    "deployment_name": f"managed_env_{provider}_{index + 1}",
                     "is_primary": model_name == primary_model,
                     "is_fallback": model_name in fallback_set,
                 }
@@ -122,7 +128,7 @@ def list_agent_model_deployments(config) -> List[Dict[str, Any]]:
     """Return configured Agent model deployments without exposing secrets."""
     deployments = _build_non_legacy_deployments(config)
     if not deployments:
-        deployments = _build_legacy_deployments(config)
+        deployments = _build_managed_env_deployments(config)
 
     return sorted(
         deployments,

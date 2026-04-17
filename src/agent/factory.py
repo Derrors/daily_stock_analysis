@@ -273,7 +273,7 @@ def build_agent_executor(config=None, skills: Optional[List[str]] = None):
     """Build and return a configured AgentExecutor (or future orchestrator).
 
     When ``AGENT_ARCH=multi``, this returns an orchestrator that manages
-    multiple specialised agents. Otherwise it returns the legacy single-agent
+    multiple specialised agents. Otherwise it returns the single-agent
     executor.
 
     Args:
@@ -351,5 +351,5 @@ def _build_orchestrator(config, registry, llm_adapter, skill_manager, *, technic
     )
 
 
-# Keep legacy alias so any external callers using the old name still work.
+# Compatibility alias for older callers still importing ``build_executor``.
 build_executor = build_agent_executor

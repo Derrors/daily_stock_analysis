@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A股自选股智能分析系统 - 报告输出层（兼容通知空壳）
+A股自选股智能分析系统 - 报告输出兼容层
 ===================================
 
 职责：
 1. 汇总分析结果生成日报
 2. 支持 Markdown 格式输出
 3. 提供本地保存能力
-4. 保留旧通知接口兼容壳（主动通知发送已下线）
+4. 为旧 `NotificationService` 导入路径保留兼容壳（主动通知发送已下线）
+
+说明：
+- 新代码优先使用 `src.report_output`。
+- 本文件继续存在，是为了兼容历史调用方与测试，而不是鼓励继续扩散“通知服务”心智模型。
 """
 import logging
 from datetime import datetime
@@ -33,7 +37,10 @@ logger = logging.getLogger(__name__)
 
 class NotificationService:
     """
-    报告输出服务（保留 NotificationService 名称以兼容旧调用方）
+    兼容保留的报告输出服务。
+
+    新代码请优先使用 `ReportOutputService` 名称；`NotificationService`
+    继续保留仅为了兼容旧调用方、旧测试与旧导入路径。
     
     职责：
     1. 生成 Markdown 格式的分析日报
@@ -1292,10 +1299,19 @@ class NotificationBuilder:
         return "\n".join(lines)
 
 
+class ReportOutputService(NotificationService):
+    """Preferred report-output service name for the current skill-first runtime."""
+
+
 # 便捷函数
 def get_notification_service() -> NotificationService:
-    """获取报告输出服务实例（沿用旧函数名保持兼容）。"""
+    """Backward-compatible factory for callers still using the old notification name."""
     return NotificationService()
+
+
+def get_report_output_service() -> ReportOutputService:
+    """Return the preferred report-output service for new call sites."""
+    return ReportOutputService()
 
 
 def send_daily_report(results: List[AnalysisResult]) -> bool:

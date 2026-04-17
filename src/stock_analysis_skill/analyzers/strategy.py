@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Strategy resource resolver for the skill-first rewrite."""
+"""User-facing strategy resolver backed by internal skill semantics."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from typing import Optional
 from src.stock_analysis_skill.contracts import StrategyResolutionResponse, StrategySpec
 
 
-class StrategyResolver:
-    """Load and resolve strategy YAML resources by id or alias."""
+class SkillResolver:
+    """Load and resolve user-facing strategy YAML resources via the internal skill layer."""
 
     def __init__(self, strategies_dir: Optional[Path] = None):
         self.strategies_dir = strategies_dir or Path(__file__).resolve().parents[3] / "strategies"
@@ -67,3 +67,7 @@ class StrategyResolver:
             instructions=str(payload.get("instructions") or ""),
             source_path=str(path),
         )
+
+
+# Backward-compatible alias: external APIs/scripts still talk about "strategy".
+StrategyResolver = SkillResolver

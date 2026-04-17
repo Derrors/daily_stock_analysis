@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Optional
 
 from src.config import get_config
-from src.notification import NotificationService
+from src.report_output import ReportOutputService
 from src.market_analyzer import MarketAnalyzer
 from src.report_language import normalize_report_language
 from src.search_service import SearchService
@@ -45,7 +45,7 @@ def _get_market_review_text(language: str) -> dict[str, str]:
 
 
 def run_market_review(
-    notifier: NotificationService,
+    report_output_service: ReportOutputService,
     analyzer: Optional[GeminiAnalyzer] = None,
     search_service: Optional[SearchService] = None,
     override_region: Optional[str] = None,
@@ -54,7 +54,7 @@ def run_market_review(
     执行大盘复盘分析
 
     Args:
-        notifier: 报告输出服务（沿用旧参数名保持兼容）
+        report_output_service: 报告输出服务（旧调用方传入的 notifier 对象也可兼容工作）
         analyzer: AI分析器（可选）
         search_service: 搜索服务（可选）
         override_region: 覆盖 config 的 market_review_region（Issue #373 交易日过滤后有效子集）
@@ -107,7 +107,7 @@ def run_market_review(
             # 保存报告到文件
             date_str = datetime.now().strftime('%Y%m%d')
             report_filename = f"market_review_{date_str}.md"
-            filepath = notifier.save_report_to_file(
+            filepath = report_output_service.save_report_to_file(
                 f"{review_text['root_title']}\n\n{review_report}",
                 report_filename
             )

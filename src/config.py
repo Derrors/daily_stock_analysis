@@ -450,7 +450,7 @@ class Config:
     # LITELLM_CONFIG: path to a standard litellm_config.yaml file (most powerful)
     litellm_config_path: Optional[str] = None
     # Internal metadata: which config layer actually produced llm_model_list
-    llm_models_source: str = "legacy_env"
+    llm_models_source: str = "managed_env"
     # LLM_CHANNELS: list of channel dicts, each with name/base_url/api_keys/models
     llm_channels: List[Dict[str, Any]] = field(default_factory=list)
     # Pre-built LiteLLM Router model_list (populated from channels, YAML, or legacy keys)
@@ -836,7 +836,7 @@ class Config:
 
         # === LLM Channels + YAML config ===
         litellm_config_path = os.getenv('LITELLM_CONFIG', '').strip() or None
-        llm_models_source = "legacy_env"
+        llm_models_source = "managed_env"
         llm_channels: List[Dict[str, Any]] = []
         llm_model_list: List[Dict[str, Any]] = []
 
@@ -855,9 +855,9 @@ class Config:
                 if llm_model_list:
                     llm_models_source = "llm_channels"
 
-        # Priority 3: Legacy env vars → auto-build model_list (backward compatible)
+        # Priority 3: managed env keys → auto-build model_list (compat-preserving path)
         if not llm_model_list:
-            llm_model_list = cls._legacy_keys_to_model_list(
+            llm_model_list = cls._managed_env_keys_to_model_list(
                 gemini_api_keys, anthropic_api_keys, openai_api_keys,
                 os.getenv('OPENAI_BASE_URL') or (
                     'https://aihubmix.com/v1' if os.getenv('AIHUBMIX_KEY') else None
@@ -865,7 +865,7 @@ class Config:
                 deepseek_api_keys,
             )
             if llm_model_list:
-                llm_models_source = "legacy_env"
+                llm_models_source = "managed_env"
 
         # Auto-infer LITELLM_MODEL from channels when not explicitly set
         if not litellm_model and llm_channels:
@@ -1301,7 +1301,7 @@ class Config:
         return model_list
 
     @classmethod
-    def _legacy_keys_to_model_list(
+    def _managed_env_keys_to_model_list(
         cls,
         gemini_keys: List[str],
         anthropic_keys: List[str],
@@ -1309,11 +1309,13 @@ class Config:
         openai_base_url: Optional[str],
         deepseek_keys: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
-        """Build Router model_list from legacy per-provider keys (backward compat).
+        """Build Router model_list from env-managed provider keys.
 
+        This remains the compatibility-preserving path for users who still rely
+        on per-provider environment variables instead of channel/YAML routing.
         Returns a model_list where each provider's keys are expanded into
-        deployments, keyed by placeholder model_name tokens.  The analyzer
-        resolves actual model_names at call time from LITELLM_MODEL /
+        deployments, keyed by placeholder model_name tokens. The analyzer
+        resolves actual model names at call time from LITELLM_MODEL /
         LITELLM_FALLBACK_MODELS.
         """
         model_list: List[Dict[str, Any]] = []
@@ -1359,6 +1361,24 @@ class Config:
                 })
 
         return model_list
+
+    @classmethod
+    def _legacy_keys_to_model_list(
+        cls,
+        gemini_keys: List[str],
+        anthropic_keys: List[str],
+        openai_keys: List[str],
+        openai_base_url: Optional[str],
+        deepseek_keys: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Backward-compatible alias for `_managed_env_keys_to_model_list()`."""
+        return cls._managed_env_keys_to_model_list(
+            gemini_keys,
+            anthropic_keys,
+            openai_keys,
+            openai_base_url,
+            deepseek_keys,
+        )
 
     @classmethod
     def _parse_report_type(cls, value: str) -> str:
@@ -1550,10 +1570,6 @@ class Config:
         cls._instance = None
         cls._BOOTSTRAP_RUNTIME_ENV_OVERRIDES_CAPTURED = False
         cls._BOOTSTRAP_RUNTIME_ENV_OVERRIDES = frozenset()
-
-    def has_searxng_enabled(self) -> bool:
-        """Legacy compatibility helper kept after search-source simplification."""
-        return False
 
     def has_search_capability_enabled(self) -> bool:
         """Whether any retained search provider is configured."""
@@ -1772,7 +1788,7 @@ class Config:
         if not self.has_search_capability_enabled():
             issues.append(ConfigIssue(
                 severity="info",
-                message="未配置搜索引擎能力 (Bocha/MiniMax/Tavily/Brave/SerpAPI/SearXNG)，新闻搜索功能将不可用",
+                message="未配置搜索引擎能力 (Bocha/Tavily/Brave/SerpAPI)，新闻搜索功能将不可用",
                 field="BOCHA_API_KEYS",
             ))
 
@@ -1868,12 +1884,12 @@ def get_config() -> Config:
 # Shared LLM helpers (used by both analyzer and agent/llm_adapter)
 # ============================================================
 
-def get_api_keys_for_model(model: str, config: Config) -> List[str]:
-    """Return explicitly managed API keys for a litellm model (legacy path only).
+def get_managed_api_keys_for_model(model: str, config: Config) -> List[str]:
+    """Return explicitly managed API keys for a LiteLLM model.
 
-    When llm_model_list is populated (channels / YAML), the Router handles key
-    selection, so this function is not needed.  Kept for backward compat when
-    no Router is built and a direct litellm.completion() call is needed.
+    This is the env-managed compatibility path used when channel/YAML Router
+    deployments are unavailable and a direct litellm.completion() call is still
+    needed.
     """
     provider = _get_litellm_provider(model)
     if provider in {"gemini", "vertex_ai"}:
@@ -1888,11 +1904,11 @@ def get_api_keys_for_model(model: str, config: Config) -> List[str]:
     return []
 
 
-def extra_litellm_params(model: str, config: Config) -> Dict[str, Any]:
-    """Build extra litellm params for a model (legacy path only).
+def get_managed_litellm_params(model: str, config: Config) -> Dict[str, Any]:
+    """Build direct-call LiteLLM params for the env-managed compatibility path.
 
-    When llm_model_list is populated, the Router already carries api_base
-    and headers per-deployment, so this is not called.
+    When llm_model_list is populated, the Router already carries api_base and
+    headers per-deployment, so this helper is skipped.
     """
     params: Dict[str, Any] = {}
     # deepseek/ provider: litellm auto-resolves api_base, no manual override needed
@@ -1904,6 +1920,16 @@ def extra_litellm_params(model: str, config: Config) -> Dict[str, Any]:
         if config.openai_base_url and "aihubmix.com" in config.openai_base_url:
             params["extra_headers"] = {"APP-Code": "GPIJ3886"}
     return params
+
+
+def get_api_keys_for_model(model: str, config: Config) -> List[str]:
+    """Backward-compatible alias for `get_managed_api_keys_for_model()`."""
+    return get_managed_api_keys_for_model(model, config)
+
+
+def extra_litellm_params(model: str, config: Config) -> Dict[str, Any]:
+    """Backward-compatible alias for `get_managed_litellm_params()`."""
+    return get_managed_litellm_params(model, config)
 
 
 if __name__ == "__main__":

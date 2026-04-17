@@ -25,10 +25,10 @@ from src.agent.llm_adapter import get_thinking_extra_body
 from src.agent.skills.defaults import CORE_TRADING_SKILL_POLICY_ZH
 from src.config import (
     Config,
-    extra_litellm_params,
-    get_api_keys_for_model,
     get_config,
     get_configured_llm_models,
+    get_managed_api_keys_for_model,
+    get_managed_litellm_params,
     resolve_news_window_days,
 )
 from src.storage import persist_llm_usage
@@ -959,12 +959,12 @@ class GeminiAnalyzer:
             )
             return
 
-        # --- Legacy path: build Router for multi-key, or use single key ---
-        keys = get_api_keys_for_model(litellm_model, config)
+        # --- Env-managed compatibility path: build Router for multi-key, or use single key ---
+        keys = get_managed_api_keys_for_model(litellm_model, config)
 
         if len(keys) > 1:
-            # Build legacy Router for primary model multi-key load-balancing
-            extra_params = extra_litellm_params(litellm_model, config)
+            # Build Router for env-managed multi-key load-balancing
+            extra_params = get_managed_litellm_params(litellm_model, config)
             legacy_model_list = [
                 {
                     "model_name": litellm_model,
@@ -1013,10 +1013,10 @@ class GeminiAnalyzer:
         if self._router and model == config.litellm_model and not use_channel_router:
             return self._router.completion(**effective_kwargs)
 
-        keys = get_api_keys_for_model(model, config)
+        keys = get_managed_api_keys_for_model(model, config)
         if keys:
             effective_kwargs["api_key"] = keys[0]
-        effective_kwargs.update(extra_litellm_params(model, config))
+        effective_kwargs.update(get_managed_litellm_params(model, config))
         return litellm.completion(**effective_kwargs)
 
     def _normalize_usage(self, usage_obj: Any) -> Dict[str, Any]:

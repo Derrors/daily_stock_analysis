@@ -17,12 +17,12 @@ import litellm
 from litellm import Router
 
 from src.config import (
-    extra_litellm_params,
-    get_api_keys_for_model,
     get_config,
     get_configured_llm_models,
     get_effective_agent_models_to_try,
     get_effective_agent_primary_model,
+    get_managed_api_keys_for_model,
+    get_managed_litellm_params,
 )
 
 logger = logging.getLogger(__name__)
@@ -196,8 +196,8 @@ class LLMToolAdapter:
             )
             return
 
-        # --- Legacy path ---
-        keys = get_api_keys_for_model(litellm_model, config)
+        # --- Env-managed compatibility path ---
+        keys = get_managed_api_keys_for_model(litellm_model, config)
         if not keys:
             logger.info(
                 f"Agent LLM: litellm initialized (model={litellm_model}, "
@@ -206,7 +206,7 @@ class LLMToolAdapter:
             return
 
         if len(keys) > 1:
-            ep = extra_litellm_params(litellm_model, config)
+            ep = get_managed_litellm_params(litellm_model, config)
             legacy_model_list = [
                 {
                     "model_name": litellm_model,
@@ -410,10 +410,10 @@ class LLMToolAdapter:
             # Legacy/direct-env path: direct call (also handles direct-env
             # providers like groq/ or bedrock/ that are not in the Router
             # model_list even when channel mode is active)
-            keys = get_api_keys_for_model(model, self._config)
+            keys = get_managed_api_keys_for_model(model, self._config)
             if keys:
                 call_kwargs["api_key"] = keys[0]
-            call_kwargs.update(extra_litellm_params(model, self._config))
+            call_kwargs.update(get_managed_litellm_params(model, self._config))
             response = litellm.completion(**call_kwargs)
 
         return self._parse_litellm_response(response, model)

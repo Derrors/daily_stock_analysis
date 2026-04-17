@@ -165,13 +165,17 @@ python scripts/resolve_strategy.py --list
 
 ## 迁移状态
 
-当前处于 **skill-first rewrite** 过程中：
+当前已进入 **Phase E：语义收口与兼容层减脂**：
 - Phase A：已完成
 - Phase B：已完成
 - Phase C：已完成最小主链
-- Phase D：进行中（删除旧产品壳、重写文档）
+- Phase D：已完成主结构瘦身
+- Phase E：进行中（统一命名、压缩兼容层、降低维护噪音）
 
-仓库会继续清理与 skill 定位冲突的历史目录、测试和文档。
+当前主方向不再是继续大拆目录，而是：
+- 统一报告输出语义
+- 统一 strategy / skill 对内外口径
+- 压缩 Agent / config / search 的 compatibility surface
 
 ---
 

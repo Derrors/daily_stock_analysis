@@ -10,6 +10,10 @@
 使用方式：
     直接从子模块导入，例如:
     from src.services.analysis_service import AnalysisService
+
+说明：
+    `src.services` 目前只保留仍有明确主链价值的服务出口。
+    报告输出服务已优先迁到 `src.report_output`；不要再把这里当成旧产品壳的全量服务总入口。
 """
 
 

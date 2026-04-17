@@ -4,10 +4,11 @@ set -euo pipefail
 
 syntax_check() {
   echo "==> backend-gate: Python syntax check"
-  python -m py_compile main.py src/config.py src/auth.py src/analyzer.py src/notification.py
-  python -m py_compile src/storage.py src/scheduler.py src/search_service.py
-  python -m py_compile src/market_analyzer.py src/stock_analyzer.py
-  python -m py_compile data_provider/*.py
+  python -m py_compile src/config.py src/analyzer.py src/notification.py src/report_output.py
+  python -m py_compile src/storage.py src/scheduler.py src/search_service.py src/core/pipeline.py
+  python -m py_compile src/market_analyzer.py src/stock_analyzer.py src/services/analysis_service.py
+  python -m py_compile src/stock_analysis_skill/*.py src/stock_analysis_skill/analyzers/*.py src/stock_analysis_skill/renderers/*.py
+  python -m py_compile data_provider/*.py scripts/*.py
 }
 
 flake8_checks() {
@@ -23,7 +24,7 @@ deterministic_checks() {
 
 offline_test_suite() {
   echo "==> backend-gate: offline test suite"
-  python -m pytest -m "not network"
+  python -m pytest tests -m "not network"
 }
 
 run_all() {

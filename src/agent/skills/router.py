@@ -64,13 +64,8 @@ class SkillRouter:
         logger.info("[SkillRouter] using default skills: %s", default_skills)
         return default_skills
 
-    def select_strategies(
-        self,
-        ctx: AgentContext,
-        max_count: int = 3,
-    ) -> List[str]:
-        """Compatibility wrapper for legacy strategy-based callers."""
-        return self.select_skills(ctx, max_count=max_count)
+    # Compatibility alias for legacy strategy-based callers.
+    select_strategies = select_skills
 
     def _detect_regime(self, ctx: AgentContext) -> Optional[str]:
         for op in ctx.opinions:

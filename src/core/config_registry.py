@@ -42,7 +42,7 @@ _CATEGORY_DEFINITIONS: List[Dict[str, Any]] = [
     {
         "category": "agent",
         "title": "Agent",
-        "description": "Agent mode and strategy-skill settings.",
+        "description": "Agent mode and user-facing strategy settings (implemented internally as skills).",
         "display_order": 55,
     },
     {
@@ -950,7 +950,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_SKILLS": {
         "title": "Agent Strategies",
-        "description": "Comma-separated list of active agent strategy skills. Leave empty to use the primary default strategy skill declared in metadata (built-in default: bull_trend). When set to specific skills (not 'all'), scheduled tasks will automatically use the Agent pipeline.",
+        "description": "Comma-separated list of active agent strategies. Internally these map to skill ids. Leave empty to use the primary default strategy/skill declared in metadata (built-in default: bull_trend). When set to specific values (not 'all'), scheduled tasks will automatically use the Agent pipeline.",
         "category": "agent",
         "data_type": "string",
         "ui_control": "text",
@@ -964,7 +964,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_SKILL_DIR": {
         "title": "Agent Strategy Dir",
-        "description": "Directory containing agent strategy-skill definition files (YAML or SKILL.md bundles).",
+        "description": "Directory containing agent strategy definitions (implemented as YAML or SKILL.md skill bundles).",
         "category": "agent",
         "data_type": "string",
         "ui_control": "text",
@@ -1084,7 +1084,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_SKILL_AUTOWEIGHT": {
         "title": "Auto-Weight Strategies",
-        "description": "Automatically weight strategy-skill opinions by their historical backtest performance.",
+        "description": "Automatically weight strategy opinions by their historical backtest performance (internal skill runtime).",
         "category": "agent",
         "data_type": "boolean",
         "ui_control": "switch",
@@ -1098,7 +1098,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "AGENT_SKILL_ROUTING": {
         "title": "Strategy Routing",
-        "description": "Strategy-skill selection mode. 'auto' detects market regime and picks relevant skills; 'manual' uses AGENT_SKILLS list only.",
+        "description": "Strategy selection mode. 'auto' detects market regime and picks relevant internal skills; 'manual' uses AGENT_SKILLS list only.",
         "category": "agent",
         "data_type": "string",
         "ui_control": "select",

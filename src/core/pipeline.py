@@ -28,7 +28,10 @@ from data_provider.base import normalize_stock_code
 from data_provider.realtime_types import ChipDistribution
 from src.analyzer import GeminiAnalyzer, AnalysisResult, fill_chip_structure_if_needed, fill_price_position_if_needed
 from src.data.stock_mapping import STOCK_NAME_MAP
-from src.notification import NotificationService
+from src.report_output import ReportOutputService
+
+# Compatibility alias for older tests/imports that still patch src.core.pipeline.NotificationService.
+NotificationService = ReportOutputService
 from src.report_language import (
     get_unknown_text,
     localize_confidence_level,
@@ -92,8 +95,9 @@ class StockAnalysisPipeline:
         # 统一通过当前保留的数据源管理器获取数据
         self.trend_analyzer = StockTrendAnalyzer()  # 技术分析器
         self.analyzer = GeminiAnalyzer(config=self.config)
-        self.report_service = NotificationService(source_message=source_message)
-        self.notifier = self.report_service  # 兼容旧调用方/测试桩；新代码请优先使用 report_service。
+        self.report_output_service = NotificationService(source_message=source_message)
+        self.report_service = self.report_output_service  # 兼容旧调用方/测试桩；新代码请优先使用 report_output_service。
+        self.notifier = self.report_output_service  # 兼容旧调用方/测试桩；新代码请优先使用 report_output_service。
         
         # 初始化搜索服务（可选，初始化失败不应阻断主分析流程）
         try:
@@ -1368,9 +1372,17 @@ class StockAnalysisPipeline:
 
         return results
 
+    def _get_report_output_service(self):
+        """Return the preferred report-output service while preserving legacy test doubles."""
+        return getattr(
+            self,
+            "report_output_service",
+            getattr(self, "report_service", getattr(self, "notifier")),
+        )
+
     def _get_report_service(self):
-        """Return the preferred report-output service while preserving legacy notifier-only test doubles."""
-        return getattr(self, "report_service", getattr(self, "notifier"))
+        """Compatibility wrapper for older call sites/tests."""
+        return self._get_report_output_service()
 
     def _save_local_report(
         self,
@@ -1379,9 +1391,9 @@ class StockAnalysisPipeline:
     ) -> None:
         """保存分析报告到本地文件（与外部消息投递解耦）"""
         try:
-            report_service = self._get_report_service()
+            report_output_service = self._get_report_output_service()
             report = self._generate_aggregate_report(results, report_type)
-            filepath = report_service.save_report_to_file(report)
+            filepath = report_output_service.save_report_to_file(report)
             logger.info(f"决策仪表盘日报已保存: {filepath}")
         except Exception as e:
             logger.error(f"保存本地报告失败: {e}")
@@ -1391,11 +1403,11 @@ class StockAnalysisPipeline:
         results: List[AnalysisResult],
         report_type: ReportType,
     ) -> str:
-        """Generate aggregate report via the report-output service, with notifier fallback kept only for compatibility."""
-        report_service = self._get_report_service()
-        generator = getattr(report_service, "generate_aggregate_report", None)
+        """Generate aggregate report via the report-output service, with legacy fallbacks."""
+        report_output_service = self._get_report_output_service()
+        generator = getattr(report_output_service, "generate_aggregate_report", None)
         if callable(generator):
             return generator(results, report_type)
-        if report_type == ReportType.BRIEF and hasattr(report_service, "generate_brief_report"):
-            return report_service.generate_brief_report(results)
-        return report_service.generate_dashboard_report(results)
+        if report_type == ReportType.BRIEF and hasattr(report_output_service, "generate_brief_report"):
+            return report_output_service.generate_brief_report(results)
+        return report_output_service.generate_dashboard_report(results)

@@ -4,6 +4,7 @@ from src.schemas.analysis_contract import (
     AnalysisResponse,
     DataCompleteness,
     DecisionAction,
+    EvidenceBlock,
     Market,
     OutputFormat,
     QuerySource,
@@ -71,11 +72,11 @@ def test_analysis_response_supports_evidence_completeness_enum() -> None:
         score=82,
         summary="均线多头，趋势偏强",
     )
-    resp.evidence = {
-        "providers": {"daily": ["yfinance"]},
-        "used_features": ["trend_analysis"],
-        "data_completeness": {"trend": DataCompleteness.FULL},
-    }
+    resp.evidence = EvidenceBlock(
+        providers={"daily": ["yfinance"]},
+        used_features=["trend_analysis"],
+        data_completeness={"trend": DataCompleteness.FULL},
+    )
 
     validated = AnalysisResponse.model_validate(resp.model_dump())
 
