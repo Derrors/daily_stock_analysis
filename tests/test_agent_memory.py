@@ -134,7 +134,7 @@ class TestBaseAgentMemoryIntegration(unittest.TestCase):
         from src.agent.agents.base_agent import BaseAgent
 
         class DummyStrategyAgent(BaseAgent):
-            agent_name = "strategy_chan_theory"
+            agent_name = "skill_chan_theory"
 
             def system_prompt(self, ctx):
                 return "system"
@@ -170,7 +170,7 @@ class TestBaseAgentMemoryIntegration(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertAlmostEqual(result.opinion.confidence, 0.4)
         memory.get_calibration.assert_called_once_with(
-            agent_name="strategy_chan_theory",
+            agent_name="skill_chan_theory",
             stock_code="600519",
             skill_id="chan_theory",
         )

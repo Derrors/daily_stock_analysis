@@ -35,7 +35,7 @@ class TestSkillAggregator(unittest.TestCase):
 
         agg = SkillAggregator()
         ctx = AgentContext()
-        ctx.add_opinion(AgentOpinion(agent_name="strategy_bull_trend", signal="buy", confidence=0.7))
+        ctx.add_opinion(AgentOpinion(agent_name="skill_bull_trend", signal="buy", confidence=0.7))
 
         result = agg.aggregate(ctx)
 
@@ -48,8 +48,8 @@ class TestSkillAggregator(unittest.TestCase):
 
         agg = SkillAggregator()
         ctx = AgentContext()
-        ctx.add_opinion(AgentOpinion(agent_name="strategy_a", signal="buy", confidence=0.6))
-        ctx.add_opinion(AgentOpinion(agent_name="strategy_b", signal="sell", confidence=0.6))
+        ctx.add_opinion(AgentOpinion(agent_name="skill_a", signal="buy", confidence=0.6))
+        ctx.add_opinion(AgentOpinion(agent_name="skill_b", signal="sell", confidence=0.6))
 
         result = agg.aggregate(ctx)
 

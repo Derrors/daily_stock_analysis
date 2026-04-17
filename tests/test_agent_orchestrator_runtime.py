@@ -96,8 +96,8 @@ class TestOrchestratorRuntime(unittest.TestCase):
         intel.run.return_value = self._stage_result("intel")
         risk = MagicMock(agent_name="risk")
         risk.run.return_value = self._stage_result("risk")
-        skill = MagicMock(agent_name="strategy_bull_trend")
-        skill.run.return_value = self._stage_result("strategy_bull_trend", StageStatus.FAILED, error="skill boom")
+        skill = MagicMock(agent_name="skill_bull_trend")
+        skill.run.return_value = self._stage_result("skill_bull_trend", StageStatus.FAILED, error="skill boom")
         decision = MagicMock(agent_name="decision")
         decision.run.return_value = self._stage_result("decision")
 

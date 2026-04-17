@@ -158,16 +158,16 @@ class TestOrchestratorResults(unittest.TestCase):
         risk = MagicMock(agent_name="risk")
         risk.run.return_value = self._stage_result("risk")
 
-        strategy = MagicMock(agent_name="strategy_bull_trend")
+        strategy = MagicMock(agent_name="skill_bull_trend")
 
         def _run_strategy(run_ctx, progress_callback=None):
             run_ctx.add_opinion(AgentOpinion(
-                agent_name="strategy_bull_trend",
+                agent_name="skill_bull_trend",
                 signal="buy",
                 confidence=0.7,
                 reasoning="strategy ok",
             ))
-            return self._stage_result("strategy_bull_trend")
+            return self._stage_result("skill_bull_trend")
 
         strategy.run.side_effect = _run_strategy
 

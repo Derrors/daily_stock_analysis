@@ -19,9 +19,7 @@ from typing import Dict, Iterable, List, Optional
 _BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "strategies"
 
 SKILL_AGENT_PREFIX = "skill_"
-LEGACY_STRATEGY_AGENT_PREFIX = "strategy_"
 SKILL_CONSENSUS_AGENT_NAME = "skill_consensus"
-LEGACY_STRATEGY_CONSENSUS_AGENT_NAME = "strategy_consensus"
 
 CORE_TRADING_SKILL_POLICY_ZH = """## 默认技能基线（必须严格遵守）
 
@@ -302,9 +300,8 @@ def build_skill_agent_name(skill_id: str) -> str:
 def extract_skill_id(agent_name: Optional[str]) -> Optional[str]:
     if not agent_name or not isinstance(agent_name, str):
         return None
-    for prefix in (SKILL_AGENT_PREFIX, LEGACY_STRATEGY_AGENT_PREFIX):
-        if agent_name.startswith(prefix):
-            return agent_name[len(prefix):]
+    if agent_name.startswith(SKILL_AGENT_PREFIX):
+        return agent_name[len(SKILL_AGENT_PREFIX):]
     return None
 
 
@@ -313,4 +310,4 @@ def is_skill_agent_name(agent_name: Optional[str]) -> bool:
 
 
 def is_skill_consensus_name(agent_name: Optional[str]) -> bool:
-    return agent_name in {SKILL_CONSENSUS_AGENT_NAME, LEGACY_STRATEGY_CONSENSUS_AGENT_NAME}
+    return agent_name == SKILL_CONSENSUS_AGENT_NAME

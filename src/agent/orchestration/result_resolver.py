@@ -478,7 +478,7 @@ class OrchestratorResultResolver:
     def select_base_opinion(self, ctx: AgentContext) -> Optional[Any]:
         preferred_groups = (
             {"decision"},
-            {"skill_consensus", "strategy_consensus"},
+            {"skill_consensus"},
             {"technical"},
             {"intel"},
             {"risk"},
