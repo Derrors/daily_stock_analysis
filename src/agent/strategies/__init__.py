@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""
-Compatibility re-exports for the legacy strategy namespace.
+"""Legacy strategy namespace.
 
 New code should import from ``src.agent.skills`` directly. This package stays
-only as an import bridge for older tests/callers.
+only as a compatibility bridge for older tests/callers that still use the
+historical ``src.agent.strategies`` import path.
 """
 
-from src.agent.skills.aggregator import StrategyAggregator
-from src.agent.skills.router import StrategyRouter
-from src.agent.skills.skill_agent import StrategyAgent
+from .aggregator import StrategyAggregator
+from .router import StrategyRouter
+from .strategy_agent import StrategyAgent
 
 __all__ = [
     "StrategyAgent",

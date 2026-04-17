@@ -105,10 +105,6 @@ class SkillRouter:
             return "auto"
 
     @staticmethod
-    def _get_available_ids() -> set:
-        return {skill.name for skill in SkillRouter._get_available_skills()}
-
-    @staticmethod
     def _get_available_skills() -> list:
         try:
             from src.agent.factory import _SKILL_MANAGER_PROTOTYPE

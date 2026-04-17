@@ -351,5 +351,6 @@ def _build_orchestrator(config, registry, llm_adapter, skill_manager, *, technic
     )
 
 
-# Compatibility alias for older callers still importing ``build_executor``.
-build_executor = build_agent_executor
+def build_executor(config=None, skills: Optional[List[str]] = None):
+    """Compatibility wrapper for older callers still importing ``build_executor``."""
+    return build_agent_executor(config=config, skills=skills)

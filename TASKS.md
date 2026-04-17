@@ -29,12 +29,12 @@
 - [x] Phase E.1 语义收口：将 `notification/notifier` 语义统一到报告输出口径，保留必要兼容层
 - [x] Phase E.2 测试与工具清洁：收口 `test_env.py` / benchmark mark / 非阻塞 warning，降低回归噪音
 - [x] Phase E.3 命名统一：继续收口 `strategy` / `skill` 双命名，明确“对外策略、对内 skill”或单一口径
-- [-] Phase E.4 Agent 兼容层审计：盘点 `src/agent/*` 中的 legacy/compat wrapper，删无用、聚合有用兼容层
+- [x] Phase E.4 Agent 兼容层审计：盘点 `src/agent/*` 中的 legacy/compat wrapper，删无用、聚合有用兼容层
 - [-] Phase E.5 配置最小化审计 v2：继续盘 `src/config.py` 里仅为旧入口保留的 LLM / runtime fallback 逻辑
 - [-] Phase E.6 数据/搜索兼容债清理：继续抽离已下线 provider 的 compat 语义，收紧主路径说明
 - [x] Phase F.1 主链真相源内迁设计：明确 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 与 `src/stock_analysis_skill/*` 的目标边界
-- [-] Phase F.2 同步主链内迁：把股票分析主执行链逐步迁入 `src/stock_analysis_skill/*`，旧入口退为兼容壳
-- [-] Phase F.3 异步主链对齐：把 `AnalysisTaskQueue -> AnalysisService -> StockAnalysisPipeline` 的调用关系对齐到新的 skill runtime 主链
+- [x] Phase F.2 同步主链内迁：把股票分析主执行链逐步迁入 `src/stock_analysis_skill/*`，旧入口退为兼容壳
+- [x] Phase F.3 异步主链对齐：把 `AnalysisTaskQueue -> AnalysisService -> StockAnalysisPipeline` 的调用关系对齐到新的 skill runtime 主链
 - [x] Phase F.4 Analyzer 内核拆分：逐步拆 `src/analyzer.py`，优先迁出纯函数/结果归一化/后处理逻辑，避免与 F.2/F.3 混成一次高风险爆破
 - [x] Phase F.5 回归与契约校验：按同步/异步/agent/script 四条链重跑回归，确认不存在双真相源
 
@@ -119,3 +119,4 @@
 - F.2/F.3 收尾阶段又补了一刀低风险空心化：`src/core/pipeline.py` 的顶部说明与类说明已收口到“低层分析执行器兼容层”，并删除了随同步编排迁出而失效的高层调度语义；针对 pipeline / skill / task queue 相关定点验证为 `59 passed`，全量 `pytest` 仍维持 **810 passed + 96 subtests passed**。
 - Phase F.4 已继续推进到核心拆分第四刀：在 `_call_litellm()` 主体迁入 `src/stock_analysis_skill/analysis/litellm_caller.py` 的基础上，进一步将 `analyze()` 主循环迁入 `src/stock_analysis_skill/analysis/execution.py`；`src/analyzer.py` 中 `analyze()` 已退为 compat delegate，并通过依赖注入继续复用 `is_available/_format_prompt/_call_litellm/_parse_response/_build_market_snapshot/_check_content_integrity/_build_integrity_retry_prompt/_apply_placeholder_fill` 等既有 patch 面，保证测试与旧调用方不炸。该刀定点验证为 `45 passed`，随后全量 `pytest` 仍维持 **810 passed + 96 subtests passed**。
 - Phase F.5 已完成两组契约级回归矩阵并收口：第一组覆盖同步主链 / 异步任务链 / script / skill contract / market analyzer（`57 passed`）；第二组覆盖 agent/orchestrator/skill service/script entry/renderers（`121 passed`）；其后再次全量 `pytest` 仍为 **810 passed + 96 subtests passed**。当前可视为 Phase F 已完成“内核内迁 + 契约回归”验收。
+- Phase E.4 已完成多刀低风险兼容层减脂：① `src/agent/strategies/*` 已收口为 strategy-first legacy bridge，public surface 优先保留 `Strategy*`；② `src/agent/orchestrator.py` 底部与 `src/agent/orchestration/result_resolver.py` 重复的一批 dashboard/result helper 已删除，改为直接复用 resolver 实现，仅保留风险 override 相关独有 helper；③ `src/agent/skills/router.py` 已删除无人使用的 `_get_available_ids()` 死 helper；④ `src/agent/factory.py` 的 `build_executor` 从裸 alias 改为显式兼容 wrapper；⑤ `src/agent/memory.py` 的 strategy 兼容入口从裸 alias 改为显式 wrapper。当前 E.4 定点验证已覆盖 strategy compat（`59 passed`）、orchestrator/runtime/result 路径（`64 passed`）、agent/router/pipeline（`83 passed`）与 memory/factory（`51 passed`）。
