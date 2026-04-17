@@ -339,6 +339,3 @@ class StockAnalysisMainlineRuntime:
             "report": report,
         }
 
-
-class StockAnalysisSkillPipeline(StockAnalysisPipeline):
-    """Canonical skill-runtime alias over the existing low-level pipeline engine."""
