@@ -56,7 +56,6 @@ class StockAnalysisSkillService:
         )
         self.market_analyzer = MarketSkillAnalyzer()
         self.skill_resolver = SkillResolver()
-        self.strategy_resolver = self.skill_resolver  # backward-compatible alias
 
     @property
     def last_error(self) -> Optional[str]:

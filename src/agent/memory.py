@@ -142,7 +142,6 @@ class AgentMemory:
         agent_name: str,
         stock_code: Optional[str] = None,
         skill_id: Optional[str] = None,
-        strategy_id: Optional[str] = None,
     ) -> CalibrationResult:
         """Compute confidence calibration for an agent or skill.
 
@@ -155,8 +154,7 @@ class AgentMemory:
             return result
 
         try:
-            resolved_skill_id = skill_id or strategy_id
-            stats = self._get_accuracy_stats(agent_name, stock_code, resolved_skill_id)
+            stats = self._get_accuracy_stats(agent_name, stock_code, skill_id)
             result.total_samples = stats.get("total", 0)
             result.historical_accuracy = stats.get("accuracy", 0.5)
             result.direction_accuracy = stats.get("direction_accuracy", 0.5)
@@ -215,13 +213,6 @@ class AgentMemory:
             "sufficient_samples": False,
         }
 
-    def get_strategy_performance(self, strategy_id: str) -> Dict[str, Any]:
-        """Compatibility wrapper for legacy strategy-based callers.
-
-        Canonical runtime code should prefer ``get_skill_performance()``.
-        """
-        return self.get_skill_performance(strategy_id)
-
     # -----------------------------------------------------------------
     # Auto-weighting
     # -----------------------------------------------------------------
@@ -240,17 +231,6 @@ class AgentMemory:
         if not self.enabled:
             return {sid: 1.0 for sid in skill_ids}
         return {sid: 1.0 for sid in skill_ids}
-
-    def compute_strategy_weights(
-        self,
-        strategy_ids: List[str],
-        use_backtest: bool = True,
-    ) -> Dict[str, float]:
-        """Compatibility wrapper for legacy strategy-based callers.
-
-        Canonical runtime code should prefer ``compute_skill_weights()``.
-        """
-        return self.compute_skill_weights(strategy_ids, use_backtest=use_backtest)
 
     # -----------------------------------------------------------------
     # Internal
