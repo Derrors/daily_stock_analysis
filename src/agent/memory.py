@@ -25,8 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Default minimum samples before calibration kicks in
 _MIN_CALIBRATION_SAMPLES = 30
-# Rolling window size for recent accuracy calculation
-_ROLLING_WINDOW = 50
 
 
 @dataclass
@@ -153,32 +151,10 @@ class AgentMemory:
         if not self.enabled:
             return result
 
-        try:
-            stats = self._get_accuracy_stats(agent_name, stock_code, skill_id)
-            result.total_samples = stats.get("total", 0)
-            result.historical_accuracy = stats.get("accuracy", 0.5)
-            result.direction_accuracy = stats.get("direction_accuracy", 0.5)
-            result.avg_confidence = stats.get("avg_confidence", 0.5)
-
-            if result.total_samples >= self.min_samples:
-                result.calibrated = True
-                # Calibration: scale confidence towards historical accuracy
-                # If agent is overconfident: factor < 1
-                # If agent is underconfident: factor > 1
-                if result.avg_confidence > 0:
-                    result.calibration_factor = min(
-                        1.5,
-                        max(0.5, result.historical_accuracy / result.avg_confidence),
-                    )
-                else:
-                    result.calibration_factor = 1.0
-            else:
-                result.calibrated = False
-                result.calibration_factor = 1.0
-
-        except Exception as exc:
-            logger.debug("[AgentMemory] calibration failed for %s: %s", agent_name, exc)
-
+        # Backtest-driven calibration stats were removed with the legacy strategy
+        # subsystem. Keep a neutral calibration result until a new evidence source
+        # is introduced in the skill-first runtime.
+        _ = (agent_name, stock_code, skill_id)
         return result
 
     def calibrate_confidence(self, agent_name: str, raw_confidence: float, stock_code: Optional[str] = None) -> float:
@@ -211,20 +187,3 @@ class AgentMemory:
             return {sid: 1.0 for sid in skill_ids}
         return {sid: 1.0 for sid in skill_ids}
 
-    # -----------------------------------------------------------------
-    # Internal
-    # -----------------------------------------------------------------
-
-    def _get_accuracy_stats(
-        self,
-        agent_name: str,
-        stock_code: Optional[str],
-        skill_id: Optional[str],
-    ) -> Dict[str, Any]:
-        """Return neutral accuracy statistics.
-
-        The previous implementation depended on deleted backtest modules.
-        Keep the signature for compatibility with calibration callers.
-        """
-        _ = (agent_name, stock_code, skill_id)
-        return {"total": 0, "accuracy": 0.5, "direction_accuracy": 0.5, "avg_confidence": 0.5}
