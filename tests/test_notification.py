@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Regression tests for NotificationService after notification descope.
+Regression tests for ReportOutputService after notification descope.
 """
 import os
 import sys
@@ -16,7 +16,7 @@ for optional_module in ("litellm", "json_repair"):
         sys.modules[optional_module] = mock.MagicMock()
 
 from src.config import Config
-from src.notification import NotificationService
+from src.notification import ReportOutputService
 from src.enums import ReportType
 
 
@@ -24,11 +24,11 @@ def _make_config(**overrides) -> Config:
     return Config(stock_list=[], **overrides)
 
 
-class TestNotificationServiceAfterDescope(unittest.TestCase):
+class TestReportOutputServiceAfterDescope(unittest.TestCase):
     @mock.patch("src.notification.get_config")
     def test_service_is_unavailable_and_send_is_noop(self, mock_get_config):
         mock_get_config.return_value = _make_config()
-        service = NotificationService()
+        service = ReportOutputService()
 
         self.assertFalse(service.is_available())
         self.assertEqual(service.get_available_channels(), [])
@@ -38,7 +38,7 @@ class TestNotificationServiceAfterDescope(unittest.TestCase):
     @mock.patch("src.notification.get_config")
     def test_only_generic_send_entry_remains_noop(self, mock_get_config):
         mock_get_config.return_value = _make_config()
-        service = NotificationService()
+        service = ReportOutputService()
 
         self.assertFalse(service.send_to_context("x"))
         self.assertFalse(service.send("x"))
@@ -47,7 +47,7 @@ class TestNotificationServiceAfterDescope(unittest.TestCase):
     @mock.patch("src.notification.get_config")
     def test_generate_aggregate_report_still_delegates_by_report_type(self, mock_get_config):
         mock_get_config.return_value = _make_config()
-        service = NotificationService()
+        service = ReportOutputService()
 
         with mock.patch.object(service, "generate_brief_report", return_value="brief-report") as brief_mock, \
              mock.patch.object(service, "generate_dashboard_report", return_value="dashboard-report") as dashboard_mock:

@@ -7,7 +7,7 @@ import os
 import sys
 import unittest
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -112,8 +112,7 @@ class TestEventMonitorConfigIntegration(unittest.TestCase):
             agent_event_alert_rules_json='[{"stock_code":"600519","alert_type":"price_cross","direction":"above","price":1800}]',
         )
 
-        with patch("src.notification.NotificationService", return_value=MagicMock()):
-            monitor = build_event_monitor_from_config(config=config)
+        monitor = build_event_monitor_from_config(config=config)
 
         self.assertIsNotNone(monitor)
         self.assertEqual(len(monitor.rules), 1)
@@ -141,8 +140,7 @@ class TestEventMonitorConfigIntegration(unittest.TestCase):
             ),
         )
 
-        with patch("src.notification.NotificationService", return_value=MagicMock()):
-            monitor = build_event_monitor_from_config(config=config)
+        monitor = build_event_monitor_from_config(config=config)
 
         self.assertIsNotNone(monitor)
         self.assertEqual(len(monitor.rules), 1)
@@ -159,8 +157,7 @@ class TestEventMonitorConfigIntegration(unittest.TestCase):
             ),
         )
 
-        with patch("src.notification.NotificationService", return_value=MagicMock()):
-            monitor = build_event_monitor_from_config(config=config)
+        monitor = build_event_monitor_from_config(config=config)
 
         self.assertIsNotNone(monitor)
         self.assertEqual(len(monitor.rules), 1)

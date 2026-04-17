@@ -8,11 +8,11 @@ A股自选股智能分析系统 - 报告输出兼容层
 1. 汇总分析结果生成日报
 2. 支持 Markdown 格式输出
 3. 提供本地保存能力
-4. 为旧 `NotificationService` 导入路径保留兼容壳（主动通知发送已下线）
+4. 保留历史文件路径 `src.notification`（主动通知发送能力已下线）
 
 说明：
 - 新代码优先使用 `src.report_output`。
-- 本文件继续存在，是为了兼容历史调用方与测试，而不是鼓励继续扩散“通知服务”心智模型。
+- 本文件继续存在，是为了兼容历史模块路径与测试，不再提供独立通知服务语义。
 """
 import logging
 from datetime import datetime
@@ -35,17 +35,13 @@ from src.utils.data_processing import normalize_model_used
 logger = logging.getLogger(__name__)
 
 
-class NotificationService:
-    """
-    兼容保留的报告输出服务。
+class ReportOutputService:
+    """报告输出服务（skill-first canonical 名称）。
 
-    新代码请优先使用 `ReportOutputService` 名称；`NotificationService`
-    继续保留仅为了兼容旧调用方、旧测试与旧导入路径。
-    
     职责：
     1. 生成 Markdown 格式的分析日报
     2. 支持本地保存日报
-    3. 为旧调用方保留发送接口兼容壳（统一 no-op）
+    3. 保留统一 send() no-op 空壳，避免误触发历史通知发送语义
     """
     
     def __init__(self, source_message: Optional[Any] = None):
@@ -69,7 +65,7 @@ class NotificationService:
         self._history_compare_cache: Dict[Tuple[int, Tuple[Tuple[str, str], ...]], Dict[str, List[Dict[str, Any]]]] = {}
         self._available_channels: List[str] = []
 
-        logger.info("通知发送能力已下线：NotificationService 当前仅负责报告生成、本地保存与兼容空壳")
+        logger.info("通知发送能力已下线：ReportOutputService 当前仅负责报告生成与本地保存")
 
     def _normalize_report_type(self, report_type: Any) -> ReportType:
         """Normalize string/enum input into ReportType."""
@@ -1299,28 +1295,15 @@ class NotificationBuilder:
         return "\n".join(lines)
 
 
-class ReportOutputService(NotificationService):
-    """Preferred report-output service name for the current skill-first runtime."""
-
-
 # 便捷函数
-def get_notification_service() -> NotificationService:
-    """Backward-compatible factory for callers still using the old notification name."""
-    return NotificationService()
-
-
 def get_report_output_service() -> ReportOutputService:
     """Return the preferred report-output service for new call sites."""
     return ReportOutputService()
 
 
 def send_daily_report(results: List[AnalysisResult]) -> bool:
-    """
-    兼容旧调用方的每日报告快捷方式。
-
-    当前行为：生成日报、保存到本地，然后走兼容 send() 空壳（恒为 no-op）。
-    """
-    service = get_notification_service()
+    """生成并保存每日报告，然后执行 send() no-op 兼容空壳。"""
+    service = get_report_output_service()
     
     # 生成报告
     report = service.generate_daily_report(results)
@@ -1370,7 +1353,7 @@ if __name__ == "__main__":
         ),
     ]
     
-    service = NotificationService()
+    service = ReportOutputService()
     
     # 显示检测到的渠道
     print("=== 通知渠道检测 ===")

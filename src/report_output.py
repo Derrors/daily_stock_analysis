@@ -9,10 +9,9 @@ expand the deprecated "notification delivery" mental model.
 
 from __future__ import annotations
 
-from src.notification import NotificationService, ReportOutputService, get_report_output_service
+from src.notification import ReportOutputService, get_report_output_service
 
 __all__ = [
-    "NotificationService",
     "ReportOutputService",
     "get_report_output_service",
 ]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Compatibility tests for the reduced NotificationService surface after notification descope.
+Compatibility tests for the reduced ReportOutputService surface after notification descope.
 """
 import os
 import sys
@@ -16,7 +16,7 @@ for optional_module in ("litellm", "json_repair"):
         sys.modules[optional_module] = mock.MagicMock()
 
 from src.config import Config
-from src.notification import NotificationService
+from src.notification import ReportOutputService
 
 
 def _make_config(**overrides) -> Config:
@@ -27,7 +27,7 @@ class TestNotificationCompatibilityStubs(unittest.TestCase):
     @mock.patch("src.notification.get_config")
     def test_detect_all_channels_returns_empty_list(self, mock_get_config):
         mock_get_config.return_value = _make_config()
-        service = NotificationService()
+        service = ReportOutputService()
 
         self.assertEqual(service._detect_all_channels(), [])
         self.assertEqual(service.get_available_channels(), [])
@@ -36,7 +36,7 @@ class TestNotificationCompatibilityStubs(unittest.TestCase):
     @mock.patch("src.notification.get_config")
     def test_legacy_channel_specific_methods_are_gone(self, mock_get_config):
         mock_get_config.return_value = _make_config()
-        service = NotificationService()
+        service = ReportOutputService()
 
         for attr in (
             "send_to_wechat",
