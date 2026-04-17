@@ -23,9 +23,6 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Default minimum samples before calibration kicks in
-_MIN_CALIBRATION_SAMPLES = 30
-
 
 @dataclass
 class CalibrationResult:
@@ -64,9 +61,8 @@ class AgentMemory:
         cal = memory.get_calibration("technical", stock_code="600519")
     """
 
-    def __init__(self, enabled: bool = False, min_samples: int = _MIN_CALIBRATION_SAMPLES):
+    def __init__(self, enabled: bool = False):
         self.enabled = enabled
-        self.min_samples = min_samples
 
     @classmethod
     def from_config(cls) -> "AgentMemory":
