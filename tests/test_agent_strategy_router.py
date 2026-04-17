@@ -102,6 +102,14 @@ class TestStrategyRouter(unittest.TestCase):
         regime = router._detect_regime(ctx)
         self.assertIsNone(regime)
 
+    def test_legacy_strategy_module_still_exposes_skill_router_compatibly(self):
+        from src.agent.skills.router import SkillRouter as CanonicalSkillRouter
+        from src.agent.strategies.router import SkillRouter as LegacySkillRouter
+        from src.agent.strategies.router import _DEFAULT_SKILLS, _DEFAULT_STRATEGIES
+
+        self.assertIs(LegacySkillRouter, CanonicalSkillRouter)
+        self.assertEqual(_DEFAULT_SKILLS, _DEFAULT_STRATEGIES)
+
 
 if __name__ == "__main__":
     unittest.main()
