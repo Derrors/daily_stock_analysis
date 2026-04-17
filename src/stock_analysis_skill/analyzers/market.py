@@ -15,7 +15,7 @@ from src.stock_analysis_skill.contracts import (
 
 
 class MarketSkillAnalyzer:
-    """Structured market-analysis entry built on the legacy market analyzer."""
+    """Structured market-analysis entry built on the existing market analyzer."""
 
     def __init__(self, analyzer_factory=MarketAnalyzer):
         self.analyzer_factory = analyzer_factory

@@ -10,7 +10,7 @@ Orchestrates the LLM + tools interaction loop:
 5. Loop until final answer or max_steps
 
 The core execution loop is delegated to :mod:`src.agent.runner` so that
-both the legacy single-agent path and future multi-agent runners share the
+the single-agent executor and future multi-agent runners share the
 same implementation.
 """
 
