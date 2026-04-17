@@ -45,7 +45,6 @@ _THINKING_TOOL_LABELS: Dict[str, str] = {
     "get_volume_analysis": "量能分析",
     "calculate_ma": "均线计算",
     "get_skill_backtest_summary": "技能回测概览",
-    "get_strategy_backtest_summary": "策略回测概览",
     "get_stock_backtest_summary": "个股回测数据",
 }
 
