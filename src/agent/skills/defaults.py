@@ -273,10 +273,6 @@ def get_primary_default_skill_id(
     return defaults[0] if defaults else ""
 
 
-DEFAULT_ACTIVE_SKILL_IDS: tuple[str, ...] = tuple(get_default_active_skill_ids())
-DEFAULT_ROUTER_SKILL_IDS: tuple[str, ...] = tuple(get_default_router_skill_ids())
-PRIMARY_DEFAULT_SKILL_ID = get_primary_default_skill_id()
-
 
 def build_skill_agent_name(skill_id: str) -> str:
     return f"{SKILL_AGENT_PREFIX}{skill_id}"
