@@ -46,12 +46,6 @@ from src.stock_analysis_skill.service import (  # noqa: E402
 from src.utils.analysis_runtime_contract import build_full_analysis_preflight_error  # noqa: E402
 
 
-def _resolve_report_type(request_or_mode: AnalysisRequest | AnalysisMode) -> str:
-    """Backward-compatible helper export for legacy tests/callers."""
-    mode = request_or_mode.mode if isinstance(request_or_mode, AnalysisRequest) else request_or_mode
-    return resolve_report_type(mode)
-
-
 def _parse_market(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None

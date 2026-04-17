@@ -1,8 +1,9 @@
 from argparse import Namespace
 from types import SimpleNamespace
 
-from scripts.run_stock_analysis import _build_request_from_args, _preflight_request, _resolve_report_type
+from scripts.run_stock_analysis import _build_request_from_args, _preflight_request
 from src.stock_analysis_skill.contracts import AnalysisMode, AnalysisRequest, OutputFormat
+from src.stock_analysis_skill.service import resolve_report_type
 
 
 def test_build_request_from_args_defaults() -> None:
@@ -65,7 +66,7 @@ def test_resolve_report_type_mapping() -> None:
 
     request = _build_request_from_args(args)
 
-    assert _resolve_report_type(request) == "full"
+    assert resolve_report_type(request.mode) == "full"
 
 
 def test_preflight_requires_provider_key(monkeypatch) -> None:
