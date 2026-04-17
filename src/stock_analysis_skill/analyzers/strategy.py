@@ -68,6 +68,3 @@ class SkillResolver:
             source_path=str(path),
         )
 
-
-# Backward-compatible alias: external APIs/scripts still talk about "strategy".
-StrategyResolver = SkillResolver
