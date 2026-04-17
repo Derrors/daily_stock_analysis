@@ -18,7 +18,6 @@ from src.agent.skills.defaults import (
     TECHNICAL_SKILL_RULES_EN,
     get_default_active_skill_ids,
     get_default_router_skill_ids,
-    get_primary_default_skill_id,
     get_regime_skill_ids,
 )
 
@@ -32,7 +31,6 @@ __all__ = [
     "TECHNICAL_SKILL_RULES_EN",
     "get_default_active_skill_ids",
     "get_default_router_skill_ids",
-    "get_primary_default_skill_id",
     "get_regime_skill_ids",
     "load_skill_from_markdown",
     "load_skill_from_yaml",

@@ -265,14 +265,6 @@ def get_regime_skill_ids(
     )
 
 
-def get_primary_default_skill_id(
-    skills: Optional[Iterable[object]] = None,
-    available_skill_ids: Optional[Iterable[str]] = None,
-) -> str:
-    defaults = get_default_active_skill_ids(skills, max_count=1, available_skill_ids=available_skill_ids)
-    return defaults[0] if defaults else ""
-
-
 
 def build_skill_agent_name(skill_id: str) -> str:
     return f"{SKILL_AGENT_PREFIX}{skill_id}"

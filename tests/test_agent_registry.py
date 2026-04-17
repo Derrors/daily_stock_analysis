@@ -739,7 +739,6 @@ class TestSkillDefaultResolution(unittest.TestCase):
         from src.agent.skills.defaults import (
             get_default_active_skill_ids,
             get_default_router_skill_ids,
-            get_primary_default_skill_id,
             get_regime_skill_ids,
         )
 
@@ -751,14 +750,13 @@ class TestSkillDefaultResolution(unittest.TestCase):
 
         self.assertEqual(get_default_active_skill_ids(skills), ["alpha"])
         self.assertEqual(get_default_router_skill_ids(skills), ["alpha"])
-        self.assertEqual(get_primary_default_skill_id(skills), "alpha")
+        self.assertEqual(get_default_active_skill_ids(skills, max_count=1)[0], "alpha")
         self.assertEqual(get_regime_skill_ids("volatile", skills), ["beta"])
 
     def test_default_helpers_fall_back_to_sorted_user_invocable_skills(self):
         from src.agent.skills.defaults import (
             get_default_active_skill_ids,
             get_default_router_skill_ids,
-            get_primary_default_skill_id,
         )
 
         skills = [
@@ -768,7 +766,7 @@ class TestSkillDefaultResolution(unittest.TestCase):
 
         self.assertEqual(get_default_active_skill_ids(skills), ["eta"])
         self.assertEqual(get_default_router_skill_ids(skills), ["eta"])
-        self.assertEqual(get_primary_default_skill_id(skills), "eta")
+        self.assertEqual(get_default_active_skill_ids(skills, max_count=1)[0], "eta")
 
 
 class TestSkillAgent(unittest.TestCase):
