@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
 from src.config import get_config
-from src.core.pipeline import StockAnalysisPipeline as LegacyStockAnalysisPipeline
+from src.core.pipeline import StockAnalysisPipeline
 from src.enums import ReportType
 from src.report_language import (
     get_localized_stock_name,
@@ -64,7 +64,7 @@ class StockAnalysisMainlineRuntime:
                 query_id = uuid.uuid4().hex
 
             config = get_config()
-            pipeline = LegacyStockAnalysisPipeline(
+            pipeline = StockAnalysisPipeline(
                 config=config,
                 query_id=query_id,
                 query_source="api",
@@ -340,5 +340,5 @@ class StockAnalysisMainlineRuntime:
         }
 
 
-class StockAnalysisSkillPipeline(LegacyStockAnalysisPipeline):
+class StockAnalysisSkillPipeline(StockAnalysisPipeline):
     """Canonical skill-runtime alias over the existing low-level pipeline engine."""

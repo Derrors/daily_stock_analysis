@@ -137,3 +137,38 @@ When deleting compatibility wrappers, first check tests for private-symbol impor
 - **Notes**: Updated tests to import/use `is_code_like` and `normalize_code` directly; reran focused suite with 22 passed.
 
 ---
+
+## [ERR-20260417-005] rename-alias-left-stale-base-class-reference
+
+**Logged**: 2026-04-17T21:27:30+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: refactor
+
+### Summary
+When removing `LegacyStockAnalysisPipeline` alias naming, one class inheritance site still referenced the old symbol, causing import-time NameError during pytest collection.
+
+### Error
+```
+NameError: name 'LegacyStockAnalysisPipeline' is not defined
+```
+
+### Context
+- Operation attempted: naming cleanup in `stock_pipeline.py`
+- Command: `.venv/bin/python -m pytest tests/test_task_queue_payload_contract.py tests/test_stock_analysis_skill_market_strategy.py tests/test_run_stock_analysis_script.py tests/test_agent_pipeline.py`
+- Trigger case: top import alias updated, but `StockAnalysisSkillPipeline(...)` base class not updated in the same patch
+
+### Suggested Fix
+When renaming imported symbols, grep the full file for all symbol references (including class bases/type hints) before running tests.
+
+### Metadata
+- Reproducible: yes
+- Related Files: src/stock_analysis_skill/runtime/stock_pipeline.py
+- See Also: ERR-20260417-004
+
+### Resolution
+- **Resolved**: 2026-04-17T21:28:30+08:00
+- **Commit/PR**: pending
+- **Notes**: Updated class base to `StockAnalysisPipeline` and reran focused regression with 55 passed.
+
+---
