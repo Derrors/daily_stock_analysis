@@ -129,7 +129,7 @@ class TestAgentExecutor(unittest.TestCase):
             adapter,
             skill_instructions="### 技能 1: 默认多头趋势",
             default_skill_policy="## 默认技能基线（必须严格遵守）\n- **多头排列必须条件**：MA5 > MA10 > MA20",
-            use_legacy_default_prompt=True,
+            use_builtin_default_trend_prompt=True,
             max_steps=2,
         )
         result = executor.run("Analyze 600519")

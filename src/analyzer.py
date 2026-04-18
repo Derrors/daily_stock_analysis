@@ -92,7 +92,7 @@ class GeminiAnalyzer:
     # 核心模块：核心结论 + 数据透视 + 舆情情报 + 作战计划
     # ========================================
 
-    LEGACY_DEFAULT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_placeholder}投资分析师，负责生成专业的【决策仪表盘】分析报告。
+    BUILTIN_DEFAULT_TREND_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_placeholder}投资分析师，负责生成专业的【决策仪表盘】分析报告。
 
 {guidelines_placeholder}
 
@@ -403,7 +403,7 @@ class GeminiAnalyzer:
         skills: Optional[List[str]] = None,
         skill_instructions: Optional[str] = None,
         default_skill_policy: Optional[str] = None,
-        use_legacy_default_prompt: Optional[bool] = None,
+        use_builtin_default_trend_prompt: Optional[bool] = None,
     ):
         """Initialize LLM Analyzer via LiteLLM.
 
@@ -414,7 +414,7 @@ class GeminiAnalyzer:
         self._requested_skills = list(skills) if skills is not None else None
         self._skill_instructions_override = skill_instructions
         self._default_skill_policy_override = default_skill_policy
-        self._use_legacy_default_prompt_override = use_legacy_default_prompt
+        self._use_builtin_default_trend_prompt_override = use_builtin_default_trend_prompt
         self._resolved_prompt_state: Optional[Dict[str, Any]] = None
         self._router = None
         self._litellm_available = False
@@ -433,7 +433,7 @@ class GeminiAnalyzer:
             requested_skills=getattr(self, "_requested_skills", None),
             skill_instructions=getattr(self, "_skill_instructions_override", None),
             default_skill_policy=getattr(self, "_default_skill_policy_override", None),
-            use_legacy_default_prompt=getattr(self, "_use_legacy_default_prompt_override", None),
+            use_builtin_default_trend_prompt=getattr(self, "_use_builtin_default_trend_prompt_override", None),
             resolved_state=getattr(self, "_resolved_prompt_state", None),
         )
         self._resolved_prompt_state = resolved_state
@@ -441,15 +441,15 @@ class GeminiAnalyzer:
 
     def _get_analysis_system_prompt(self, report_language: str, stock_code: str = "") -> str:
         """Build the analyzer system prompt with output-language guidance."""
-        skill_instructions, default_skill_policy, use_legacy_default_prompt = self._get_skill_prompt_sections()
+        skill_instructions, default_skill_policy, use_builtin_default_trend_prompt = self._get_skill_prompt_sections()
         return build_analysis_system_prompt(
             report_language,
             stock_code=stock_code,
-            legacy_default_system_prompt=self.LEGACY_DEFAULT_SYSTEM_PROMPT,
+            builtin_default_trend_system_prompt=self.BUILTIN_DEFAULT_TREND_SYSTEM_PROMPT,
             system_prompt=self.SYSTEM_PROMPT,
             skill_instructions=skill_instructions,
             default_skill_policy=default_skill_policy,
-            use_legacy_default_prompt=use_legacy_default_prompt,
+            use_builtin_default_trend_prompt=use_builtin_default_trend_prompt,
         )
 
     def _has_channel_config(self, config: Config) -> bool:
@@ -600,13 +600,13 @@ class GeminiAnalyzer:
         report_language: str = "zh",
     ) -> str:
         """Delegate to prompt builder."""
-        _, _, use_legacy_default_prompt = self._get_skill_prompt_sections()
+        _, _, use_builtin_default_trend_prompt = self._get_skill_prompt_sections()
         return build_stock_analysis_prompt(
             context,
             name,
             news_context=news_context,
             report_language=report_language,
-            use_legacy_default_prompt=use_legacy_default_prompt,
+            use_builtin_default_trend_prompt=use_builtin_default_trend_prompt,
             runtime_config=self._get_runtime_config(),
         )
     

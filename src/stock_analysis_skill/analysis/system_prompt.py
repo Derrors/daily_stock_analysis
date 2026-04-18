@@ -15,7 +15,7 @@ def resolve_skill_prompt_sections(
     requested_skills: Optional[List[str]] = None,
     skill_instructions: Optional[str] = None,
     default_skill_policy: Optional[str] = None,
-    use_legacy_default_prompt: Optional[bool] = None,
+    use_builtin_default_trend_prompt: Optional[bool] = None,
     resolved_state: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Tuple[str, str, bool], Dict[str, Any]]:
     """Resolve skill instructions + default baseline + prompt mode with cache support."""
@@ -23,12 +23,12 @@ def resolve_skill_prompt_sections(
         sections = (
             skill_instructions,
             default_skill_policy,
-            bool(use_legacy_default_prompt) if use_legacy_default_prompt is not None else False,
+            bool(use_builtin_default_trend_prompt) if use_builtin_default_trend_prompt is not None else False,
         )
         state = {
             "skill_instructions": sections[0],
             "default_skill_policy": sections[1],
-            "use_legacy_default_prompt": sections[2],
+            "use_builtin_default_trend_prompt": sections[2],
         }
         return sections, state
 
@@ -39,13 +39,13 @@ def resolve_skill_prompt_sections(
         resolved_state = {
             "skill_instructions": prompt_state.skill_instructions,
             "default_skill_policy": prompt_state.default_skill_policy,
-            "use_legacy_default_prompt": bool(getattr(prompt_state, "use_legacy_default_prompt", False)),
+            "use_builtin_default_trend_prompt": bool(getattr(prompt_state, "use_builtin_default_trend_prompt", False)),
         }
 
     sections = (
         skill_instructions if skill_instructions is not None else resolved_state.get("skill_instructions", ""),
         default_skill_policy if default_skill_policy is not None else resolved_state.get("default_skill_policy", ""),
-        use_legacy_default_prompt if use_legacy_default_prompt is not None else bool(resolved_state.get("use_legacy_default_prompt", False)),
+        use_builtin_default_trend_prompt if use_builtin_default_trend_prompt is not None else bool(resolved_state.get("use_builtin_default_trend_prompt", False)),
     )
     return sections, resolved_state
 
@@ -54,19 +54,19 @@ def build_analysis_system_prompt(
     report_language: str,
     *,
     stock_code: str = "",
-    legacy_default_system_prompt: str,
+    builtin_default_trend_system_prompt: str,
     system_prompt: str,
     skill_instructions: str,
     default_skill_policy: str,
-    use_legacy_default_prompt: bool,
+    use_builtin_default_trend_prompt: bool,
 ) -> str:
     """Build analyzer system prompt with market-role and language guidance."""
     lang = normalize_report_language(report_language)
     market_role = get_market_role(stock_code, lang)
     market_guidelines = get_market_guidelines(stock_code, lang)
 
-    if use_legacy_default_prompt:
-        base_prompt = legacy_default_system_prompt.replace(
+    if use_builtin_default_trend_prompt:
+        base_prompt = builtin_default_trend_system_prompt.replace(
             "{market_placeholder}", market_role
         ).replace(
             "{guidelines_placeholder}", market_guidelines

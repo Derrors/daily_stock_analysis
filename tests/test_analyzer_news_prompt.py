@@ -47,7 +47,7 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
             analyzer = GeminiAnalyzer(
                 skill_instructions="### 技能 1: 默认多头趋势",
                 default_skill_policy="## 默认技能基线（必须严格遵守）\n- **多头排列必须条件**：MA5 > MA10 > MA20",
-                use_legacy_default_prompt=True,
+                use_builtin_default_trend_prompt=True,
             )
 
         prompt = analyzer._get_analysis_system_prompt("zh", stock_code="600519")
@@ -114,7 +114,7 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
             analyzer = GeminiAnalyzer(
                 skill_instructions="### 技能 1: 缠论\n- 关注中枢与背驰",
                 default_skill_policy="",
-                use_legacy_default_prompt=False,
+                use_builtin_default_trend_prompt=False,
             )
 
         context = {

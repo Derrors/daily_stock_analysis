@@ -17,7 +17,7 @@ def build_stock_analysis_prompt(
     *,
     news_context: Optional[str] = None,
     report_language: str = "zh",
-    use_legacy_default_prompt: bool = False,
+    use_builtin_default_trend_prompt: bool = False,
     runtime_config: Optional[Any] = None,
 ) -> str:
     """Build the full analyzer prompt body for stock analysis."""
@@ -141,7 +141,7 @@ def build_stock_analysis_prompt(
 
     if "trend_analysis" in context:
         trend = context["trend_analysis"]
-        if use_legacy_default_prompt:
+        if use_builtin_default_trend_prompt:
             bias_warning = "🚨 超过5%，严禁追高！" if trend.get("bias_ma5", 0) > 5 else "✅ 安全范围"
             prompt += f"""
 ### 趋势分析预判（基于交易理念）
@@ -268,7 +268,7 @@ def build_stock_analysis_prompt(
 正确的股票名称格式为“股票名称（股票代码）”，例如“贵州茅台（600519）”。
 如果上方显示的股票名称为"股票{code}"或不正确，请在分析开头**明确输出该股票的正确中文全称**。
 """
-    if use_legacy_default_prompt:
+    if use_builtin_default_trend_prompt:
         prompt += f"""
 
 ### 重点关注（必须明确回答）：

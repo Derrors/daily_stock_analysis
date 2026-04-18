@@ -52,7 +52,7 @@ class SkillPromptState:
     skill_manager: object
     skills_to_activate: List[str]
     explicit_skill_selection: bool
-    use_legacy_default_prompt: bool
+    use_builtin_default_trend_prompt: bool
     skill_instructions: str
     default_skill_policy: str
     technical_skill_policy: str
@@ -128,13 +128,13 @@ def _resolve_selected_skill_ids(
     return list(default_skills), False
 
 
-def _should_use_legacy_default_prompt(
+def _should_use_builtin_default_trend_prompt(
     *,
     skills_to_activate: List[str],
     explicit_skill_selection: bool,
     skill_catalog: List[object],
 ) -> bool:
-    """Keep the legacy prompt only for the implicit built-in bull_trend fallback."""
+    """Use the built-in default trend prompt only for implicit bull_trend fallback."""
     if explicit_skill_selection or skills_to_activate != ["bull_trend"]:
         return False
 
@@ -245,7 +245,7 @@ def resolve_skill_prompt_state(config=None, skills: Optional[List[str]] = None) 
         available_skill_ids=available_skill_ids,
     )
 
-    use_legacy_default_prompt = _should_use_legacy_default_prompt(
+    use_builtin_default_trend_prompt = _should_use_builtin_default_trend_prompt(
         skills_to_activate=skills_to_activate,
         explicit_skill_selection=explicit_skill_selection,
         skill_catalog=skill_catalog,
@@ -258,13 +258,13 @@ def resolve_skill_prompt_state(config=None, skills: Optional[List[str]] = None) 
         skill_manager=skill_manager,
         skills_to_activate=skills_to_activate,
         explicit_skill_selection=explicit_skill_selection,
-        use_legacy_default_prompt=use_legacy_default_prompt,
+        use_builtin_default_trend_prompt=use_builtin_default_trend_prompt,
         skill_instructions=skill_manager.get_skill_instructions(),
         default_skill_policy=get_default_trading_skill_policy(
-            explicit_skill_selection=not use_legacy_default_prompt,
+            explicit_skill_selection=not use_builtin_default_trend_prompt,
         ),
         technical_skill_policy=get_default_technical_skill_policy(
-            explicit_skill_selection=not use_legacy_default_prompt,
+            explicit_skill_selection=not use_builtin_default_trend_prompt,
         ),
     )
 
@@ -298,11 +298,11 @@ def build_agent_executor(config=None, skills: Optional[List[str]] = None):
     prompt_state = resolve_skill_prompt_state(config, skills=skills)
     skill_manager = prompt_state.skill_manager
     logger.info(
-        "[AgentFactory] Resolved skill prompt state: skills=%s (arch=%s, explicit=%s, legacy_default_prompt=%s)",
+        "[AgentFactory] Resolved skill prompt state: skills=%s (arch=%s, explicit=%s, builtin_default_trend_prompt=%s)",
         prompt_state.skills_to_activate,
         arch,
         prompt_state.explicit_skill_selection,
-        prompt_state.use_legacy_default_prompt,
+        prompt_state.use_builtin_default_trend_prompt,
     )
 
     llm_adapter = LLMToolAdapter(config)
@@ -322,7 +322,7 @@ def build_agent_executor(config=None, skills: Optional[List[str]] = None):
         llm_adapter=llm_adapter,
         skill_instructions=prompt_state.skill_instructions,
         default_skill_policy=prompt_state.default_skill_policy,
-        use_legacy_default_prompt=prompt_state.use_legacy_default_prompt,
+        use_builtin_default_trend_prompt=prompt_state.use_builtin_default_trend_prompt,
         max_steps=getattr(config, "agent_max_steps", AGENT_MAX_STEPS_DEFAULT),
         timeout_seconds=getattr(config, "agent_orchestrator_timeout_s", 0),
     )

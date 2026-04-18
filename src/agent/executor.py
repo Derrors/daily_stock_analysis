@@ -50,7 +50,7 @@ class AgentResult:
 # System prompt builder
 # ============================================================
 
-LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_role}投资分析 Agent，拥有数据工具和交易技能，负责生成专业的【决策仪表盘】分析报告。
+BUILTIN_DEFAULT_TREND_AGENT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_role}投资分析 Agent，拥有数据工具和交易技能，负责生成专业的【决策仪表盘】分析报告。
 
 {market_guidelines}
 
@@ -309,7 +309,7 @@ AGENT_SYSTEM_PROMPT = """你是一位{market_role}投资分析 Agent，拥有数
 {language_section}
 """
 
-LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_role}投资分析 Agent，拥有数据工具和交易技能，负责解答用户的股票投资问题。
+BUILTIN_DEFAULT_TREND_CHAT_SYSTEM_PROMPT = """你是一位专注于趋势交易的{market_role}投资分析 Agent，拥有数据工具和交易技能，负责解答用户的股票投资问题。
 
 {market_guidelines}
 
@@ -440,7 +440,7 @@ class AgentExecutor:
         llm_adapter: LLMToolAdapter,
         skill_instructions: str = "",
         default_skill_policy: str = "",
-        use_legacy_default_prompt: bool = False,
+        use_builtin_default_trend_prompt: bool = False,
         max_steps: int = 10,
         timeout_seconds: Optional[float] = None,
     ):
@@ -448,7 +448,7 @@ class AgentExecutor:
         self.llm_adapter = llm_adapter
         self.skill_instructions = skill_instructions
         self.default_skill_policy = default_skill_policy
-        self.use_legacy_default_prompt = use_legacy_default_prompt
+        self.use_builtin_default_trend_prompt = use_builtin_default_trend_prompt
         self.max_steps = max_steps
         self.timeout_seconds = timeout_seconds
 
@@ -474,8 +474,8 @@ class AgentExecutor:
         market_role = get_market_role(stock_code, report_language)
         market_guidelines = get_market_guidelines(stock_code, report_language)
         prompt_template = (
-            LEGACY_DEFAULT_AGENT_SYSTEM_PROMPT
-            if self.use_legacy_default_prompt
+            BUILTIN_DEFAULT_TREND_AGENT_SYSTEM_PROMPT
+            if self.use_builtin_default_trend_prompt
             else AGENT_SYSTEM_PROMPT
         )
         system_prompt = prompt_template.format(
@@ -523,8 +523,8 @@ class AgentExecutor:
         market_role = get_market_role(stock_code, report_language)
         market_guidelines = get_market_guidelines(stock_code, report_language)
         prompt_template = (
-            LEGACY_DEFAULT_CHAT_SYSTEM_PROMPT
-            if self.use_legacy_default_prompt
+            BUILTIN_DEFAULT_TREND_CHAT_SYSTEM_PROMPT
+            if self.use_builtin_default_trend_prompt
             else CHAT_SYSTEM_PROMPT
         )
         system_prompt = prompt_template.format(
