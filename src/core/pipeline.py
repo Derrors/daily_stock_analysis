@@ -21,9 +21,9 @@ import pandas as pd
 
 from src.config import get_config, Config
 from src.storage import get_db
-from data_provider import DataFetcherManager
-from data_provider.base import normalize_stock_code
-from data_provider.realtime_types import ChipDistribution
+from src.stock_analysis_skill.providers import DataFetcherManager
+from src.stock_analysis_skill.providers.base import normalize_stock_code
+from src.stock_analysis_skill.providers.realtime_types import ChipDistribution
 from src.analyzer import GeminiAnalyzer, AnalysisResult, fill_chip_structure_if_needed, fill_price_position_if_needed
 from src.data.stock_mapping import STOCK_NAME_MAP
 from src.report_output import ReportOutputService
@@ -43,7 +43,7 @@ from src.core.trading_calendar import (
     get_market_now,
     is_market_open,
 )
-from data_provider.us_index_mapping import is_us_stock_code
+from src.stock_analysis_skill.providers.us_index_mapping import is_us_stock_code
 
 
 logger = logging.getLogger(__name__)

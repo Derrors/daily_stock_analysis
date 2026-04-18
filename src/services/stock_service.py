@@ -41,7 +41,7 @@ class StockService:
         """
         try:
             # 调用数据获取器获取实时行情
-            from data_provider.base import DataFetcherManager
+            from src.stock_analysis_skill.providers.base import DataFetcherManager
             
             manager = DataFetcherManager()
             quote = manager.get_realtime_quote(stock_code)
@@ -114,7 +114,7 @@ class StockService:
         
         try:
             # 调用数据获取器获取历史数据
-            from data_provider.base import DataFetcherManager
+            from src.stock_analysis_skill.providers.base import DataFetcherManager
             
             manager = DataFetcherManager()
             df, source = manager.get_daily_data(stock_code, days=days)

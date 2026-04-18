@@ -59,6 +59,7 @@
 - [x] Phase I.3 兼容桥收口：将 `data_provider/*` 收口为 legacy import shim，避免外部导入立即中断
 - [x] Phase I.4 口径同步：README/SKILL/references/docs 更新 provider canonical path 说明
 - [x] Phase I.5 回归校验：验证 provider 相关定点矩阵与全量回归
+- [x] Phase I.6 仓内引用收口：将 `src/` 与 `tests/` 中剩余 `data_provider.*` 迁移到 `src.stock_analysis_skill.providers.*` canonical import
 
 ## Proposed Phases
 
@@ -148,6 +149,7 @@
 - Phase G 已完成真实兼容面收缩：设计冻结报告已写入 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-g-compatibility-contraction-plan.md`；task queue 对外 payload 删除 `legacy_result`，保留 `result` / `runtime_payload` / `unified_response`；managed-env Router placeholder 已从 `__legacy_*` 更换为 `__managed_env_*`；配置层退役 `RUN_IMMEDIATELY` 的 schedule fallback / registry 暴露以及 `AGENT_SKILL_AUTOWEIGHT` no-op 字段。定点回归矩阵为 `84 passed`（task queue payload / config env compat / config registry / agent model service / config validate structured / llm channel config / run script），随后再次全量 `pytest` 为 **802 passed**。
 - Phase H 已完成第一轮 skill 包纯化：目标冻结文档已写入 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-h-skill-package-purification-plan.md`；`templates/` 下沉为 `assets/templates/`，`sources/` 下沉为 `assets/media/`，`reports/` 下沉为 `support/reports/`，`patch/` 下沉为 `support/patch/`；`README.md`、`docs/README_EN.md`、`SKILL.md` 与新增 `references/package-layout.md` 已改成 skill package surface 优先口径；定点回归为 `50 passed`，随后全量 `pytest` 为 **802 passed**。
 - Phase I 已完成第一刀 provider 内迁：`data_provider/*.py` 业务实现已迁入 `src/stock_analysis_skill/providers/`，原 `data_provider/*` 收口为 compatibility shim（仍可导入）；`src/stock_analysis_skill/*` 主链已改用 provider canonical path；README/SKILL/references/docs 已同步口径为 `src.stock_analysis_skill.providers` 主路径。
+- Phase I 已完成第二刀仓内引用收口：`src/` 与 `tests/` 内部调用已统一切到 `src.stock_analysis_skill.providers.*`，`data_provider/*` 仅保留外部兼容桥；定点矩阵为 `130 passed`，随后全量 `pytest` 为 **802 passed**。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

@@ -212,7 +212,7 @@ class EventMonitor:
         """Check price alert against realtime quote."""
         try:
             def _fetch_quote():
-                from data_provider import DataFetcherManager
+                from src.stock_analysis_skill.providers import DataFetcherManager
 
                 fm = DataFetcherManager()
                 return fm.get_realtime_quote(rule.stock_code)
@@ -246,7 +246,7 @@ class EventMonitor:
         """Check volume spike against recent average."""
         try:
             def _fetch_daily_data():
-                from data_provider import DataFetcherManager
+                from src.stock_analysis_skill.providers import DataFetcherManager
 
                 fm = DataFetcherManager()
                 return fm.get_daily_data(rule.stock_code, days=20)

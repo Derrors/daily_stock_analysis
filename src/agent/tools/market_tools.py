@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def _get_fetcher_manager():
     """Lazy import to avoid circular deps."""
-    from data_provider import DataFetcherManager
+    from src.stock_analysis_skill.providers import DataFetcherManager
     return DataFetcherManager()
 
 

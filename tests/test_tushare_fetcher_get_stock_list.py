@@ -39,8 +39,8 @@ if not json_repair_available and "json_repair" not in sys.modules:
 if "fake_useragent" not in sys.modules:
     sys.modules["fake_useragent"] = MagicMock()
 
-from data_provider.base import DataFetchError, RateLimitError
-from data_provider.tushare_fetcher import TushareFetcher
+from src.stock_analysis_skill.providers.base import DataFetchError, RateLimitError
+from src.stock_analysis_skill.providers.tushare_fetcher import TushareFetcher
 
 try:
     from dotenv import load_dotenv

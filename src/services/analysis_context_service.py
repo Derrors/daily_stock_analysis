@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from data_provider import DataFetcherManager, is_hk_stock_code, is_us_stock_code
+from src.stock_analysis_skill.providers import DataFetcherManager, is_hk_stock_code, is_us_stock_code
 from src.config import get_config
 from src.stock_analysis_skill.contracts import AnalysisRequest, DataCompleteness
 from src.search_service import SearchService

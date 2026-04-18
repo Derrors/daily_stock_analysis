@@ -29,7 +29,7 @@ def _get_fetcher_manager():
     (~2 s each) and prevents circuit-breaker cooldown from taking effect across
     consecutive tool calls within the same agent run.
     """
-    from data_provider import DataFetcherManager
+    from src.stock_analysis_skill.providers import DataFetcherManager
     global _fetcher_manager_singleton
     if _fetcher_manager_singleton is None:
         with _fetcher_manager_lock:

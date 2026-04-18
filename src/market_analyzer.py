@@ -23,7 +23,7 @@ from src.report_language import normalize_report_language
 from src.search_service import SearchService
 from src.core.market_profile import get_profile, MarketProfile
 from src.core.market_strategy import get_market_strategy_blueprint
-from data_provider.base import DataFetcherManager
+from src.stock_analysis_skill.providers.base import DataFetcherManager
 
 logger = logging.getLogger(__name__)
 

@@ -18,8 +18,8 @@ def _fetch_trend_data(stock_code: str):
     """Fetch historical OHLCV (DataFrame) for trend analysis. DB first, then DataFetcher fallback."""
     from datetime import date, timedelta
     import pandas as pd
-    from data_provider.base import canonical_stock_code, DataFetchError
-    from data_provider import DataFetcherManager
+    from src.stock_analysis_skill.providers.base import canonical_stock_code, DataFetchError
+    from src.stock_analysis_skill.providers import DataFetcherManager
     from src.storage import get_db
 
     code = canonical_stock_code(stock_code)
@@ -143,7 +143,7 @@ analyze_trend_tool = ToolDefinition(
 
 def _handle_calculate_ma(stock_code: str, periods: Optional[str] = None, days: int = 120) -> dict:
     """Calculate moving averages for arbitrary periods from historical K-line data."""
-    from data_provider import DataFetcherManager
+    from src.stock_analysis_skill.providers import DataFetcherManager
     import pandas as pd
 
     manager = DataFetcherManager()
@@ -236,7 +236,7 @@ calculate_ma_tool = ToolDefinition(
 
 def _handle_get_volume_analysis(stock_code: str, days: int = 30) -> dict:
     """Analyse volume-price patterns over recent trading days."""
-    from data_provider import DataFetcherManager
+    from src.stock_analysis_skill.providers import DataFetcherManager
     import pandas as pd
 
     manager = DataFetcherManager()
@@ -353,7 +353,7 @@ get_volume_analysis_tool = ToolDefinition(
 
 def _handle_analyze_pattern(stock_code: str, days: int = 60) -> dict:
     """Detect common candlestick and chart patterns in recent price history."""
-    from data_provider import DataFetcherManager
+    from src.stock_analysis_skill.providers import DataFetcherManager
     import pandas as pd
 
     manager = DataFetcherManager()

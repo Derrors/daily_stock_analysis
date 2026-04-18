@@ -236,3 +236,27 @@ Use module-bridge shims (`__getattr__` forwarding to canonical module) instead o
 - **Resolved**: 2026-04-18T12:58:00+08:00
 - **Commit/PR**: pending
 - **Notes**: Replaced shim modules with `__getattr__` bridge pattern and aligned two tests to canonical provider module patch/log paths.
+
+---
+
+## [ERR-20260418-003] host-python-missing-in-repo-automation
+
+**Logged**: 2026-04-18T13:08:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tooling
+
+### Summary
+A bulk import-rewrite helper was first launched with bare `python`, but this host does not provide that binary for the project session.
+
+### Error
+```
+/bin/bash: line 1: python: command not found
+```
+
+### Suggested Fix
+Use `.venv/bin/python` (or `python3`) consistently for repo-local automation scripts.
+
+### Resolution
+- **Resolved**: 2026-04-18T13:08:00+08:00
+- **Notes**: Re-ran the rewrite script with `.venv/bin/python`; replacement pass completed successfully.

@@ -26,9 +26,9 @@ from typing import Optional, Dict, List, Any, TYPE_CHECKING, Tuple, Literal
 if TYPE_CHECKING:
     from asyncio import Queue as AsyncQueue
 
-from data_provider.base import canonical_stock_code
+from src.stock_analysis_skill.providers.base import canonical_stock_code
 try:
-    from data_provider.base import normalize_stock_code
+    from src.stock_analysis_skill.providers.base import normalize_stock_code
 except ImportError:  # pragma: no cover - test stubs may only expose canonical_stock_code
     normalize_stock_code = canonical_stock_code
 from src.utils.analysis_metadata import SELECTION_SOURCES
