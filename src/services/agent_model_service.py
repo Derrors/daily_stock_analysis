@@ -2,7 +2,7 @@
 """Helpers for exposing configured Agent model deployments.
 
 This module reports the current runtime deployment view. Channel/YAML routes are
-preferred; env-managed deployments remain supported as a compatibility path.
+preferred; env-managed deployments remain available as the fallback runtime path.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ _PLACEHOLDER_TO_PROVIDER = {
     "__legacy_openai__": "openai",
     "__legacy_deepseek__": "deepseek",
 }
-_MANAGED_LEGACY_PROVIDERS = set(_PLACEHOLDER_TO_PROVIDER.values())
+_MANAGED_ENV_PLACEHOLDER_PROVIDERS = set(_PLACEHOLDER_TO_PROVIDER.values())
 
 
 def _normalize_models_source(source: Any) -> str:
@@ -42,7 +42,7 @@ def _get_model_provider(model_name: str) -> str:
     return "openai"
 
 
-def _build_non_legacy_deployments(config) -> List[Dict[str, Any]]:
+def _build_declared_router_deployments(config) -> List[Dict[str, Any]]:
     source = _get_models_source(config)
     primary_model = get_effective_agent_primary_model(config)
     fallback_models = set(get_effective_agent_models_to_try(config)[1:])
@@ -98,7 +98,7 @@ def _build_managed_env_deployments(config) -> List[Dict[str, Any]]:
             # Managed-env runtime still supports direct litellm calls for providers
             # whose credentials/base are resolved from environment variables
             # instead of managed placeholder deployments.
-            if provider in _MANAGED_LEGACY_PROVIDERS:
+            if provider in _MANAGED_ENV_PLACEHOLDER_PROVIDERS:
                 continue
             deployment_count = 1
 
@@ -130,7 +130,7 @@ def _build_managed_env_deployments(config) -> List[Dict[str, Any]]:
 
 def list_agent_model_deployments(config) -> List[Dict[str, Any]]:
     """Return configured Agent model deployments without exposing secrets."""
-    deployments = _build_non_legacy_deployments(config)
+    deployments = _build_declared_router_deployments(config)
     if not deployments:
         deployments = _build_managed_env_deployments(config)
 

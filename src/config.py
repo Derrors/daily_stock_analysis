@@ -267,7 +267,7 @@ def normalize_llm_channel_model(model: str, protocol: Optional[str], base_url: O
 
 
 def get_configured_llm_models(model_list: List[Dict[str, Any]]) -> List[str]:
-    """Return non-legacy model names declared in Router model_list order.
+    """Return declared Router model names, excluding managed-env placeholders.
 
     Uses the top-level ``model_name`` (the routing alias that users set in
     LITELLM_MODEL) rather than ``litellm_params.model`` (the wire-level
@@ -966,13 +966,13 @@ class Config:
 
         # Preserve historical semantics for startup flags: only an explicit
         # literal "true" enables immediate execution; empty strings stay False.
-        legacy_run_immediately_env = cls._resolve_env_value(
+        fallback_run_immediately_env = cls._resolve_env_value(
             'RUN_IMMEDIATELY',
             prefer_env_file=True,
         )
-        legacy_run_immediately = (
-            legacy_run_immediately_env.lower() == 'true'
-            if legacy_run_immediately_env is not None
+        fallback_run_immediately = (
+            fallback_run_immediately_env.lower() == 'true'
+            if fallback_run_immediately_env is not None
             else True
         )
 
@@ -983,7 +983,7 @@ class Config:
         schedule_run_immediately = (
             schedule_run_immediately_env.lower() == 'true'
             if schedule_run_immediately_env is not None
-            else legacy_run_immediately
+            else fallback_run_immediately
         )
         schedule_time_value = cls._resolve_env_value(
             'SCHEDULE_TIME',
@@ -1146,7 +1146,7 @@ class Config:
             ).lower() == 'true',
             schedule_time=(schedule_time_value or '18:00').strip() or '18:00',
             schedule_run_immediately=schedule_run_immediately,
-            run_immediately=legacy_run_immediately,
+            run_immediately=fallback_run_immediately,
             market_review_enabled=os.getenv('MARKET_REVIEW_ENABLED', 'true').lower() == 'true',
             market_review_region=cls._parse_market_review_region(
                 os.getenv('MARKET_REVIEW_REGION', 'cn')
