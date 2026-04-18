@@ -30,3 +30,5 @@ These paths still exist for maintenance and validation, but they are not the fir
 
 When documenting or integrating this repository, present the primary skill surface first.
 Use support/engineering paths only when the task explicitly requires implementation history, CI workflow details, or debugging collateral.
+
+For legacy import migration guidance, see `references/provider-import-migration.md`.

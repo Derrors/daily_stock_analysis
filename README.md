@@ -205,9 +205,11 @@ python scripts/resolve_strategy.py --list
 - `references/data-sources.md`
 - `references/output-format.md`
 - `references/strategies.md`
+- `references/provider-import-migration.md`（legacy `data_provider.*` → canonical provider path 迁移说明）
 - `docs/LLM_CONFIG_GUIDE.md`
 - `docs/TUSHARE_STOCK_LIST_GUIDE.md`
 - `docs/openclaw-skill-integration.md`（历史 / compatibility-only 参考，不是当前主线推荐接入方式）
+- `data_provider/README.md`（compat-only 边界与退役窗口）
 
 ---
 

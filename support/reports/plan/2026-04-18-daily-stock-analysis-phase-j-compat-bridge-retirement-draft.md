@@ -120,6 +120,8 @@ If a post-removal import break occurs:
 
 - This plan document
 - CI/pytest guard for "no new internal `data_provider.*` imports"
+- External consumer audit note: `support/reports/review/2026-04-18-daily-stock-analysis-phase-j-external-consumer-audit.md`
+- Migration guidance note: `references/provider-import-migration.md`
 - TASKS/README references aligned to Phase J as planned next step
 
 ---

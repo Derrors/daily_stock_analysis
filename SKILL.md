@@ -41,6 +41,7 @@ python scripts/resolve_strategy.py 均线金叉 --pretty
 - `references/data-sources.md` — read when checking runtime dependencies.
 - `references/strategies.md` — read when mapping a user request to strategy YAML files.
 - `references/output-format.md` — read when deciding how to return results.
+- `references/provider-import-migration.md` — read when migrating legacy `data_provider.*` import paths.
 
 ## Package boundary
 

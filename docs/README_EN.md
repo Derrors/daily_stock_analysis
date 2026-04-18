@@ -91,3 +91,5 @@ Current work is focused on keeping the primary skill surface obvious while pushi
 
 ## Historical references
 REST/API-oriented integration notes such as `docs/openclaw-skill-integration.md` remain as historical compatibility references only, not the current mainline recommendation.
+
+For legacy provider import migration, see `references/provider-import-migration.md` and `data_provider/README.md`.
