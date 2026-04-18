@@ -41,7 +41,7 @@ These paths still exist, but they are not the first place a new skill consumer s
 - `docs/`
 - `support/`
 - `tests/`
-- `data_provider/` (legacy import shim; canonical provider modules now live under `src/stock_analysis_skill/providers/`)
+- `data_provider/` (legacy import shim; canonical provider modules now live under `src/stock_analysis_skill/providers/`; see `data_provider/README.md`)
 
 ## Assets and support layout
 - `assets/templates/` — Jinja2 report templates

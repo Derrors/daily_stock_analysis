@@ -19,7 +19,7 @@ These paths still exist for maintenance and validation, but they are not the fir
 - `docs/` — supplemental human-facing docs
 - `support/` — planning notes, review artifacts, historical patch utilities
 - `tests/` — regression and contract validation
-- `data_provider/` — legacy import bridge retained for compatibility (`src.stock_analysis_skill.providers` is canonical)
+- `data_provider/` — legacy import bridge retained for compatibility (`src.stock_analysis_skill.providers` is canonical); see `data_provider/README.md` for deprecation window
 
 ## Asset layout
 

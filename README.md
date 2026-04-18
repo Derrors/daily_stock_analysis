@@ -29,7 +29,7 @@
 - `docs/`：补充性人工文档
 - `support/`：规划 / 复盘 / 历史 patch 等工程支撑材料
 - `tests/`：回归与契约验证
-- `data_provider/`：兼容导入桥（legacy import shim），canonical 实现在 `src/stock_analysis_skill/providers/`
+- `data_provider/`：兼容导入桥（legacy import shim），canonical 实现在 `src/stock_analysis_skill/providers/`（详见 `data_provider/README.md`）
 
 新接入默认不要从这些目录开始理解仓库；优先先看 skill 包核心面。
 
@@ -69,6 +69,7 @@ daily_stock_analysis/
 - 策略解析：`src.stock_analysis_skill.analyzers.strategy`
 - Markdown 输出：`src.stock_analysis_skill.renderers.markdown`
 - 数据访问层：`src.stock_analysis_skill.providers`
+- 兼容桥告警开关：`DSA_WARN_LEGACY_IMPORTS=1`（默认关闭）
 
 `src.schemas` 只保留报告 schema；分析请求 / 响应合同请直接从 `src.stock_analysis_skill.contracts` 导入。
 

@@ -61,6 +61,7 @@
 - [x] Phase I.5 回归校验：验证 provider 相关定点矩阵与全量回归
 - [x] Phase I.6 仓内引用收口：将 `src/` 与 `tests/` 中剩余 `data_provider.*` 迁移到 `src.stock_analysis_skill.providers.*` canonical import
 - [x] Phase I.7 兼容桥压薄：`data_provider/*` 收敛为最小 alias bridge，并补一组兼容导入测试
+- [x] Phase I.8 兼容层治理收尾：补充 compat-only 目录说明、deprecation 窗口与告警开关口径（不改变运行时行为）
 
 ## Proposed Phases
 
@@ -152,6 +153,7 @@
 - Phase I 已完成第一刀 provider 内迁：`data_provider/*.py` 业务实现已迁入 `src/stock_analysis_skill/providers/`，原 `data_provider/*` 收口为 compatibility shim（仍可导入）；`src/stock_analysis_skill/*` 主链已改用 provider canonical path；README/SKILL/references/docs 已同步口径为 `src.stock_analysis_skill.providers` 主路径。
 - Phase I 已完成第二刀仓内引用收口：`src/` 与 `tests/` 内部调用已统一切到 `src.stock_analysis_skill.providers.*`，`data_provider/*` 仅保留外部兼容桥；定点矩阵为 `130 passed`，随后全量 `pytest` 为 **802 passed**。
 - Phase I 已完成第三刀兼容桥压薄：`data_provider/*` 现改为最小 alias bridge（统一走 `data_provider/_compat.py`），并新增 `tests/test_data_provider_compat_bridge.py` 验证 legacy import 仍可解析到 canonical provider 模块；兼容桥定点为 `39 passed`，随后全量 `pytest` 为 **805 passed**。
+- Phase I 已完成收官治理：新增 `data_provider/README.md` 明确 compat-only 定位、`DSA_WARN_LEGACY_IMPORTS` 告警开关与 deprecation 时间窗；README / SKILL / references / docs / `.env.example` 已同步口径。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

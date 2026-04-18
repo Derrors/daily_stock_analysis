@@ -286,3 +286,27 @@ In shim modules, add fallback import path:
 ### Resolution
 - **Resolved**: 2026-04-18T13:18:00+08:00
 - **Notes**: Added fallback import in all `data_provider/*` shim modules and re-ran targeted + full regression.
+
+---
+
+## [ERR-20260418-005] shell-backtick-command-substitution-in-grep-pattern
+
+**Logged**: 2026-04-18T13:33:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: shell
+
+### Summary
+A grep command used a pattern containing backticks (`` `pytest` ``) inside double quotes, which triggered shell command substitution unexpectedly.
+
+### Error
+```
+/bin/bash: line 1: pytest: command not found
+```
+
+### Suggested Fix
+When searching literals containing backticks, avoid unescaped backticks in double-quoted shell strings; use single quotes, escape backticks, or avoid matching that token directly.
+
+### Resolution
+- **Resolved**: 2026-04-18T13:33:00+08:00
+- **Notes**: Switched to safer grep patterns without backticks and continued verification.

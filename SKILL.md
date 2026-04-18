@@ -58,7 +58,7 @@ Treat these as engineering/support surfaces, not default user-facing entrypoints
 - `docs/`
 - `support/`
 - `tests/`
-- `data_provider/`（legacy import shim，canonical provider path 已迁到 `src/stock_analysis_skill/providers/`）
+- `data_provider/`（legacy import shim，canonical provider path 已迁到 `src/stock_analysis_skill/providers/`；默认不告警，可用 `DSA_WARN_LEGACY_IMPORTS=1` 打开）
 
 ## Current runtime boundary
 
