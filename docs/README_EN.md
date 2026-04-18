@@ -56,6 +56,7 @@ python scripts/doctor.py
 python scripts/run_stock_analysis.py --stock 600519 --dry-run --pretty
 python scripts/run_market_analysis.py --region us --dry-run --pretty
 python scripts/resolve_strategy.py ma_golden_cross --pretty
+bash scripts/check_legacy_import_window.sh
 ```
 
 ## Runtime requirements

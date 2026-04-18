@@ -116,6 +116,12 @@ python scripts/run_market_analysis.py --region cn --dry-run --pretty
 python scripts/resolve_strategy.py 均线金叉 --pretty
 ```
 
+### 6. 运行 legacy import 告警窗口检查（Phase J）
+
+```bash
+bash scripts/check_legacy_import_window.sh
+```
+
 ---
 
 ## 运行说明

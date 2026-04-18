@@ -44,6 +44,12 @@ When auditing legacy consumers, enable:
 DSA_WARN_LEGACY_IMPORTS=1
 ```
 
+Or run:
+
+```bash
+bash scripts/check_legacy_import_window.sh
+```
+
 This keeps compatibility behavior but emits deprecation warnings for legacy import edges.
 
 ---

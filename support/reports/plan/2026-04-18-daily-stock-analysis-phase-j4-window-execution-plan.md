@@ -29,6 +29,12 @@ Execute a controlled deprecation window for `data_provider/*` compatibility brid
 DSA_WARN_LEGACY_IMPORTS=1
 ```
 
+- Or run the packaged check script:
+
+```bash
+bash scripts/check_legacy_import_window.sh
+```
+
 - Collect warning hits and source scripts.
 - Open migration tickets for each hit.
 
