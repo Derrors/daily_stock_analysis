@@ -66,7 +66,8 @@
 - [x] Phase J.2 防回退守门：新增测试，禁止仓内重新引入 `data_provider.*` internal import
 - [x] Phase J.3 外部调用方审计：盘点仓库外脚本/自动化对 legacy import 的依赖面
 - [x] Phase J.4.A 退役窗口执行方案：输出按周窗口、公告模板、删除门禁与回滚预案
-- [ ] Phase J.4.B 退役窗口实操：按窗口推进告警启用、迁移公告与最终删除门禁
+- [x] Phase J.4.B.1 退役窗口实操模板：周报、阻塞台账、Go/No-Go 决策模板落地
+- [ ] Phase J.4.B.2 退役窗口实操执行：按窗口推进告警启用、迁移公告与最终删除门禁
 
 ## Proposed Phases
 
@@ -167,6 +168,7 @@
 - Phase J 草案已落地：新增 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-j-compat-bridge-retirement-draft.md`，并新增 `tests/test_no_internal_data_provider_imports.py` 作为内部导入防回退守门测试。
 - Phase J.3 外部调用方审计已完成：新增 `support/reports/review/2026-04-18-daily-stock-analysis-phase-j-external-consumer-audit.md`，并补充 `references/provider-import-migration.md` 作为对外迁移说明；当前结论是“仓库可见面已审计完成，未知外部私有调用仍需 J.4 告警窗口验证”。
 - Phase J.4.A 执行方案已完成：新增 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-j4-window-execution-plan.md`（周级窗口计划 + 删除门禁 + 回滚），并新增 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-j-migration-announcement-template.md`（迁移公告模板）；兼容告警开关行为测试已补充到 `tests/test_data_provider_compat_bridge.py`，并提供窗口执行脚本 `scripts/check_legacy_import_window.sh`。
+- Phase J.4.B.1 实操模板已完成：新增 `support/reports/templates/phase-j4-warning-window-log-template.md`、`support/reports/templates/phase-j4-blocker-register-template.md`、`support/reports/templates/phase-j4-go-no-go-template.md`，用于窗口执行证据留存与决策收口。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

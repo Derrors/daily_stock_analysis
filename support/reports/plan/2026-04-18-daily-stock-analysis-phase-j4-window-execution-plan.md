@@ -20,6 +20,10 @@ Execute a controlled deprecation window for `data_provider/*` compatibility brid
 - Ensure migration note is published: `references/provider-import-migration.md`
 - Ensure compat-only boundary doc is published: `data_provider/README.md`
 - Ensure anti-regression guard test is green.
+- Prepare execution artifacts from templates:
+  - `support/reports/templates/phase-j4-warning-window-log-template.md`
+  - `support/reports/templates/phase-j4-blocker-register-template.md`
+  - `support/reports/templates/phase-j4-go-no-go-template.md`
 
 ### Week 1 - Canary warnings on
 
@@ -92,3 +96,9 @@ If removal causes import break:
 - A complete warning-window cycle executed with evidence.
 - Migration blockers triaged.
 - Clear go/no-go decision recorded for bridge deletion candidate.
+
+## Suggested artifact locations
+
+- Window log: `support/reports/review/YYYY-MM-DD-phase-j4-warning-window-log.md`
+- Blocker register: `support/reports/review/YYYY-MM-DD-phase-j4-blocker-register.md`
+- Go/No-Go decision: `support/reports/review/YYYY-MM-DD-phase-j4-go-no-go.md`
