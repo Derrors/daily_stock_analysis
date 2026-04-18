@@ -49,6 +49,8 @@ class TestRegistryAfterSkillRuntimeMinimization(unittest.TestCase):
             "PYTDX_SERVERS",
             "BACKTEST_ENABLED",
             "BACKTEST_EVAL_WINDOW_DAYS",
+            "RUN_IMMEDIATELY",
+            "AGENT_SKILL_AUTOWEIGHT",
         ):
             field = get_field_definition(key)
             self.assertEqual(field.get("display_order"), 9000)

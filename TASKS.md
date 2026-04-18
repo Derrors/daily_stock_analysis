@@ -45,6 +45,10 @@
 - [x] Phase E.9.F 收口 agent_model_service / config.py 中仍带 legacy 心智的内部 helper 命名
 - [x] Phase E.9.G 收口 agent memory / skill loader / runner / prompt defaults / runtime helper 的过时 legacy 文案
 - [x] Phase E.9.H 收口配置元数据 / 搜索服务 / 数据源参考里的 transition wording
+- [x] Phase G.1 兼容面收缩设计冻结：明确哪些字段/参数/placeholder 属于“可删 / 仅保留一层 shim / 必须长期保留”
+- [x] Phase G.2 Task payload 收缩方案：评估 `result` / `runtime_payload` / `legacy_result` 的最终对外契约，并设计迁移顺序
+- [x] Phase G.3 Managed-env placeholder 方案审计：评估 `__legacy_*` sentinel 是否保留、替换或包裹隐藏
+- [x] Phase G.4 配置兼容字段退役计划：梳理 `RUN_IMMEDIATELY`、旧 env alias、no-op 开关、UI metadata 的退役等级与验证矩阵
 
 ## Proposed Phases
 
@@ -82,6 +86,12 @@
 - 对齐同步主链、异步任务链、脚本入口与 agent 调用链
 - 迁移过程中旧入口只允许退化为兼容壳，不允许继续增长新业务逻辑
 
+### Phase G - 真实兼容面收缩（需单独确认，高风险）
+- 识别哪些“legacy / compatibility”残留已不只是文案，而是对外契约或运行时机制的一部分
+- 先冻结收缩顺序，再分层处理：task payload → managed-env placeholder → config/env alias / metadata
+- 每一类改动都必须先定义“兼容窗口 / 迁移路径 / 回滚点 / 回归矩阵”，禁止一次性爆破
+- 默认目标不是“全部删除”，而是把必须长期保留的兼容面显式归类，把可退役部分收成有节奏的 deprecation 计划
+
 ## Key Design Decisions（已确认）
 - [x] 新仓库**完全放弃** FastAPI / Web / Docker 服务形态，只保留 skill + library + scripts
 - [x] 新 skill **只服务 Agent**，不再把通用产品壳作为主目标
@@ -114,6 +124,7 @@
 - Phase E.9.F 再补了一刀内部命名收口：`src/services/agent_model_service.py` 的 helper 命名已从 `non_legacy` / `MANAGED_LEGACY_*` 收口为更准确的 declared-router / managed-env placeholder 语义；`src/config.py` 里 `legacy_run_immediately*` 内部变量也已改为 fallback 语义，同时保持行为不变。相关定点回归为 `47 passed`（agent model service / config env compat / llm channel config / run script）。
 - Phase E.9.G 继续做了一刀过时文案清理：agent memory、runner、skill loader、default skill policy、env-managed config 注释、analyzer execution 与 batch runtime fallback 说明都已从旧 legacy/compatibility 心智收口到当前 skill-first 语义；定点回归为 `83 passed`（agent memory / agent executor / agent model service / config env compat / llm channel config / run script）。
 - Phase E.9.H 又补了一刀 transition wording：`src/core/config_registry.py` 的 Tushare-only / startup flag 描述、`src/search_service.py` 的 retired SearXNG 输入说明，以及 `references/data-sources.md` 的 runtime fetcher 提示已同步收口；定点回归为 `8 passed`（config registry / search searxng / agent model service）。
+- Phase G 已完成真实兼容面收缩：设计冻结报告已写入 `reports/plan/2026-04-18-daily-stock-analysis-phase-g-compatibility-contraction-plan.md`；task queue 对外 payload 删除 `legacy_result`，保留 `result` / `runtime_payload` / `unified_response`；managed-env Router placeholder 已从 `__legacy_*` 更换为 `__managed_env_*`；配置层退役 `RUN_IMMEDIATELY` 的 schedule fallback / registry 暴露以及 `AGENT_SKILL_AUTOWEIGHT` no-op 字段。相关回归矩阵为 `84 passed`（task queue payload / config env compat / config registry / agent model service / config validate structured / llm channel config / run script）。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

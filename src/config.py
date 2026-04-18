@@ -284,7 +284,7 @@ def get_configured_llm_models(model_list: List[Dict[str, Any]]) -> List[str]:
         if not name:
             params = entry.get("litellm_params", {}) or {}
             name = str(params.get("model") or "").strip()
-        if not name or name.startswith("__legacy_") or name in seen:
+        if not name or name.startswith("__managed_env_") or name in seen:
             continue
         seen.add(name)
         models.append(name)
@@ -522,7 +522,6 @@ class Config:
     agent_deep_research_budget: int = 30000  # Max token budget for deep research
     agent_deep_research_timeout: int = 180  # Max seconds for /research command before returning timeout
     agent_memory_enabled: bool = False  # Enable memory & calibration system
-    agent_skill_autoweight: bool = True  # Compatibility no-op; historical auto-weight flag
     agent_skill_routing: str = "auto"  # Skill routing: 'auto' (regime-based) or 'manual'
     agent_event_monitor_enabled: bool = False  # Enable periodic event-driven alert checks in schedule mode
     agent_event_monitor_interval_minutes: int = 5  # Polling interval for event monitor background checks
@@ -574,8 +573,7 @@ class Config:
     # === 定时任务配置 ===
     schedule_enabled: bool = False            # 是否启用定时任务
     schedule_time: str = "18:00"              # 每日推送时间（HH:MM 格式）
-    schedule_run_immediately: bool = True     # 启动时是否立即执行一次
-    run_immediately: bool = True              # 启动时是否立即执行一次（非定时模式）
+    schedule_run_immediately: bool = True     # 定时模式启动时是否立即执行一次
     market_review_enabled: bool = True        # 是否启用大盘复盘
     # 大盘复盘市场区域：cn(A股)、us(美股)、both(两者)，us 适合仅关注美股的用户
     market_review_region: str = "cn"
@@ -637,7 +635,6 @@ class Config:
     _RUNTIME_DOTENV_PRIORITY_KEYS = frozenset(
         {
             "STOCK_LIST",
-            "RUN_IMMEDIATELY",
             "SCHEDULE_ENABLED",
             "SCHEDULE_TIME",
             "SCHEDULE_RUN_IMMEDIATELY",
@@ -964,18 +961,9 @@ class Config:
         brave_keys_str = os.getenv('BRAVE_API_KEYS', '')
         brave_api_keys = [k.strip() for k in brave_keys_str.split(',') if k.strip()]
 
-        # Preserve historical semantics for startup flags: only an explicit
-        # literal "true" enables immediate execution; empty strings stay False.
-        fallback_run_immediately_env = cls._resolve_env_value(
-            'RUN_IMMEDIATELY',
-            prefer_env_file=True,
-        )
-        fallback_run_immediately = (
-            fallback_run_immediately_env.lower() == 'true'
-            if fallback_run_immediately_env is not None
-            else True
-        )
-
+        # Schedule startup behavior is now controlled solely by
+        # SCHEDULE_RUN_IMMEDIATELY. Only an explicit literal "true"
+        # enables immediate execution; empty strings stay False.
         schedule_run_immediately_env = cls._resolve_env_value(
             'SCHEDULE_RUN_IMMEDIATELY',
             prefer_env_file=True,
@@ -983,7 +971,7 @@ class Config:
         schedule_run_immediately = (
             schedule_run_immediately_env.lower() == 'true'
             if schedule_run_immediately_env is not None
-            else fallback_run_immediately
+            else True
         )
         schedule_time_value = cls._resolve_env_value(
             'SCHEDULE_TIME',
@@ -994,6 +982,7 @@ class Config:
         report_language_raw = cls._resolve_report_language_env_value(
             preexisting_report_language
         )
+        cls._warn_removed_agent_autoweight_envs()
         
         return cls(
             stock_list=stock_list,
@@ -1082,7 +1071,6 @@ class Config:
                 minimum=30,
             ),
             agent_memory_enabled=os.getenv('AGENT_MEMORY_ENABLED', 'false').lower() == 'true',
-            agent_skill_autoweight=cls._resolve_agent_skill_autoweight(),
             agent_skill_routing=(
                 os.getenv('AGENT_SKILL_ROUTING')
                 or os.getenv('AGENT_STRATEGY_ROUTING', 'auto')
@@ -1146,7 +1134,6 @@ class Config:
             ).lower() == 'true',
             schedule_time=(schedule_time_value or '18:00').strip() or '18:00',
             schedule_run_immediately=schedule_run_immediately,
-            run_immediately=fallback_run_immediately,
             market_review_enabled=os.getenv('MARKET_REVIEW_ENABLED', 'true').lower() == 'true',
             market_review_region=cls._parse_market_review_region(
                 os.getenv('MARKET_REVIEW_REGION', 'cn')
@@ -1377,28 +1364,28 @@ class Config:
         for k in gemini_keys:
             if k and len(k) >= 8:
                 model_list.append({
-                    'model_name': '__legacy_gemini__',
-                    'litellm_params': {'model': '__legacy_gemini__', 'api_key': k},
+                    'model_name': '__managed_env_gemini__',
+                    'litellm_params': {'model': '__managed_env_gemini__', 'api_key': k},
                 })
 
         # Anthropic keys
         for k in anthropic_keys:
             if k and len(k) >= 8:
                 model_list.append({
-                    'model_name': '__legacy_anthropic__',
-                    'litellm_params': {'model': '__legacy_anthropic__', 'api_key': k},
+                    'model_name': '__managed_env_anthropic__',
+                    'litellm_params': {'model': '__managed_env_anthropic__', 'api_key': k},
                 })
 
         # OpenAI-compatible keys
         for k in openai_keys:
             if k and len(k) >= 8:
-                params: Dict[str, Any] = {'model': '__legacy_openai__', 'api_key': k}
+                params: Dict[str, Any] = {'model': '__managed_env_openai__', 'api_key': k}
                 if openai_base_url:
                     params['api_base'] = openai_base_url
                 if openai_base_url and 'aihubmix.com' in openai_base_url:
                     params['extra_headers'] = {'APP-Code': 'GPIJ3886'}
                 model_list.append({
-                    'model_name': '__legacy_openai__',
+                    'model_name': '__managed_env_openai__',
                     'litellm_params': params,
                 })
 
@@ -1406,9 +1393,9 @@ class Config:
         for k in (deepseek_keys or []):
             if k and len(k) >= 8:
                 model_list.append({
-                    'model_name': '__legacy_deepseek__',
+                    'model_name': '__managed_env_deepseek__',
                     'litellm_params': {
-                        'model': '__legacy_deepseek__',
+                        'model': '__managed_env_deepseek__',
                         'api_key': k,
                     },
                 })
@@ -1600,26 +1587,16 @@ class Config:
         return 'tushare'
 
     @classmethod
-    def _resolve_agent_skill_autoweight(cls) -> bool:
-        """Resolve the historical auto-weight toggle.
-
-        The skill-first runtime no longer applies backtest-driven auto-weighting,
-        so AGENT_SKILL_AUTOWEIGHT is retained as a compatibility no-op.
-        AGENT_STRATEGY_AUTOWEIGHT is retired and ignored.
-        """
-        explicit = os.getenv('AGENT_SKILL_AUTOWEIGHT')
-        if explicit is not None:
+    def _warn_removed_agent_autoweight_envs(cls) -> None:
+        """Warn when removed agent auto-weight envs are still present."""
+        if os.getenv('AGENT_SKILL_AUTOWEIGHT') is not None:
             logging.getLogger(__name__).warning(
-                "AGENT_SKILL_AUTOWEIGHT is retained for compatibility only and is currently a no-op in the skill-first runtime",
+                "AGENT_SKILL_AUTOWEIGHT has been removed from the skill-first runtime and is now ignored",
             )
-            return explicit.lower() == 'true'
-
         if os.getenv('AGENT_STRATEGY_AUTOWEIGHT') is not None:
             logging.getLogger(__name__).warning(
-                "AGENT_STRATEGY_AUTOWEIGHT is retired and ignored; use AGENT_SKILL_AUTOWEIGHT if needed",
+                "AGENT_STRATEGY_AUTOWEIGHT has been removed from the skill-first runtime and is now ignored",
             )
-
-        return True
 
     @classmethod
     def reset_instance(cls) -> None:
