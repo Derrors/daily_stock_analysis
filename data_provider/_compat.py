@@ -10,7 +10,10 @@ import warnings
 
 
 _WARNED: set[str] = set()
-_WARN_ENABLED = os.getenv("DSA_WARN_LEGACY_IMPORTS", "0").strip().lower() in {"1", "true", "yes"}
+
+
+def _warn_enabled() -> bool:
+    return os.getenv("DSA_WARN_LEGACY_IMPORTS", "0").strip().lower() in {"1", "true", "yes"}
 
 
 def alias_module(legacy_name: str, canonical_name: str):
@@ -19,7 +22,7 @@ def alias_module(legacy_name: str, canonical_name: str):
     This keeps old imports executable while making canonical imports explicit.
     """
     edge = f"{legacy_name}->{canonical_name}"
-    if _WARN_ENABLED and edge not in _WARNED:
+    if _warn_enabled() and edge not in _WARNED:
         warnings.warn(
             f"`{legacy_name}` is deprecated; use `{canonical_name}` instead.",
             DeprecationWarning,

@@ -12,11 +12,12 @@ import warnings
 __all__ = getattr(_impl, "__all__", [n for n in dir(_impl) if not n.startswith("__")])
 
 
-_WARN_ENABLED = os.getenv("DSA_WARN_LEGACY_IMPORTS", "0").strip().lower() in {"1", "true", "yes"}
+def _warn_enabled() -> bool:
+    return os.getenv("DSA_WARN_LEGACY_IMPORTS", "0").strip().lower() in {"1", "true", "yes"}
 
 
 def __getattr__(name):
-    if _WARN_ENABLED:
+    if _warn_enabled():
         warnings.warn(
             "`data_provider` is deprecated; use `src.stock_analysis_skill.providers`.",
             DeprecationWarning,

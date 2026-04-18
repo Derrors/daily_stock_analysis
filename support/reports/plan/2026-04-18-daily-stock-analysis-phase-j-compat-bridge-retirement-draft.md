@@ -122,6 +122,8 @@ If a post-removal import break occurs:
 - CI/pytest guard for "no new internal `data_provider.*` imports"
 - External consumer audit note: `support/reports/review/2026-04-18-daily-stock-analysis-phase-j-external-consumer-audit.md`
 - Migration guidance note: `references/provider-import-migration.md`
+- J.4 window execution playbook: `support/reports/plan/2026-04-18-daily-stock-analysis-phase-j4-window-execution-plan.md`
+- Migration announcement template: `support/reports/plan/2026-04-18-daily-stock-analysis-phase-j-migration-announcement-template.md`
 - TASKS/README references aligned to Phase J as planned next step
 
 ---
