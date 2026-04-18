@@ -67,9 +67,10 @@ class TaskInfo:
     status: TaskStatus = TaskStatus.PENDING
     progress: int = 0
     message: Optional[str] = None
-    # Canonical internal payload. Compatibility payload remains in `result`
-    # for callers that still read TaskInfo.result directly.
-    # `runtime_payload` is the API-facing canonical alias for this compat blob.
+    # Canonical internal payload. `result` continues to hold the task/runtime
+    # storage blob for existing consumers.
+    # `runtime_payload` is the API-facing canonical alias for that stored blob,
+    # while `legacy_result` is exposed only for transition-period compatibility.
     unified_result: Optional[Dict[str, Any]] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -85,8 +86,8 @@ class TaskInfo:
 
         Preference order:
         1. unified_result (canonical skill/runtime payload)
-        2. unified_response embedded inside the compatibility payload dict
-        3. compatibility payload dict
+        2. unified_response embedded inside the stored runtime payload dict
+        3. stored runtime payload dict
         """
         if self.unified_result is not None:
             return self.unified_result
@@ -97,7 +98,11 @@ class TaskInfo:
         return self.result
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert task info into an API-friendly dictionary."""
+        """Convert task info into an API-friendly dictionary.
+
+        New consumers should prefer `result` and `runtime_payload`.
+        `legacy_result` is kept only to avoid breaking older readers.
+        """
         return {
             "task_id": self.task_id,
             "stock_code": self.stock_code,

@@ -41,6 +41,7 @@
 - [x] Phase E.9.B 收口 `use_legacy_default_prompt` 命名为更准确的默认 bull-trend prompt 语义
 - [x] Phase E.9.C 收口 agent/analyzer 的 env-managed LiteLLM Router 变量名与日志文案
 - [x] Phase E.9.D 收薄 OrchestratorStageRuntime 委托层，避免重复创建 runtime helper
+- [x] Phase E.9.E 继续收口 compatibility 文案：task payload / strategies 资源目录 / stage runtime / constructor shim 注释
 
 ## Proposed Phases
 
@@ -106,6 +107,7 @@
 - CHANGELOG 已补充 skill-first rewrite、主链迁移、产品壳删除、文档重写与测试覆盖条目
 - 当前主线已经进入“结构完成、语义收口”的阶段；后续价值最高的工作不再是继续大删目录，而是统一命名、压缩兼容层、降低维护噪音
 - Phase E.9 已完成一轮低风险收尾：先提交当前文档状态对齐，再把默认 bull-trend prompt 开关命名、env-managed LiteLLM Router 变量/日志，以及 OrchestratorStageRuntime 的重复委托层同步收口；定点回归为 `152 passed`（agent executor / analyzer prompt / agent pipeline / orchestrator runtime / registry / run script / agent model service）。
+- Phase E.9.E 又补了一刀纯语义收口：task queue payload 说明、`strategies/` 资源目录口径、stage runtime 注释、以及少量 constructor/runtime shim 文案已改成当前 skill-first 语义；相关定点回归为 `65 passed`（task queue payload / orchestrator runtime / agent registry / agent model service）。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

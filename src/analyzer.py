@@ -408,7 +408,7 @@ class GeminiAnalyzer:
         """Initialize LLM Analyzer via LiteLLM.
 
         Args:
-            api_key: Ignored (kept for backward compatibility). Keys are loaded from config.
+            api_key: Ignored (retained only for constructor compatibility). Keys are loaded from config.
         """
         self._config_override = config
         self._requested_skills = list(skills) if skills is not None else None

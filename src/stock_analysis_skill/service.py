@@ -76,8 +76,8 @@ class StockAnalysisSkillService:
     ) -> Optional[dict[str, Any]]:
         """Runtime payload entry for async task/runtime callers.
 
-        Keeps task-queue writes on the canonical skill service while preserving
-        the existing compatibility payload shape for task storage/events.
+        Keeps task-queue writes on the canonical skill service while returning
+        the current task/event storage payload shape.
         """
         return self.mainline_runtime.analyze_stock(
             stock_code=stock_code,

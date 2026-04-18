@@ -260,7 +260,7 @@ class LLMToolAdapter:
             messages: Conversation history in provider-neutral format:
                       [{"role": "system"/"user"/"assistant"/"tool", "content": ...}, ...]
             tools: OpenAI-format tool declarations; litellm converts to each provider's format.
-            provider: Ignored (kept for backward compatibility).
+            provider: Ignored (retained only for call-site compatibility).
 
         Returns:
             LLMResponse with either content (final answer) or tool_calls.

@@ -65,7 +65,7 @@ Current work is focused on stale-document cleanup, remaining compatibility-surfa
 
 ## Compatibility-only remnants
 
-A small number of compatibility-only fields and historical runtime shims still exist to avoid breaking old consumers during migration. They are not the recommended integration surface for new work.
+A small number of compatibility-only payload fields and constructor/runtime shims still exist to avoid breaking old consumers during migration. They are not the recommended integration surface for new work.
 
 For new integrations, prefer:
 - scripts under `scripts/*`

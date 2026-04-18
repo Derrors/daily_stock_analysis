@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Stage runtime helpers for :mod:`src.agent.orchestrator`.
 
-Phase A extraction: move per-stage runtime compatibility logic out of
-``AgentOrchestrator`` while preserving behaviour.
+Extract per-stage runtime call-shape handling out of ``AgentOrchestrator``
+while preserving existing behaviour.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from src.config import AGENT_MAX_STEPS_DEFAULT
 
 
 class OrchestratorStageRuntime:
-    """Compatibility helpers for orchestrator stage execution."""
+    """Call-shape and budget helpers for orchestrator stage execution."""
 
     def __init__(self, *, max_steps: int) -> None:
         self.max_steps = max_steps
@@ -46,7 +46,7 @@ class OrchestratorStageRuntime:
         )
 
     def agent_run_accepts_timeout(self, run_callable: Any) -> bool:
-        """Best-effort compatibility check for legacy test doubles / custom agents."""
+        """Best-effort check for older test doubles / custom agents."""
         side_effect = getattr(run_callable, "side_effect", None)
         accepts_timeout = self.callable_accepts_timeout_kwarg(side_effect)
         if accepts_timeout is not None:
@@ -65,7 +65,7 @@ class OrchestratorStageRuntime:
         progress_callback: Optional[Callable] = None,
         timeout_seconds: Optional[float] = None,
     ) -> StageResult:
-        """Run a stage agent while preserving compatibility with older signatures."""
+        """Run a stage agent while tolerating older call signatures."""
         run_kwargs = {"progress_callback": progress_callback}
         if (
             timeout_seconds is not None

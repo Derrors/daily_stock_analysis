@@ -7,7 +7,8 @@ Skills are pluggable trading analysis modules defined in **natural language**
 (e.g., 龙头策略, 缩量回踩, 均线金叉) used for analysis and push notifications.
 
 Users can write custom skills by creating a YAML file — no Python code needed.
-The built-in YAML files still live under ``strategies/`` for compatibility.
+Built-in trading strategy resources currently live under ``strategies/`` and are
+loaded directly by the skill runtime.
 """
 
 import logging
@@ -19,7 +20,7 @@ from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
-# Built-in skill YAML directory (project_root/strategies/ kept for compatibility)
+# Built-in skill YAML directory (project_root/strategies/ as the canonical resource folder)
 _BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "strategies"
 
 
