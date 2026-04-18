@@ -44,6 +44,7 @@
 - [x] Phase E.9.E 继续收口 compatibility 文案：task payload / strategies 资源目录 / stage runtime / constructor shim 注释
 - [x] Phase E.9.F 收口 agent_model_service / config.py 中仍带 legacy 心智的内部 helper 命名
 - [x] Phase E.9.G 收口 agent memory / skill loader / runner / prompt defaults / runtime helper 的过时 legacy 文案
+- [x] Phase E.9.H 收口配置元数据 / 搜索服务 / 数据源参考里的 transition wording
 
 ## Proposed Phases
 
@@ -112,6 +113,7 @@
 - Phase E.9.E 又补了一刀纯语义收口：task queue payload 说明、`strategies/` 资源目录口径、stage runtime 注释、以及少量 constructor/runtime shim 文案已改成当前 skill-first 语义；相关定点回归为 `65 passed`（task queue payload / orchestrator runtime / agent registry / agent model service）。
 - Phase E.9.F 再补了一刀内部命名收口：`src/services/agent_model_service.py` 的 helper 命名已从 `non_legacy` / `MANAGED_LEGACY_*` 收口为更准确的 declared-router / managed-env placeholder 语义；`src/config.py` 里 `legacy_run_immediately*` 内部变量也已改为 fallback 语义，同时保持行为不变。相关定点回归为 `47 passed`（agent model service / config env compat / llm channel config / run script）。
 - Phase E.9.G 继续做了一刀过时文案清理：agent memory、runner、skill loader、default skill policy、env-managed config 注释、analyzer execution 与 batch runtime fallback 说明都已从旧 legacy/compatibility 心智收口到当前 skill-first 语义；定点回归为 `83 passed`（agent memory / agent executor / agent model service / config env compat / llm channel config / run script）。
+- Phase E.9.H 又补了一刀 transition wording：`src/core/config_registry.py` 的 Tushare-only / startup flag 描述、`src/search_service.py` 的 retired SearXNG 输入说明，以及 `references/data-sources.md` 的 runtime fetcher 提示已同步收口；定点回归为 `8 passed`（config registry / search searxng / agent model service）。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

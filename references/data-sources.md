@@ -22,4 +22,4 @@ Current skill-first boundary keeps these sources:
 
 - Treat Tushare as the canonical runtime market-data provider.
 - Treat search providers as optional enrichers, not hard dependencies for every call.
-- Do not reintroduce removed legacy runtime fetchers into the new mainline unless the task explicitly requires it.
+- Do not reintroduce removed runtime fetchers into the new mainline unless the task explicitly requires it.

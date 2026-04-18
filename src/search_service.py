@@ -1686,7 +1686,7 @@ class BraveSearchProvider(BaseSearchProvider):
 
 # SearXNG provider implementation was removed from the runtime path during
 # skill-first simplification. SearchService still accepts the historical
-# searxng_* constructor arguments as no-op compatibility inputs so old
+# searxng_* constructor arguments as no-op transition inputs so old
 # configs fail soft with a warning instead of re-enabling the provider.
 
 

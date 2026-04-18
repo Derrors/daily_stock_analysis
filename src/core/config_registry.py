@@ -219,7 +219,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "REALTIME_SOURCE_PRIORITY": {
         "title": "Realtime Source Priority",
-        "description": "Runtime is simplified to Tushare-only; this field is retained for compatibility and normalizes to `tushare`.",
+        "description": "Runtime is simplified to Tushare-only; this transition field normalizes to `tushare`.",
         "category": "data_source",
         "data_type": "string",
         "ui_control": "text",
@@ -796,7 +796,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "RUN_IMMEDIATELY": {
         "title": "Run Immediately",
-        "description": "Whether to run analysis immediately on startup in non-schedule mode. When SCHEDULE_RUN_IMMEDIATELY is unset, schedule mode still falls back to this legacy flag for compatibility.",
+        "description": "Whether to run analysis immediately on startup in non-schedule mode. When SCHEDULE_RUN_IMMEDIATELY is unset, schedule mode still falls back to this field.",
         "category": "system",
         "data_type": "boolean",
         "ui_control": "switch",
@@ -824,7 +824,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "SCHEDULE_RUN_IMMEDIATELY": {
         "title": "Schedule Run Immediately",
-        "description": "Canonical startup flag for schedule mode. When unset, the runtime falls back to RUN_IMMEDIATELY for backward compatibility.",
+        "description": "Canonical startup flag for schedule mode. When unset, the runtime falls back to RUN_IMMEDIATELY.",
         "category": "system",
         "data_type": "boolean",
         "ui_control": "switch",
