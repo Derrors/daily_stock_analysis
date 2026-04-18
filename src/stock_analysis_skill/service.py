@@ -8,14 +8,8 @@ product-shell modules.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
-from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
-
-from .analyzers.market import MarketSkillAnalyzer
-from .analyzers.stock import StockSkillAnalyzer
-from .analyzers.strategy import SkillResolver
-from .renderers.markdown import SkillMarkdownRenderer
 from .contracts import (
     AnalysisMode,
     AnalysisRequest,
@@ -23,7 +17,28 @@ from .contracts import (
     MarketAnalysisRequest,
     MarketAnalysisResponse,
     QuerySource,
+    StrategyResolutionRequest,
     StrategyResolutionResponse,
+    StrategySpec,
+)
+
+if TYPE_CHECKING:
+    from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
+    from .analyzers.market import MarketSkillAnalyzer
+    from .analyzers.stock import StockSkillAnalyzer
+    from .analyzers.strategy import SkillResolver
+
+PUBLIC_API_VERSION = "v1"
+PUBLIC_SERVICE_METHODS = (
+    "last_error",
+    "analyze_request",
+    "analyze_stock_payload",
+    "analyze_market",
+    "resolve_strategy",
+    "list_strategies",
+    "render_stock_markdown",
+    "render_market_markdown",
+    "render_strategy_markdown",
 )
 
 MODE_TO_PIPELINE_REPORT_TYPE = {
@@ -48,17 +63,49 @@ class StockAnalysisSkillService:
     """
 
     def __init__(self):
-        self.mainline_runtime = StockAnalysisMainlineRuntime()
-        self.stock_analyzer = StockSkillAnalyzer(runtime=self.mainline_runtime)
-        self.market_analyzer = MarketSkillAnalyzer()
-        self.skill_resolver = SkillResolver()
+        self._mainline_runtime: Optional["StockAnalysisMainlineRuntime"] = None
+        self._stock_analyzer: Optional["StockSkillAnalyzer"] = None
+        self._market_analyzer: Optional["MarketSkillAnalyzer"] = None
+        self._skill_resolver: Optional["SkillResolver"] = None
+
+    @property
+    def mainline_runtime(self) -> "StockAnalysisMainlineRuntime":
+        if self._mainline_runtime is None:
+            from src.stock_analysis_skill.runtime.stock_pipeline import StockAnalysisMainlineRuntime
+
+            self._mainline_runtime = StockAnalysisMainlineRuntime()
+        return self._mainline_runtime
+
+    @property
+    def stock_analyzer(self) -> "StockSkillAnalyzer":
+        if self._stock_analyzer is None:
+            from .analyzers.stock import StockSkillAnalyzer
+
+            self._stock_analyzer = StockSkillAnalyzer(runtime=self.mainline_runtime)
+        return self._stock_analyzer
+
+    @property
+    def market_analyzer(self) -> "MarketSkillAnalyzer":
+        if self._market_analyzer is None:
+            from .analyzers.market import MarketSkillAnalyzer
+
+            self._market_analyzer = MarketSkillAnalyzer()
+        return self._market_analyzer
+
+    @property
+    def skill_resolver(self) -> "SkillResolver":
+        if self._skill_resolver is None:
+            from .analyzers.strategy import SkillResolver
+
+            self._skill_resolver = SkillResolver()
+        return self._skill_resolver
 
     @property
     def last_error(self) -> Optional[str]:
         return (
-            self.mainline_runtime.last_error
-            or self.stock_analyzer.last_error
-            or self.market_analyzer.last_error
+            (self._mainline_runtime.last_error if self._mainline_runtime is not None else None)
+            or (self._stock_analyzer.last_error if self._stock_analyzer is not None else None)
+            or (self._market_analyzer.last_error if self._market_analyzer is not None else None)
         )
 
     def analyze_request(self, request: AnalysisRequest) -> Optional[AnalysisResponse]:
@@ -91,17 +138,28 @@ class StockAnalysisSkillService:
         """Execute market analysis through the new facade."""
         return self.market_analyzer.analyze(request)
 
-    def resolve_strategy(self, query: str) -> StrategyResolutionResponse:
+    def resolve_strategy(self, query: str | StrategyResolutionRequest) -> StrategyResolutionResponse:
         """Resolve a user-facing strategy resource through the internal skill resolver."""
-        return self.skill_resolver.resolve(query)
+        query_text = query.query if isinstance(query, StrategyResolutionRequest) else query
+        return self.skill_resolver.resolve(query_text)
+
+    def list_strategies(self) -> list[StrategySpec]:
+        """Return the canonical repository strategy resources."""
+        return self.skill_resolver.list_strategy_specs()
 
     def render_stock_markdown(self, response: AnalysisResponse) -> str:
+        from .renderers.markdown import SkillMarkdownRenderer
+
         return SkillMarkdownRenderer.render_stock(response)
 
     def render_market_markdown(self, response: MarketAnalysisResponse) -> str:
+        from .renderers.markdown import SkillMarkdownRenderer
+
         return SkillMarkdownRenderer.render_market(response)
 
     def render_strategy_markdown(self, response: StrategyResolutionResponse) -> str:
+        from .renderers.markdown import SkillMarkdownRenderer
+
         return SkillMarkdownRenderer.render_strategy_resolution(response)
 
     @staticmethod
@@ -109,3 +167,11 @@ class StockAnalysisSkillService:
         if query_source in {QuerySource.UNKNOWN, QuerySource.SYSTEM}:
             return QuerySource.AGENT
         return query_source
+
+
+__all__ = [
+    "PUBLIC_API_VERSION",
+    "PUBLIC_SERVICE_METHODS",
+    "StockAnalysisSkillService",
+    "resolve_report_type",
+]

@@ -8,7 +8,6 @@
 # 测试文件（可能包含敏感配置）
 # 仅忽略仓库根目录下的临时 test_*.py 脚本；tests/ 目录下的单元测试需要纳入版本控制。
 /test_*.py
-!test_env.py
 
 # Python
 __pycache__/
@@ -71,10 +70,10 @@ run.sh
 
 verify_*.py
 
-# ignore Claude workspace artifacts, but keep shared repo skills versioned
-.claude/*
-!.claude/skills/
-!.claude/skills/**
+# ignore Trae workspace artifacts, but keep shared repo skills versioned
+.trae/*
+!.trae/skills/
+!.trae/skills/**
 
 # ignore static files
 static/

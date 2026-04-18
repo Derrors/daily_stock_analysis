@@ -11,7 +11,7 @@ try:
 except ModuleNotFoundError:
     sys.modules["litellm"] = MagicMock()
 
-from src.analyzer import GeminiAnalyzer
+from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
 
 
 class AnalyzerNewsPromptTestCase(unittest.TestCase):
@@ -78,7 +78,7 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
             news_max_age_days=30,
             news_strategy_profile="medium",  # 7 days
         )
-        with patch("src.analyzer.get_config", return_value=fake_cfg):
+        with patch("src.stock_analysis_skill.analysis.facade.get_config", return_value=fake_cfg):
             prompt = analyzer._format_prompt(context, "贵州茅台", news_context="news")
 
         self.assertIn("近7日的新闻搜索结果", prompt)
@@ -103,7 +103,7 @@ class AnalyzerNewsPromptTestCase(unittest.TestCase):
             news_max_age_days=30,
             news_strategy_profile="long",  # 30 days if fallback is used
         )
-        with patch("src.analyzer.get_config", return_value=fake_cfg):
+        with patch("src.stock_analysis_skill.analysis.facade.get_config", return_value=fake_cfg):
             prompt = analyzer._format_prompt(context, "贵州茅台", news_context="news")
 
         self.assertIn("近1日的新闻搜索结果", prompt)

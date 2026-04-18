@@ -17,7 +17,6 @@ from __future__ import annotations
 import re
 
 from .base import BaseFetcher, DataFetcherManager
-from .tushare_fetcher import TushareFetcher
 from .us_index_mapping import is_us_index_code, is_us_stock_code, get_us_index_yf_symbol, US_INDEX_MAPPING
 
 _HK_CODE_PATTERN = re.compile(r'^(HK)?\d{5}$', re.IGNORECASE)
@@ -31,6 +30,14 @@ def is_hk_stock_code(stock_code: str) -> bool:
     if normalized.endswith('.HK'):
         return True
     return bool(_HK_CODE_PATTERN.match(normalized))
+
+
+def __getattr__(name: str):
+    if name == "TushareFetcher":
+        from .tushare_fetcher import TushareFetcher
+
+        return TushareFetcher
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 __all__ = [

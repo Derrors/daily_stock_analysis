@@ -7,12 +7,17 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.stock_analysis_skill.analyzers.strategy import SkillResolver  # noqa: E402
+from src.stock_analysis_skill.contracts import StrategyResolutionRequest  # noqa: E402
+from src.stock_analysis_skill.service import StockAnalysisSkillService  # noqa: E402
+
+PUBLIC_API_VERSION = "v1"
+EXIT_CODE_SUCCESS = 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,17 +28,31 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
-    resolver = SkillResolver()
+def build_request_from_args(args: argparse.Namespace) -> StrategyResolutionRequest:
+    return StrategyResolutionRequest(query=args.query)
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    args = build_parser().parse_args(argv)
+    service = StockAnalysisSkillService()
+    request = build_request_from_args(args)
 
     if args.list:
-        payload = {"strategies": [spec.model_dump(mode="json") for spec in resolver.list_strategy_specs()]}
+        payload = {"strategies": [spec.model_dump(mode="json") for spec in service.list_strategies()]}
     else:
-        payload = resolver.resolve(args.query).model_dump(mode="json")
+        payload = service.resolve_strategy(request).model_dump(mode="json")
 
     print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
-    return 0
+    return EXIT_CODE_SUCCESS
+
+
+__all__ = [
+    "PUBLIC_API_VERSION",
+    "EXIT_CODE_SUCCESS",
+    "build_parser",
+    "build_request_from_args",
+    "main",
+]
 
 
 if __name__ == "__main__":

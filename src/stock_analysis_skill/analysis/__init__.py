@@ -16,6 +16,7 @@ from .presentation import (
     get_stock_name_multi_source,
 )
 from .execution import execute_stock_analysis
+from .facade import StockAnalysisLLMAnalyzer
 from .litellm_caller import call_litellm
 from .litellm_runtime import (
     dispatch_litellm_completion,
@@ -40,13 +41,20 @@ from .response_parser import (
 )
 from .result import AnalysisResult
 from .system_prompt import (
+    ANALYSIS_SYSTEM_PROMPT_TEMPLATE,
+    BUILTIN_DEFAULT_TREND_SYSTEM_PROMPT_TEMPLATE,
+    TEXT_SYSTEM_PROMPT_TEMPLATE,
     build_analysis_system_prompt,
     resolve_skill_prompt_sections,
 )
 
 __all__ = [
     "AnalysisResult",
+    "ANALYSIS_SYSTEM_PROMPT_TEMPLATE",
+    "BUILTIN_DEFAULT_TREND_SYSTEM_PROMPT_TEMPLATE",
     "LiteLLMStreamError",
+    "StockAnalysisLLMAnalyzer",
+    "TEXT_SYSTEM_PROMPT_TEMPLATE",
     "apply_placeholder_fill",
     "call_litellm",
     "execute_stock_analysis",

@@ -4,37 +4,11 @@
 from __future__ import annotations
 
 import sys
-import types
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-# Keep task_queue import lightweight in environments without optional deps,
-# but restore sys.modules immediately to avoid cross-test pollution.
-_orig_data_provider_base = sys.modules.get("data_provider.base")
-_orig_data_provider = sys.modules.get("data_provider")
-
-if _orig_data_provider_base is None:
-    base_mod = types.ModuleType("data_provider.base")
-    base_mod.canonical_stock_code = lambda x: (x or "").strip().upper()
-    sys.modules["data_provider.base"] = base_mod
-
-if _orig_data_provider is None:
-    pkg_mod = types.ModuleType("data_provider")
-    pkg_mod.base = sys.modules["data_provider.base"]
-    sys.modules["data_provider"] = pkg_mod
-
 from src.services.task_queue import AnalysisTaskQueue, get_task_queue
-
-if _orig_data_provider_base is None:
-    sys.modules.pop("data_provider.base", None)
-else:
-    sys.modules["data_provider.base"] = _orig_data_provider_base
-
-if _orig_data_provider is None:
-    sys.modules.pop("data_provider", None)
-else:
-    sys.modules["data_provider"] = _orig_data_provider
 
 
 class TaskQueueConfigSyncTestCase(unittest.TestCase):

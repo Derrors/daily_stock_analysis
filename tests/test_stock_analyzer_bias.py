@@ -7,7 +7,7 @@ import math
 import unittest
 from unittest.mock import patch, MagicMock
 
-from src.stock_analyzer import (
+from src.stock_analysis_skill.analyzers.trend import (
     StockTrendAnalyzer,
     TrendAnalysisResult,
     TrendStatus,
@@ -72,7 +72,7 @@ class StockAnalyzerBiasTestCase(unittest.TestCase):
             msg=f"Did not expect substring '{substring}' in {items}",
         )
 
-    @patch("src.stock_analyzer.get_config")
+    @patch("src.stock_analysis_skill.analyzers.trend.get_config")
     def test_bias_nan_defense(self, mock_get_config: MagicMock) -> None:
         """bias_ma5=NaN should be treated as 0.0 without exception."""
         mock_get_config.return_value.bias_threshold = 5.0

@@ -4,11 +4,12 @@ set -euo pipefail
 
 syntax_check() {
   echo "==> backend-gate: Python syntax check"
-  python -m py_compile src/config.py src/analyzer.py src/notification.py src/report_output.py
-  python -m py_compile src/storage.py src/scheduler.py src/search_service.py src/core/pipeline.py
+  python -m py_compile src/config.py src/report_output.py
+  python -m py_compile src/storage.py src/search_service.py src/core/pipeline.py
   python -m py_compile src/market_analyzer.py src/stock_analyzer.py src/services/analysis_service.py
   python -m py_compile src/stock_analysis_skill/*.py src/stock_analysis_skill/analyzers/*.py src/stock_analysis_skill/renderers/*.py
-  python -m py_compile data_provider/*.py scripts/*.py
+  python -m py_compile src/stock_analysis_skill/analysis/*.py src/stock_analysis_skill/runtime/*.py src/stock_analysis_skill/providers/*.py
+  python -m py_compile scripts/*.py
 }
 
 flake8_checks() {
@@ -18,8 +19,7 @@ flake8_checks() {
 
 deterministic_checks() {
   echo "==> backend-gate: local deterministic checks"
-  ./test.sh code
-  ./test.sh yfinance
+  python -m pytest tests/test_stock_code_utils.py tests/test_us_index_mapping.py
 }
 
 offline_test_suite() {

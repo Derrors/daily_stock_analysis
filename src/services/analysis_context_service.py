@@ -14,7 +14,7 @@ from src.stock_analysis_skill.providers import DataFetcherManager, is_hk_stock_c
 from src.config import get_config
 from src.stock_analysis_skill.contracts import AnalysisRequest, DataCompleteness
 from src.search_service import SearchService
-from src.stock_analyzer import StockTrendAnalyzer
+from src.stock_analysis_skill.analyzers.trend import StockTrendAnalyzer
 from src.utils.analysis_runtime_contract import apply_component_completeness
 
 

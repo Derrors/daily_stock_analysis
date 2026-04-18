@@ -7,7 +7,11 @@ import json
 import logging
 import re
 
-from json_repair import repair_json
+try:
+    from json_repair import repair_json
+except ModuleNotFoundError:  # pragma: no cover - minimal test env fallback
+    def repair_json(value: str) -> str:
+        return value
 
 from src.report_language import (
     infer_decision_type_from_advice,

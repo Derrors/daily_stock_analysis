@@ -28,7 +28,7 @@ from unittest.mock import PropertyMock
 class TestAnalyzerGenerateText:
     def _make_analyzer(self):
         """Return a minimally configured GeminiAnalyzer with _call_litellm mocked."""
-        with patch("src.analyzer.get_config") as mock_cfg:
+        with patch("src.stock_analysis_skill.analysis.facade.get_config") as mock_cfg:
             cfg = MagicMock()
             cfg.litellm_model = "gemini/gemini-2.0-flash"
             cfg.litellm_fallback_models = []
@@ -39,7 +39,7 @@ class TestAnalyzerGenerateText:
             cfg.llm_model_list = []
             cfg.openai_base_url = None
             mock_cfg.return_value = cfg
-            from src.analyzer import GeminiAnalyzer
+            from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
             analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
             analyzer._router = None
             return analyzer
@@ -206,7 +206,7 @@ class TestAnalyzerGenerateText:
             report_integrity_retry=1,
         )
 
-        from src.analyzer import AnalysisResult
+        from src.stock_analysis_skill.contracts import AnalysisResult
 
         progress_updates = []
         first_result = AnalysisResult(
@@ -245,7 +245,7 @@ class TestAnalyzerGenerateText:
                  side_effect=[(False, ["analysis_summary"]), (True, [])],
              ), \
              patch.object(analyzer, "_build_integrity_retry_prompt", return_value="retry prompt"), \
-             patch("src.analyzer.persist_llm_usage"):
+             patch("src.llm_usage.persist_llm_usage"):
             result = analyzer.analyze(
                 {"code": "600519", "stock_name": "贵州茅台"},
                 progress_callback=lambda progress, message: progress_updates.append((progress, message)),
@@ -261,7 +261,7 @@ class TestAnalyzerGenerateText:
         analyzer = self._make_analyzer()
         analyzer._config_override = SimpleNamespace(report_language="zh")
 
-        from src.analyzer import GeminiAnalyzer
+        from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
 
         result = GeminiAnalyzer._parse_response(analyzer, "这是一段纯文本分析，没有 JSON。", "600519", "贵州茅台")
         assert result.success is False
@@ -273,7 +273,7 @@ class TestAnalyzerGenerateText:
         analyzer = self._make_analyzer()
         analyzer._config_override = SimpleNamespace(report_language="zh")
 
-        from src.analyzer import GeminiAnalyzer
+        from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
 
         malformed = "Here is the analysis: {broken json content without closing"
         result = GeminiAnalyzer._parse_response(analyzer, malformed, "AAPL", "Apple")
@@ -285,7 +285,7 @@ class TestAnalyzerGenerateText:
         analyzer = self._make_analyzer()
         analyzer._config_override = SimpleNamespace(report_language="zh")
 
-        from src.analyzer import GeminiAnalyzer
+        from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
         import json
 
         valid_response = json.dumps({
@@ -309,8 +309,8 @@ class TestMarketAnalyzerBypassFix:
         from src.core.market_profile import CN_PROFILE
         from src.core.market_strategy import get_market_strategy_blueprint
 
-        with patch("src.analyzer.get_config") as mock_cfg, \
-             patch("src.market_analyzer.get_config") as mock_cfg2:
+        with patch("src.stock_analysis_skill.analysis.facade.get_config") as mock_cfg, \
+             patch("src.stock_analysis_skill.analyzers.market.get_config") as mock_cfg2:
             cfg = MagicMock()
             cfg.litellm_model = "gemini/gemini-2.0-flash"
             cfg.litellm_fallback_models = []
@@ -325,8 +325,8 @@ class TestMarketAnalyzerBypassFix:
             mock_cfg.return_value = cfg
             mock_cfg2.return_value = cfg
 
-            from src.analyzer import GeminiAnalyzer
-            from src.market_analyzer import MarketAnalyzer
+            from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
+            from src.stock_analysis_skill.analyzers.market import MarketAnalyzer
 
             analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
             analyzer._router = None
@@ -355,7 +355,7 @@ class TestMarketAnalyzerBypassFix:
 
     def test_generate_text_none_falls_back_to_template(self):
         """generate_market_review() falls back to template when generate_text returns None."""
-        from src.market_analyzer import MarketOverview, MarketIndex
+        from src.stock_analysis_skill.analyzers.market import MarketOverview, MarketIndex
 
         ma = self._make_market_analyzer_with_mock_generate_text(return_value=None)
         overview = MarketOverview(

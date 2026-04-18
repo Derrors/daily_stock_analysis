@@ -6,10 +6,10 @@ This script is the first concrete executable brick for the future
 and returns the unified AnalysisResponse contract as JSON.
 
 Current implementation is intentionally conservative:
-- reuses the existing AnalysisService
+- reuses the canonical StockAnalysisSkillService
 - defaults to NO notification side effects
 - supports both CLI flags and JSON request input
-- keeps report-type mapping minimal while v2 refactor is still in progress
+- keeps the script helper surface explicit during the Phase 2 public-API freeze
 """
 
 from __future__ import annotations
@@ -39,21 +39,24 @@ from src.stock_analysis_skill.contracts import (  # noqa: E402
     SelectionSource,
     StockTarget,
 )
-from src.stock_analysis_skill.service import (  # noqa: E402
-    StockAnalysisSkillService,
-    resolve_report_type,
-)
+from src.stock_analysis_skill.service import StockAnalysisSkillService  # noqa: E402
 from src.utils.analysis_runtime_contract import build_full_analysis_preflight_error  # noqa: E402
 
+PUBLIC_API_VERSION = "v1"
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_ANALYSIS_FAILED = 1
+EXIT_CODE_INVALID_REQUEST = 2
+EXIT_CODE_PREFLIGHT_FAILED = 3
 
-def _parse_market(value: Optional[str]) -> Optional[str]:
+
+def parse_market(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
     normalized = value.strip().lower()
     return normalized or None
 
 
-def _parse_selection_source(value: Optional[str]) -> SelectionSource:
+def parse_selection_source(value: Optional[str]) -> SelectionSource:
     if not value:
         return SelectionSource.MANUAL
     try:
@@ -62,7 +65,7 @@ def _parse_selection_source(value: Optional[str]) -> SelectionSource:
         return SelectionSource.UNKNOWN
 
 
-def _load_request_from_json(path_or_dash: str) -> AnalysisRequest:
+def load_request_from_json(path_or_dash: str) -> AnalysisRequest:
     if path_or_dash == "-":
         payload = json.load(sys.stdin)
     else:
@@ -70,7 +73,7 @@ def _load_request_from_json(path_or_dash: str) -> AnalysisRequest:
     return AnalysisRequest.model_validate(payload)
 
 
-def _build_request_from_args(args: argparse.Namespace) -> AnalysisRequest:
+def build_request_from_args(args: argparse.Namespace) -> AnalysisRequest:
     if not args.stock:
         raise ValueError("--stock is required when --input-json is not provided")
 
@@ -78,7 +81,7 @@ def _build_request_from_args(args: argparse.Namespace) -> AnalysisRequest:
         stock=StockTarget(
             input=args.stock,
             code=args.stock if args.stock and args.stock.strip() else None,
-            market=_parse_market(args.market),
+            market=parse_market(args.market),
             name=args.stock_name,
         ),
         mode=AnalysisMode(args.mode),
@@ -104,12 +107,12 @@ def _build_request_from_args(args: argparse.Namespace) -> AnalysisRequest:
         context=AnalysisContextMeta(
             query_source=QuerySource.CLI,
             original_query=args.original_query,
-            selection_source=_parse_selection_source(args.selection_source),
+            selection_source=parse_selection_source(args.selection_source),
         ),
     )
 
 
-def _build_parser() -> argparse.ArgumentParser:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run unified stock analysis and emit v2 AnalysisResponse JSON.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -166,31 +169,31 @@ Examples:
     return parser
 
 
-def _preflight_request(request: AnalysisRequest) -> Optional[dict[str, Any]]:
+def preflight_request(_request: AnalysisRequest) -> Optional[dict[str, Any]]:
     """Return a JSON-serializable error payload when preflight fails, else None."""
     config = get_config()
     return build_full_analysis_preflight_error(litellm_model=getattr(config, "litellm_model", None))
 
 
-def main() -> int:
-    parser = _build_parser()
-    args = parser.parse_args()
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     try:
-        request = _load_request_from_json(args.input_json) if args.input_json else _build_request_from_args(args)
+        request = load_request_from_json(args.input_json) if args.input_json else build_request_from_args(args)
     except Exception as exc:
         print(json.dumps({"error": "invalid_request", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
-        return 2
+        return EXIT_CODE_INVALID_REQUEST
 
     if request.execution.dry_run:
         payload = request.model_dump(mode="json", by_alias=True)
         print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
-        return 0
+        return EXIT_CODE_SUCCESS
 
-    preflight_error = _preflight_request(request)
+    preflight_error = preflight_request(request)
     if preflight_error is not None:
         print(json.dumps(preflight_error, ensure_ascii=False), file=sys.stderr)
-        return 3
+        return EXIT_CODE_PREFLIGHT_FAILED
 
     service = StockAnalysisSkillService()
     response = service.analyze_request(request)
@@ -203,11 +206,52 @@ def main() -> int:
             ),
             file=sys.stderr,
         )
-        return 1
+        return EXIT_CODE_ANALYSIS_FAILED
 
     payload = response.model_dump(mode="json")
     print(json.dumps(payload, ensure_ascii=False, indent=2 if args.pretty else None))
-    return 0
+    return EXIT_CODE_SUCCESS
+
+
+# Compatibility shims for early tests/importers before the Phase 2 public
+# script helpers were finalized.
+def _parse_market(value: Optional[str]) -> Optional[str]:
+    return parse_market(value)
+
+
+def _parse_selection_source(value: Optional[str]) -> SelectionSource:
+    return parse_selection_source(value)
+
+
+def _load_request_from_json(path_or_dash: str) -> AnalysisRequest:
+    return load_request_from_json(path_or_dash)
+
+
+def _build_request_from_args(args: argparse.Namespace) -> AnalysisRequest:
+    return build_request_from_args(args)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    return build_parser()
+
+
+def _preflight_request(request: AnalysisRequest) -> Optional[dict[str, Any]]:
+    return preflight_request(request)
+
+__all__ = [
+    "PUBLIC_API_VERSION",
+    "EXIT_CODE_SUCCESS",
+    "EXIT_CODE_ANALYSIS_FAILED",
+    "EXIT_CODE_INVALID_REQUEST",
+    "EXIT_CODE_PREFLIGHT_FAILED",
+    "parse_market",
+    "parse_selection_source",
+    "load_request_from_json",
+    "build_request_from_args",
+    "build_parser",
+    "preflight_request",
+    "main",
+]
 
 
 if __name__ == "__main__":

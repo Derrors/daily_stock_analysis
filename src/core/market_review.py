@@ -16,10 +16,10 @@ from typing import Optional
 
 from src.config import get_config
 from src.report_output import ReportOutputService
-from src.market_analyzer import MarketAnalyzer
+from src.stock_analysis_skill.analyzers.market import MarketAnalyzer
 from src.report_language import normalize_report_language
 from src.search_service import SearchService
-from src.analyzer import GeminiAnalyzer
+from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
 
 
 logger = logging.getLogger(__name__)

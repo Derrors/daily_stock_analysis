@@ -14,21 +14,144 @@
 3. 指数退避重试机制
 """
 
+from __future__ import annotations
+
 import logging
 import random
 import time
 from threading import BoundedSemaphore, RLock, Thread
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Callable, Optional, List, Tuple, Dict, Any
+from typing import TYPE_CHECKING, Callable, Optional, List, Tuple, Dict, Any
 
-import pandas as pd
-import numpy as np
 from src.data.stock_mapping import STOCK_NAME_MAP, is_meaningful_stock_name
-from .fundamental_adapter import AkshareFundamentalAdapter
+from .dataframe_helpers import (
+    calculate_standard_technical_indicators,
+    clean_standard_ohlcv_dataframe,
+)
+
+if TYPE_CHECKING:
+    from .fundamental_adapter import AkshareFundamentalAdapter
 
 # 配置日志
 logger = logging.getLogger(__name__)
+
+
+def _raise_missing_pandas(attr_name: str):
+    raise ModuleNotFoundError(
+        f"pandas is required for providers.base.{attr_name} at runtime"
+    )
+
+
+def _raise_missing_numpy(attr_name: str):
+    raise ModuleNotFoundError(
+        f"numpy is required for providers.base.{attr_name} at runtime"
+    )
+
+
+class _LazyPandasProxy:
+    """Lazy pandas proxy that keeps module importable in minimal environments."""
+
+    class DataFrame:  # pragma: no cover - fallback marker type
+        pass
+
+    class Series:  # pragma: no cover - fallback marker type
+        pass
+
+    class Index:  # pragma: no cover - fallback marker type
+        pass
+
+    _real_pd = None
+    _import_attempted = False
+
+    @classmethod
+    def _load(cls):
+        if cls._import_attempted:
+            return cls._real_pd
+        cls._import_attempted = True
+        try:
+            import pandas as real_pd
+        except ModuleNotFoundError:
+            cls._real_pd = None
+        else:
+            cls._real_pd = real_pd
+            cls.DataFrame = real_pd.DataFrame
+            cls.Series = real_pd.Series
+            cls.Index = real_pd.Index
+        return cls._real_pd
+
+    @classmethod
+    def __getattr__(cls, name: str):
+        real_pd = cls._load()
+        if real_pd is not None:
+            return getattr(real_pd, name)
+        if name in {"DataFrame", "Series", "Index"}:
+            return getattr(cls, name)
+        _raise_missing_pandas(name)
+
+    @classmethod
+    def isna(cls, *args, **kwargs):
+        real_pd = cls._load()
+        if real_pd is None:
+            _raise_missing_pandas("isna")
+        return real_pd.isna(*args, **kwargs)
+
+    @classmethod
+    def to_datetime(cls, *args, **kwargs):
+        real_pd = cls._load()
+        if real_pd is None:
+            _raise_missing_pandas("to_datetime")
+        return real_pd.to_datetime(*args, **kwargs)
+
+    @classmethod
+    def to_numeric(cls, *args, **kwargs):
+        real_pd = cls._load()
+        if real_pd is None:
+            _raise_missing_pandas("to_numeric")
+        return real_pd.to_numeric(*args, **kwargs)
+
+
+pd = _LazyPandasProxy
+
+
+class _LazyNumpyProxy:
+    """Lazy numpy proxy that keeps module importable in minimal environments."""
+
+    class ndarray:  # pragma: no cover - fallback marker type
+        pass
+
+    class bool_:  # pragma: no cover - fallback marker type
+        pass
+
+    _real_np = None
+    _import_attempted = False
+
+    @classmethod
+    def _load(cls):
+        if cls._import_attempted:
+            return cls._real_np
+        cls._import_attempted = True
+        try:
+            import numpy as real_np
+        except ModuleNotFoundError:
+            cls._real_np = None
+        else:
+            cls._real_np = real_np
+            cls.ndarray = real_np.ndarray
+            cls.bool_ = real_np.bool_
+        return cls._real_np
+
+    @classmethod
+    def __getattr__(cls, name: str):
+        real_np = cls._load()
+        if real_np is not None:
+            return getattr(real_np, name)
+        if name in {"ndarray", "bool_"}:
+            return getattr(cls, name)
+        _raise_missing_numpy(name)
+
+
+np = _LazyNumpyProxy
 
 
 # === 标准化列名定义 ===
@@ -404,25 +527,7 @@ class BaseFetcher(ABC):
         3. 去除空值行
         4. 按日期排序
         """
-        df = df.copy()
-        
-        # 确保日期列为 datetime 类型
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'])
-        
-        # 数值列类型转换
-        numeric_cols = ['open', 'high', 'low', 'close', 'volume', 'amount', 'pct_chg']
-        for col in numeric_cols:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-        
-        # 去除关键列为空的行
-        df = df.dropna(subset=['close', 'volume'])
-        
-        # 按日期升序排序
-        df = df.sort_values('date', ascending=True).reset_index(drop=True)
-        
-        return df
+        return clean_standard_ohlcv_dataframe(df, pd_module=pd)
     
     def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -432,27 +537,7 @@ class BaseFetcher(ABC):
         - MA5, MA10, MA20: 移动平均线
         - Volume_Ratio: 量比（今日成交量 / 5日平均成交量）
         """
-        df = df.copy()
-        
-        # 移动平均线
-        df['ma5'] = df['close'].rolling(window=5, min_periods=1).mean()
-        df['ma10'] = df['close'].rolling(window=10, min_periods=1).mean()
-        df['ma20'] = df['close'].rolling(window=20, min_periods=1).mean()
-        
-        # 量比：当日成交量 / 5日平均成交量
-        # 注意：此处的 volume_ratio 是“日线成交量 / 前5日均量(shift 1)”的相对倍数，
-        # 与部分交易软件口径的“分时量比（同一时刻对比）”不同，含义更接近“放量倍数”。
-        # 该行为目前保留（按需求不改逻辑）。
-        avg_volume_5 = df['volume'].rolling(window=5, min_periods=1).mean()
-        df['volume_ratio'] = df['volume'] / avg_volume_5.shift(1)
-        df['volume_ratio'] = df['volume_ratio'].fillna(1.0)
-        
-        # 保留2位小数
-        for col in ['ma5', 'ma10', 'ma20', 'volume_ratio']:
-            if col in df.columns:
-                df[col] = df[col].round(2)
-        
-        return df
+        return calculate_standard_technical_indicators(df)
     
     @staticmethod
     def random_sleep(min_seconds: float = 1.0, max_seconds: float = 3.0) -> None:
@@ -502,7 +587,9 @@ class DataFetcherManager:
         else:
             # 默认数据源将在首次使用时延迟加载
             self._init_default_fetchers()
-        self._fundamental_adapter = AkshareFundamentalAdapter()
+        from .fundamental_adapter import AkshareFundamentalAdapter
+
+        self._fundamental_adapter: "AkshareFundamentalAdapter" = AkshareFundamentalAdapter()
         self._tickflow_fetcher = None
         self._tickflow_api_key: Optional[str] = None
         self._tickflow_lock = RLock()

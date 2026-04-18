@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from src.analyzer import AnalysisResult
+from src.stock_analysis_skill.contracts import AnalysisResult
 from src.enums import ReportType
 
 logger = logging.getLogger(__name__)

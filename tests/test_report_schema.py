@@ -20,7 +20,8 @@ except ModuleNotFoundError:
     sys.modules["litellm"] = MagicMock()
 
 from src.schemas.report_schema import AnalysisReportSchema
-from src.analyzer import GeminiAnalyzer, AnalysisResult
+from src.stock_analysis_skill.contracts import AnalysisResult
+from src.stock_analysis_skill.analysis.facade import StockAnalysisLLMAnalyzer as GeminiAnalyzer
 
 
 class TestAnalysisReportSchema(unittest.TestCase):

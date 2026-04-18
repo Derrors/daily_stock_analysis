@@ -1,9 +1,17 @@
 from argparse import Namespace
 from types import SimpleNamespace
 
-from scripts.run_stock_analysis import _build_request_from_args, _preflight_request
+from scripts.run_stock_analysis import (
+    PUBLIC_API_VERSION,
+    build_request_from_args,
+    preflight_request,
+)
 from src.stock_analysis_skill.contracts import AnalysisMode, AnalysisRequest, OutputFormat
 from src.stock_analysis_skill.service import resolve_report_type
+
+
+def test_stock_script_public_api_version() -> None:
+    assert PUBLIC_API_VERSION == "v1"
 
 
 def test_build_request_from_args_defaults() -> None:
@@ -30,7 +38,7 @@ def test_build_request_from_args_defaults() -> None:
         pretty=False,
     )
 
-    request = _build_request_from_args(args)
+    request = build_request_from_args(args)
 
     assert request.stock.input == "600519"
     assert request.stock.name == "贵州茅台"
@@ -64,7 +72,7 @@ def test_resolve_report_type_mapping() -> None:
         pretty=False,
     )
 
-    request = _build_request_from_args(args)
+    request = build_request_from_args(args)
 
     assert resolve_report_type(request.mode) == "full"
 
@@ -74,7 +82,7 @@ def test_preflight_requires_provider_key(monkeypatch) -> None:
     for key in ["GEMINI_API_KEY", "OPENAI_API_KEY", "AIHUBMIX_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY"]:
         monkeypatch.delenv(key, raising=False)
 
-    payload = _preflight_request(AnalysisRequest.minimal("600519"))
+    payload = preflight_request(AnalysisRequest.minimal("600519"))
 
     assert payload is not None
     assert payload["error"] == "preflight_failed"
@@ -85,6 +93,6 @@ def test_preflight_passes_with_model_and_provider_key(monkeypatch) -> None:
     monkeypatch.setattr("scripts.run_stock_analysis.get_config", lambda: SimpleNamespace(litellm_model="gemini/test"))
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
 
-    payload = _preflight_request(AnalysisRequest.minimal("600519"))
+    payload = preflight_request(AnalysisRequest.minimal("600519"))
 
     assert payload is None
