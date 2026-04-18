@@ -10,6 +10,7 @@ Treat these paths as the primary skill package boundary:
 - `strategies/`
 - `assets/`
 - `src/stock_analysis_skill/`
+  - includes `providers/` as the canonical runtime data-access layer
 
 ## Secondary engineering/support surface
 
@@ -18,7 +19,7 @@ These paths still exist for maintenance and validation, but they are not the fir
 - `docs/` — supplemental human-facing docs
 - `support/` — planning notes, review artifacts, historical patch utilities
 - `tests/` — regression and contract validation
-- `data_provider/` — runtime data-access layer retained outside `src/stock_analysis_skill/` in this phase
+- `data_provider/` — legacy import bridge retained for compatibility (`src.stock_analysis_skill.providers` is canonical)
 
 ## Asset layout
 

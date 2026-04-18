@@ -482,8 +482,8 @@ class TestFundamentalContext(unittest.TestCase):
 
     def test_missing_value_helpers_log_expected_pd_isna_fallback(self) -> None:
         sentinel = object()
-        with patch("data_provider.base.pd.isna", side_effect=ValueError("ambiguous")):
-            with self.assertLogs("data_provider.base", level="DEBUG") as logs:
+        with patch("src.stock_analysis_skill.providers.base.pd.isna", side_effect=ValueError("ambiguous")):
+            with self.assertLogs("src.stock_analysis_skill.providers.base", level="DEBUG") as logs:
                 self.assertFalse(DataFetcherManager._is_missing_board_value(sentinel))
                 self.assertTrue(DataFetcherManager._has_meaningful_payload(sentinel))
 
@@ -504,7 +504,7 @@ class TestFundamentalContext(unittest.TestCase):
 
     def test_missing_value_helpers_propagate_unexpected_pd_isna_errors(self) -> None:
         sentinel = object()
-        with patch("data_provider.base.pd.isna", side_effect=RuntimeError("boom")):
+        with patch("src.stock_analysis_skill.providers.base.pd.isna", side_effect=RuntimeError("boom")):
             with self.assertRaises(RuntimeError):
                 DataFetcherManager._is_missing_board_value(sentinel)
             with self.assertRaises(RuntimeError):

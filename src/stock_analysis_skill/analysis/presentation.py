@@ -34,7 +34,7 @@ def get_stock_name_multi_source(
 
     if data_manager is None:
         try:
-            from data_provider.base import DataFetcherManager
+            from src.stock_analysis_skill.providers.base import DataFetcherManager
 
             data_manager = DataFetcherManager()
         except Exception as e:

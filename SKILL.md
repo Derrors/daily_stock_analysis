@@ -51,14 +51,14 @@ Treat these as the primary skill surface:
 - `scripts/`
 - `strategies/`
 - `assets/`
-- `src/stock_analysis_skill/`
+- `src/stock_analysis_skill/`（含 `providers/` 运行时数据访问层）
 
 Treat these as engineering/support surfaces, not default user-facing entrypoints:
 
 - `docs/`
 - `support/`
 - `tests/`
-- `data_provider/`
+- `data_provider/`（legacy import shim，canonical provider path 已迁到 `src/stock_analysis_skill/providers/`）
 
 ## Current runtime boundary
 

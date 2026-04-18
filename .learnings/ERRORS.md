@@ -207,3 +207,32 @@ After large directory moves, prefer `git status --short --untracked-files=all` o
 - **Resolved**: 2026-04-18T12:42:00+08:00
 - **Commit/PR**: pending
 - **Notes**: Re-ran staging with `git add -A`, then committed the Phase H repository-shape change successfully.
+
+---
+
+## [ERR-20260418-002] provider-shim-star-import-breaks-private-test-symbols
+
+**Logged**: 2026-04-18T12:56:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: compatibility
+
+### Summary
+During Phase I provider internalization, compatibility shim modules initially used `from ... import *`, which failed to expose private helper symbols used by tests (for example `_build_dividend_payload`).
+
+### Error
+```
+ImportError: cannot import name '_build_dividend_payload' from 'data_provider.fundamental_adapter'
+```
+
+### Context
+- Operation attempted: provider internalization targeted regression matrix
+- Trigger case: shim module relied on wildcard import semantics that skip underscored names
+
+### Suggested Fix
+Use module-bridge shims (`__getattr__` forwarding to canonical module) instead of wildcard re-export when compatibility paths must preserve private/test-level symbol access.
+
+### Resolution
+- **Resolved**: 2026-04-18T12:58:00+08:00
+- **Commit/PR**: pending
+- **Notes**: Replaced shim modules with `__getattr__` bridge pattern and aligned two tests to canonical provider module patch/log paths.

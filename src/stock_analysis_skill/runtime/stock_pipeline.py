@@ -130,7 +130,7 @@ class StockAnalysisMainlineRuntime:
     @staticmethod
     def resolve_market(stock_code: str) -> Market:
         try:
-            from data_provider import is_hk_stock_code, is_us_stock_code
+            from src.stock_analysis_skill.providers import is_hk_stock_code, is_us_stock_code
         except Exception:
             is_hk_stock_code = lambda _code: False  # type: ignore[assignment]
             is_us_stock_code = lambda _code: False  # type: ignore[assignment]

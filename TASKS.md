@@ -54,6 +54,11 @@
 - [x] Phase H.3 工程支撑分层：评估 `docs/` / `reports/` / `data_provider` / `templates` / `sources` / `patch` 是否应保留、下沉或移出主 skill 暴露面
 - [x] Phase H.4 skill 包口径收尾：重写 README / SKILL / references，使仓库对外更像可分发的 skill bundle，而不是通用工程仓库
 - [x] Phase H.5 回归与可发布性校验：验证脚本入口、合同层、skill 资源索引和最小/全量回归，确认纯化后仍可稳定使用
+- [x] Phase I.1 Provider 内迁设计冻结：明确 `data_provider/` 与 `src/stock_analysis_skill/providers/` 的 canonical/compat 边界
+- [x] Phase I.2 Provider 主体内迁：将运行时数据访问实现迁入 `src/stock_analysis_skill/providers/`
+- [x] Phase I.3 兼容桥收口：将 `data_provider/*` 收口为 legacy import shim，避免外部导入立即中断
+- [x] Phase I.4 口径同步：README/SKILL/references/docs 更新 provider canonical path 说明
+- [x] Phase I.5 回归校验：验证 provider 相关定点矩阵与全量回归
 
 ## Proposed Phases
 
@@ -103,6 +108,11 @@
 - 改造重点是 **结构纯化 + 对外暴露面纯化 + 文档口径纯化**，不是为了美观而删掉必要测试或运行时代码
 - 默认目标不是把仓库压成极简模板，而是把它做成“核心一眼看出是 skill 包，工程配套尽量退到二线”的结构
 
+### Phase I - Provider 层内迁（需单独确认，高风险）
+- 将运行时数据访问层的 canonical path 从顶层 `data_provider/` 内迁到 `src/stock_analysis_skill/providers/`
+- 允许短期保留 `data_provider/*` 作为兼容导入桥（shim），但不再承载业务真相源
+- 目标是进一步提高 skill 包内聚度，同时避免一次性爆破历史导入路径
+
 ## Key Design Decisions（已确认）
 - [x] 新仓库**完全放弃** FastAPI / Web / Docker 服务形态，只保留 skill + library + scripts
 - [x] 新 skill **只服务 Agent**，不再把通用产品壳作为主目标
@@ -137,6 +147,7 @@
 - Phase E.9.H 又补了一刀 transition wording：`src/core/config_registry.py` 的 Tushare-only / startup flag 描述、`src/search_service.py` 的 retired SearXNG 输入说明，以及 `references/data-sources.md` 的 runtime fetcher 提示已同步收口；定点回归为 `8 passed`（config registry / search searxng / agent model service）。
 - Phase G 已完成真实兼容面收缩：设计冻结报告已写入 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-g-compatibility-contraction-plan.md`；task queue 对外 payload 删除 `legacy_result`，保留 `result` / `runtime_payload` / `unified_response`；managed-env Router placeholder 已从 `__legacy_*` 更换为 `__managed_env_*`；配置层退役 `RUN_IMMEDIATELY` 的 schedule fallback / registry 暴露以及 `AGENT_SKILL_AUTOWEIGHT` no-op 字段。定点回归矩阵为 `84 passed`（task queue payload / config env compat / config registry / agent model service / config validate structured / llm channel config / run script），随后再次全量 `pytest` 为 **802 passed**。
 - Phase H 已完成第一轮 skill 包纯化：目标冻结文档已写入 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-h-skill-package-purification-plan.md`；`templates/` 下沉为 `assets/templates/`，`sources/` 下沉为 `assets/media/`，`reports/` 下沉为 `support/reports/`，`patch/` 下沉为 `support/patch/`；`README.md`、`docs/README_EN.md`、`SKILL.md` 与新增 `references/package-layout.md` 已改成 skill package surface 优先口径；定点回归为 `50 passed`，随后全量 `pytest` 为 **802 passed**。
+- Phase I 已完成第一刀 provider 内迁：`data_provider/*.py` 业务实现已迁入 `src/stock_analysis_skill/providers/`，原 `data_provider/*` 收口为 compatibility shim（仍可导入）；`src/stock_analysis_skill/*` 主链已改用 provider canonical path；README/SKILL/references/docs 已同步口径为 `src.stock_analysis_skill.providers` 主路径。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

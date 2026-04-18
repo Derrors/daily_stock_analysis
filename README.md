@@ -10,6 +10,7 @@
 - `strategies/`
 - `assets/`
 - `src/stock_analysis_skill/`
+  - 包括 `providers/` 作为运行时数据访问 canonical path
 
 > 当前主目标不再是 Web / FastAPI / Docker 产品壳，而是 **skill package + runtime library + deterministic scripts**。
 
@@ -28,7 +29,7 @@
 - `docs/`：补充性人工文档
 - `support/`：规划 / 复盘 / 历史 patch 等工程支撑材料
 - `tests/`：回归与契约验证
-- `data_provider/`：当前阶段仍保留在顶层的运行时数据访问层
+- `data_provider/`：兼容导入桥（legacy import shim），canonical 实现在 `src/stock_analysis_skill/providers/`
 
 新接入默认不要从这些目录开始理解仓库；优先先看 skill 包核心面。
 
@@ -50,7 +51,7 @@ daily_stock_analysis/
 ├── tests/
 ├── docs/
 ├── support/
-└── data_provider/
+└── data_provider/  (compat import bridge)
 ```
 
 ### 推荐阅读顺序
@@ -67,6 +68,7 @@ daily_stock_analysis/
 - 市场分析：`src.stock_analysis_skill.analyzers.market`
 - 策略解析：`src.stock_analysis_skill.analyzers.strategy`
 - Markdown 输出：`src.stock_analysis_skill.renderers.markdown`
+- 数据访问层：`src.stock_analysis_skill.providers`
 
 `src.schemas` 只保留报告 schema；分析请求 / 响应合同请直接从 `src.stock_analysis_skill.contracts` 导入。
 
