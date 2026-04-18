@@ -649,7 +649,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "templates",
+        "default_value": "assets/templates",
         "options": [],
         "validation": {},
         "display_order": 57,

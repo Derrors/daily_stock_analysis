@@ -1,10 +1,17 @@
 # daily_stock_analysis
 
-Agent-first **stock-analysis skill repository**.
+Agent-first **stock-analysis skill package repository**.
 
-This repository has been rewritten from a legacy multi-entry stock-analysis system into a skill-first codebase that only serves agents.
+This repository has been rewritten from a legacy multi-entry stock-analysis system into a skill-centered package whose primary surface is:
 
-## Core capabilities
+- `SKILL.md`
+- `references/`
+- `scripts/`
+- `strategies/`
+- `assets/`
+- `src/stock_analysis_skill/`
+
+## Core skill capabilities
 - single-stock analysis
 - market review / market analysis
 - strategy resolution from `strategies/*.yaml`
@@ -12,7 +19,10 @@ This repository has been rewritten from a legacy multi-entry stock-analysis syst
 - deterministic markdown rendering
 - agent-friendly scripts
 
-## Primary entry scripts
+## Primary package surface
+- `SKILL.md`
+- `references/package-layout.md`
+- `references/contracts.md`
 - `scripts/run_stock_analysis.py`
 - `scripts/run_market_analysis.py`
 - `scripts/resolve_strategy.py`
@@ -25,6 +35,19 @@ This repository has been rewritten from a legacy multi-entry stock-analysis syst
 - `src.stock_analysis_skill.analyzers.market`
 - `src.stock_analysis_skill.analyzers.strategy`
 - `src.stock_analysis_skill.renderers.markdown`
+
+## Secondary engineering/support surface
+These paths still exist, but they are not the first place a new skill consumer should look:
+- `docs/`
+- `support/`
+- `tests/`
+- `data_provider/`
+
+## Assets and support layout
+- `assets/templates/` — Jinja2 report templates
+- `assets/media/` — media, screenshots, brand assets
+- `support/reports/` — planning/review artifacts
+- `support/patch/` — historical patch utilities
 
 ## Quick checks
 
@@ -40,6 +63,7 @@ At minimum:
 - `LITELLM_MODEL`
 - one provider key such as `GEMINI_API_KEY`, `OPENAI_API_KEY`, `AIHUBMIX_KEY`, `DEEPSEEK_API_KEY`, or `ANTHROPIC_API_KEY`
 - `TUSHARE_TOKEN` is strongly recommended for the market-data mainline
+- `REPORT_TEMPLATES_DIR` defaults to `assets/templates`
 
 ## Validation
 The current minimal skill test suite is:
@@ -52,23 +76,18 @@ The current minimal skill test suite is:
   tests/test_stock_analysis_skill_renderers.py
 ```
 
-## Current migration status
+## Current status
 - Phase A: done
 - Phase B: done
 - Phase C: minimal mainline done
 - Phase D: structural slimming done
-- Phase E: semantic alignment + compatibility-surface reduction completed across multiple cleanup passes
+- Phase E: semantic alignment + compatibility-surface reduction completed
 - Phase F: mainline internalization and contract regression completed
+- Phase G: compatibility contraction completed
+- Phase H: first-pass skill-package purification completed
 
-This repository no longer treats FastAPI/Web/Docker as its primary product shape.
-Current work is focused on stale-document cleanup, remaining compatibility-surface reduction, and keeping the skill-first regression matrix stable.
+This repository no longer treats FastAPI/Web/Docker as its product shape.
+Current work is focused on keeping the primary skill surface obvious while pushing engineering support material to the background.
 
-## Compatibility-only remnants
-
-A small number of compatibility-only payload fields and constructor/runtime shims still exist to avoid breaking old consumers during migration. They are not the recommended integration surface for new work.
-
-For new integrations, prefer:
-- scripts under `scripts/*`
-- canonical modules under `src.stock_analysis_skill.*`
-
-REST/API-oriented integration notes such as `docs/openclaw-skill-integration.md` are historical compatibility references only, not the current mainline recommendation.
+## Historical references
+REST/API-oriented integration notes such as `docs/openclaw-skill-integration.md` remain as historical compatibility references only, not the current mainline recommendation.

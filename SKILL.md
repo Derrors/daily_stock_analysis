@@ -1,15 +1,22 @@
 ---
 name: stock-analysis-skill
-description: Agent-first stock and market analysis skill for A-shares, Hong Kong stocks, and US stocks. Use when the agent needs structured stock analysis, market review, strategy-based analysis, or reusable command-line execution for equity research. Supports unified request/response contracts, Tushare-backed market data, and news-search-assisted analysis workflows.
+description: Agent-first stock and market analysis skill for A-shares, Hong Kong stocks, and US stocks. Use when an agent needs structured stock analysis, market review, strategy-based analysis, or reusable command-line execution for equity research. Supports unified request/response contracts, Tushare-backed market data, news-search-assisted workflows, and deterministic scripts.
 ---
 
 # Stock Analysis Skill
 
-Use this skill to run reusable stock analysis workflows for agents.
+Use this skill to run reusable stock and market analysis workflows for agents.
 
-## Start with the executable entry
+## Primary workflow
 
-Run the stock analysis entry script:
+1. Start with a dry run to verify request normalization.
+2. Run the stock / market / strategy script needed by the task.
+3. Prefer structured responses for downstream chaining.
+4. Render Markdown only when the agent needs a human-readable report.
+
+## Executable entries
+
+Run stock analysis request normalization:
 
 ```bash
 python scripts/run_stock_analysis.py --stock 600519 --dry-run --pretty
@@ -27,44 +34,38 @@ Resolve a strategy resource:
 python scripts/resolve_strategy.py 均线金叉 --pretty
 ```
 
-Use `--dry-run` first when checking normalized request payloads.
+## References to load when needed
 
-## Use the unified contract
+- `references/package-layout.md` — read when you need to understand the package boundary.
+- `references/contracts.md` — read when you need request/response fields.
+- `references/data-sources.md` — read when checking runtime dependencies.
+- `references/strategies.md` — read when mapping a user request to strategy YAML files.
+- `references/output-format.md` — read when deciding how to return results.
 
-Read `references/contracts.md` when you need the request/response structure.
+## Package boundary
 
-Prefer the unified contract for:
-- single-stock analysis
-- strategy-scoped analysis
-- agent-to-script invocation
-- future market-analysis script alignment
+Treat these as the primary skill surface:
 
-## Use the current data-source boundary
+- `SKILL.md`
+- `references/`
+- `scripts/`
+- `strategies/`
+- `assets/`
+- `src/stock_analysis_skill/`
 
-Read `references/data-sources.md` when checking runtime dependencies.
+Treat these as engineering/support surfaces, not default user-facing entrypoints:
 
-Current boundary:
+- `docs/`
+- `support/`
+- `tests/`
+- `data_provider/`
+
+## Current runtime boundary
+
 - market data: Tushare
 - news search: Bocha / Tavily / Brave / SerpAPI
 - markets: CN / HK / US
+- report templates: `assets/templates/`
 
-Do not assume legacy API/Web fallback paths are part of the new skill contract.
-
-## Use strategy resources
-
-Read `references/strategies.md` when mapping a request to strategy YAML files.
-
-Treat `strategies/*.yaml` as the current strategy resource layer.
-
-## Use output guidance
-
-Read `references/output-format.md` when deciding how to return results to an agent.
-
-Prefer structured response first, then Markdown/summary rendering as a secondary output form.
-
-## Migration note
-
-This repository has been rewritten toward a skill-first shape.
-
+Do not assume API/Web/Docker fallback paths are part of the skill contract.
 Prefer new code under `src/stock_analysis_skill/`.
-Treat legacy `api/`, `server.py`, and product-shell modules as removed migration debt unless the current task explicitly requires historical context.

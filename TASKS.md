@@ -49,6 +49,11 @@
 - [x] Phase G.2 Task payload 收缩方案：评估 `result` / `runtime_payload` / `legacy_result` 的最终对外契约，并设计迁移顺序
 - [x] Phase G.3 Managed-env placeholder 方案审计：评估 `__legacy_*` sentinel 是否保留、替换或包裹隐藏
 - [x] Phase G.4 配置兼容字段退役计划：梳理 `RUN_IMMEDIATELY`、旧 env alias、no-op 开关、UI metadata 的退役等级与验证矩阵
+- [x] Phase H.1 纯 skill 包目标冻结：明确“更纯 skill 包”允许保留/必须下沉/必须外移的目录与文件
+- [x] Phase H.2 仓库结构纯化：收缩顶层非必要目录，优先把 skill 核心聚焦到 `SKILL.md` / `references/` / `scripts/` / `src/stock_analysis_skill/` / `strategies/`
+- [x] Phase H.3 工程支撑分层：评估 `docs/` / `reports/` / `data_provider` / `templates` / `sources` / `patch` 是否应保留、下沉或移出主 skill 暴露面
+- [x] Phase H.4 skill 包口径收尾：重写 README / SKILL / references，使仓库对外更像可分发的 skill bundle，而不是通用工程仓库
+- [x] Phase H.5 回归与可发布性校验：验证脚本入口、合同层、skill 资源索引和最小/全量回归，确认纯化后仍可稳定使用
 
 ## Proposed Phases
 
@@ -92,6 +97,12 @@
 - 每一类改动都必须先定义“兼容窗口 / 迁移路径 / 回滚点 / 回归矩阵”，禁止一次性爆破
 - 默认目标不是“全部删除”，而是把必须长期保留的兼容面显式归类，把可退役部分收成有节奏的 deprecation 计划
 
+### Phase H - 更纯的 skill 包化（需单独确认，高风险）
+- 从“skill-first 工程仓库”进一步收口到“更像可分发 skill bundle 的仓库形态”
+- 明确哪些目录属于 skill 核心（必须保留），哪些只是工程支撑（可下沉/外移），哪些已经不值得继续暴露在顶层
+- 改造重点是 **结构纯化 + 对外暴露面纯化 + 文档口径纯化**，不是为了美观而删掉必要测试或运行时代码
+- 默认目标不是把仓库压成极简模板，而是把它做成“核心一眼看出是 skill 包，工程配套尽量退到二线”的结构
+
 ## Key Design Decisions（已确认）
 - [x] 新仓库**完全放弃** FastAPI / Web / Docker 服务形态，只保留 skill + library + scripts
 - [x] 新 skill **只服务 Agent**，不再把通用产品壳作为主目标
@@ -102,7 +113,7 @@
 ## Notes
 - 已有历史结论表明，这个项目此前已经在往 **Agent / skill / API 内核仓库** 方向收敛；这次不是小修，而是进一步推进到 **skill-first** 终态。
 - 这是一次高风险、大范围改造，按当前 `AGENTS.md` 规则，必须先由 User 确认任务拆解与边界，再进入编码阶段。
-- Phase A 蓝图已产出：`reports/plan/2026-04-16-daily-stock-analysis-skill-first-rewrite-blueprint.md`
+- Phase A 蓝图已产出：`support/reports/plan/2026-04-16-daily-stock-analysis-skill-first-rewrite-blueprint.md`
 - Phase B 已建立初版 skill-first 骨架：`SKILL.md`、`references/`、`src/stock_analysis_skill/`、`scripts/doctor.py`
 - 合同层 canonical path 已迁到 `src.stock_analysis_skill.contracts`；当前 `src.schemas` 只保留 `AnalysisReportSchema` 导出，分析合同模型要求直接从 canonical path 导入
 - `scripts/run_stock_analysis.py` 已切到 `StockAnalysisSkillService` 新服务入口；dry-run 与 doctor smoke 已通过
@@ -124,7 +135,8 @@
 - Phase E.9.F 再补了一刀内部命名收口：`src/services/agent_model_service.py` 的 helper 命名已从 `non_legacy` / `MANAGED_LEGACY_*` 收口为更准确的 declared-router / managed-env placeholder 语义；`src/config.py` 里 `legacy_run_immediately*` 内部变量也已改为 fallback 语义，同时保持行为不变。相关定点回归为 `47 passed`（agent model service / config env compat / llm channel config / run script）。
 - Phase E.9.G 继续做了一刀过时文案清理：agent memory、runner、skill loader、default skill policy、env-managed config 注释、analyzer execution 与 batch runtime fallback 说明都已从旧 legacy/compatibility 心智收口到当前 skill-first 语义；定点回归为 `83 passed`（agent memory / agent executor / agent model service / config env compat / llm channel config / run script）。
 - Phase E.9.H 又补了一刀 transition wording：`src/core/config_registry.py` 的 Tushare-only / startup flag 描述、`src/search_service.py` 的 retired SearXNG 输入说明，以及 `references/data-sources.md` 的 runtime fetcher 提示已同步收口；定点回归为 `8 passed`（config registry / search searxng / agent model service）。
-- Phase G 已完成真实兼容面收缩：设计冻结报告已写入 `reports/plan/2026-04-18-daily-stock-analysis-phase-g-compatibility-contraction-plan.md`；task queue 对外 payload 删除 `legacy_result`，保留 `result` / `runtime_payload` / `unified_response`；managed-env Router placeholder 已从 `__legacy_*` 更换为 `__managed_env_*`；配置层退役 `RUN_IMMEDIATELY` 的 schedule fallback / registry 暴露以及 `AGENT_SKILL_AUTOWEIGHT` no-op 字段。定点回归矩阵为 `84 passed`（task queue payload / config env compat / config registry / agent model service / config validate structured / llm channel config / run script），随后再次全量 `pytest` 为 **802 passed**。
+- Phase G 已完成真实兼容面收缩：设计冻结报告已写入 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-g-compatibility-contraction-plan.md`；task queue 对外 payload 删除 `legacy_result`，保留 `result` / `runtime_payload` / `unified_response`；managed-env Router placeholder 已从 `__legacy_*` 更换为 `__managed_env_*`；配置层退役 `RUN_IMMEDIATELY` 的 schedule fallback / registry 暴露以及 `AGENT_SKILL_AUTOWEIGHT` no-op 字段。定点回归矩阵为 `84 passed`（task queue payload / config env compat / config registry / agent model service / config validate structured / llm channel config / run script），随后再次全量 `pytest` 为 **802 passed**。
+- Phase H 已完成第一轮 skill 包纯化：目标冻结文档已写入 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-h-skill-package-purification-plan.md`；`templates/` 下沉为 `assets/templates/`，`sources/` 下沉为 `assets/media/`，`reports/` 下沉为 `support/reports/`，`patch/` 下沉为 `support/patch/`；`README.md`、`docs/README_EN.md`、`SKILL.md` 与新增 `references/package-layout.md` 已改成 skill package surface 优先口径；定点回归为 `50 passed`，随后全量 `pytest` 为 **802 passed**。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**
@@ -132,7 +144,7 @@
 - Phase E 第二批第三刀已完成：`llm_models_source` 的 env-key 路径已从 `legacy_env` 语义收口为 `managed_env`（`agent_model_service` 仍兼容识别旧值）；`Config._managed_env_keys_to_model_list()` 成为主名，旧 `_legacy_keys_to_model_list()` 保留兼容别名；`get_managed_api_keys_for_model()` / `get_managed_litellm_params()` 成为 analyzer 与 agent llm-adapter 的主用 helper，旧 `get_api_keys_for_model()` / `extra_litellm_params()` 保留兼容别名；定点验证 `98 passed`，全量 pytest 仍为 **808 passed + 96 subtests passed**
 - Phase E 第二批第四刀已完成：README / `docs/README_EN.md` 的迁移状态已从 Phase D 更新到 Phase E；`src/services/__init__.py` 明确不再作为旧产品壳的全量服务总入口；`src/notification.py` 与 `src/report_output.py` 的注释已进一步强调“新代码优先走报告输出语义，notification 仅是兼容层”；`docs/CHANGELOG.md` 的 Unreleased 已补齐本轮语义收口条目。该刀仅涉及文档/注释与说明口径，已通过 `py_compile` 快速校验，无新增行为回归风险。
 - 你已明确选择高风险路线「方案 1：主链内迁」。按当前规则，这一轮必须先把 Phase F 拆成单独里程碑并暂停确认，避免在未锁边界的情况下直接动 `src/analyzer.py` / `src/core/pipeline.py` / `src/services/analysis_service.py` 造成双真相源或调用链断裂。
-- Phase F.1 设计冻结文档已落地：`reports/plan/2026-04-17-daily-stock-analysis-mainline-internalization-plan.md`。
+- Phase F.1 设计冻结文档已落地：`support/reports/plan/2026-04-17-daily-stock-analysis-mainline-internalization-plan.md`。
 - Phase F.2 第一刀已完成：新增 `src/stock_analysis_skill/runtime/stock_pipeline.py` 与 `runtime/__init__.py`，把同步股票分析服务编排抽到 canonical skill runtime；`StockSkillAnalyzer` 默认改为直接走 `StockAnalysisMainlineRuntime`，`AnalysisService` 已退化为 compat facade（内部转发到新 runtime），`src/stock_analysis_skill/pipeline.py` 也已切到新 runtime alias；当前 `src/core/pipeline.py` 仍保留为低层执行器，尚未退成纯壳，因此 Phase F.2 仍处于进行中。
 - Phase F.2 第一刀验证结果：定点验证 `45 passed`，随后全量 `pytest` 通过 `808 passed + 96 subtests passed`。
 - Phase F.2 第二刀已完成：`AnalysisService` 的历史依赖与注释已进一步收薄，当前语义已经明确为 compat facade，而不是服务层真相源；定点验证继续为 `45 passed`，全量 `pytest` 仍为 `808 passed + 96 subtests passed`。
