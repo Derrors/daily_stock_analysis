@@ -50,7 +50,7 @@ def init_analyzer_litellm(config: Config) -> Tuple[Optional[Any], bool]:
     keys = get_managed_api_keys_for_model(litellm_model, config)
     if len(keys) > 1:
         extra_params = get_managed_litellm_params(litellm_model, config)
-        legacy_model_list = [
+        env_managed_model_list = [
             {
                 "model_name": litellm_model,
                 "litellm_params": {
@@ -62,12 +62,12 @@ def init_analyzer_litellm(config: Config) -> Tuple[Optional[Any], bool]:
             for key in keys
         ]
         router = Router(
-            model_list=legacy_model_list,
+            model_list=env_managed_model_list,
             routing_strategy="simple-shuffle",
             num_retries=2,
         )
         logger.info(
-            "Analyzer LLM: Legacy Router initialized with %s keys for %s",
+            "Analyzer LLM: Env-managed Router initialized with %s keys for %s",
             len(keys),
             litellm_model,
         )

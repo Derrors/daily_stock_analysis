@@ -170,7 +170,7 @@ class LLMToolAdapter:
         )
 
     def _init_litellm(self) -> None:
-        """Initialize litellm Router from channels / YAML / legacy keys."""
+        """Initialize litellm Router from channels / YAML / env-managed keys."""
         config = self._config
         litellm_model = get_effective_agent_primary_model(config)
         if not litellm_model:
@@ -196,7 +196,7 @@ class LLMToolAdapter:
             )
             return
 
-        # --- Env-managed compatibility path ---
+        # --- Env-managed direct-key path ---
         keys = get_managed_api_keys_for_model(litellm_model, config)
         if not keys:
             logger.info(
@@ -207,7 +207,7 @@ class LLMToolAdapter:
 
         if len(keys) > 1:
             ep = get_managed_litellm_params(litellm_model, config)
-            legacy_model_list = [
+            env_managed_model_list = [
                 {
                     "model_name": litellm_model,
                     "litellm_params": {
@@ -219,12 +219,12 @@ class LLMToolAdapter:
                 for k in keys
             ]
             self._router = Router(
-                model_list=legacy_model_list,
+                model_list=env_managed_model_list,
                 routing_strategy="simple-shuffle",
                 num_retries=2,
             )
             logger.info(
-                f"Agent LLM: Legacy Router initialized with {len(keys)} keys "
+                f"Agent LLM: Env-managed Router initialized with {len(keys)} keys "
                 f"for {litellm_model}"
             )
         else:

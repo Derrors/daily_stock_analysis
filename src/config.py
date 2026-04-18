@@ -453,7 +453,7 @@ class Config:
     llm_models_source: str = "managed_env"
     # LLM_CHANNELS: list of channel dicts, each with name/base_url/api_keys/models
     llm_channels: List[Dict[str, Any]] = field(default_factory=list)
-    # Pre-built LiteLLM Router model_list (populated from channels, YAML, or legacy keys)
+    # Pre-built LiteLLM Router model_list (populated from channels, YAML, or env-managed keys)
     llm_model_list: List[Dict[str, Any]] = field(default_factory=list)
 
     # Multi-key support: each list is parsed from *_API_KEYS (comma-separated) with single-key fallback
@@ -1726,7 +1726,7 @@ class Config:
             ))
 
         # --- LLM availability ---
-        # llm_model_list is populated for YAML / channels / managed legacy keys.
+        # llm_model_list is populated for YAML / channels / env-managed keys.
         # Other LiteLLM-native providers (for example cohere/*) run through the
         # direct litellm env path and therefore do not populate llm_model_list.
         has_direct_env_model = bool(self.litellm_model) and _uses_direct_env_provider(self.litellm_model)
