@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Tests for task queue result payload compatibility."""
+"""Tests for task queue result payload contraction."""
 
 from src.services.task_queue import TaskInfo
 
 
-def test_task_info_exposes_unified_response_without_removing_legacy_result() -> None:
+def test_task_info_exposes_unified_response_without_redundant_legacy_field() -> None:
     unified = {"stock": {"code": "600519", "name": "贵州茅台"}}
     legacy = {"stock_code": "600519", "stock_name": "贵州茅台", "unified_response": unified}
     task = TaskInfo(
@@ -20,7 +20,7 @@ def test_task_info_exposes_unified_response_without_removing_legacy_result() -> 
     assert payload["result"] == unified
     assert payload["unified_response"] == unified
     assert payload["runtime_payload"] == legacy
-    assert payload["legacy_result"] == legacy
+    assert "legacy_result" not in payload
     assert task.get_preferred_result() == unified
     assert task.result == legacy
     assert copied.unified_result == unified
@@ -37,5 +37,5 @@ def test_task_info_prefers_embedded_unified_response_when_field_missing() -> Non
     assert task.get_preferred_result() == unified
     assert payload["result"] == unified
     assert payload["runtime_payload"] == legacy
-    assert payload["legacy_result"] == legacy
+    assert "legacy_result" not in payload
     assert payload["unified_response"] is None

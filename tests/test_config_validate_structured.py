@@ -5,7 +5,7 @@ Covers:
 - ConfigIssue dataclass basics
 - validate_structured() severity classifications
 - LLM availability check honours all three config tiers (YAML / channels /
-  legacy keys) via llm_model_list
+  env-managed keys) via llm_model_list
 - validate() backward-compat: still returns List[str] with the same messages
 """
 from unittest.mock import patch
@@ -122,7 +122,7 @@ class TestValidateStructuredStockList:
 
 class TestValidateStructuredLLM:
     def test_no_llm_is_error(self):
-        """Empty llm_model_list must produce an error regardless of legacy keys."""
+        """Empty llm_model_list must produce an error regardless of env-managed keys."""
         cfg = _make_config(llm_model_list=[])
         issues = cfg.validate_structured()
         assert any(i.severity == "error" and "AI 模型" in i.message for i in issues)
@@ -131,7 +131,7 @@ class TestValidateStructuredLLM:
         """LLM_CHANNELS populated via llm_model_list must NOT trigger an error.
 
         This is the primary regression guard: a user who only configures
-        LLM_CHANNELS (no legacy *_API_KEY) should not see 'AI 功能不可用'.
+        LLM_CHANNELS (no env-managed *_API_KEY) should not see 'AI 功能不可用'.
         """
         channel_model_list = [
             {"model_name": "openai/gpt-4o-mini", "litellm_params": {"api_key": "sk-chan", "api_base": "https://aihubmix.com/v1"}},
@@ -163,10 +163,10 @@ class TestValidateStructuredLLM:
         issues = cfg.validate_structured()
         assert not any(i.severity == "error" and "LLM" in i.message for i in issues)
 
-    def test_legacy_gemini_key_no_error(self):
-        """Legacy GEMINI_API_KEY path: llm_model_list populated = no error."""
+    def test_managed_env_gemini_key_no_error(self):
+        """Managed-env GEMINI_API_KEY path: llm_model_list populated = no error."""
         model_list = [
-            {"model_name": "__legacy_gemini__", "litellm_params": {"model": "__legacy_gemini__", "api_key": "sk-gem"}},
+            {"model_name": "__managed_env_gemini__", "litellm_params": {"model": "__managed_env_gemini__", "api_key": "sk-gem"}},
         ]
         cfg = _make_config(llm_model_list=model_list, gemini_api_keys=["sk-gem"])
         issues = cfg.validate_structured()
@@ -175,7 +175,7 @@ class TestValidateStructuredLLM:
     def test_deepseek_only_no_error(self):
         """DEEPSEEK_API_KEY path (was missing in old validate()): no error."""
         model_list = [
-            {"model_name": "__legacy_deepseek__", "litellm_params": {"model": "__legacy_deepseek__", "api_key": "sk-ds"}},
+            {"model_name": "__managed_env_deepseek__", "litellm_params": {"model": "__managed_env_deepseek__", "api_key": "sk-ds"}},
         ]
         cfg = _make_config(
             llm_model_list=model_list,

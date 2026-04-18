@@ -69,8 +69,7 @@ class TaskInfo:
     message: Optional[str] = None
     # Canonical internal payload. `result` continues to hold the task/runtime
     # storage blob for existing consumers.
-    # `runtime_payload` is the API-facing canonical alias for that stored blob,
-    # while `legacy_result` is exposed only for transition-period compatibility.
+    # `runtime_payload` is the API-facing alias for that stored blob.
     unified_result: Optional[Dict[str, Any]] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -101,7 +100,6 @@ class TaskInfo:
         """Convert task info into an API-friendly dictionary.
 
         New consumers should prefer `result` and `runtime_payload`.
-        `legacy_result` is kept only to avoid breaking older readers.
         """
         return {
             "task_id": self.task_id,
@@ -119,7 +117,6 @@ class TaskInfo:
             "selection_source": self.selection_source,
             "result": self.get_preferred_result(),
             "runtime_payload": self.result,
-            "legacy_result": self.result,
             "unified_response": self.unified_result,
         }
     

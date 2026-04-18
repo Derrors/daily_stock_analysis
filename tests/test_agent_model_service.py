@@ -19,8 +19,8 @@ def _make_config(*, llm_models_source: str) -> SimpleNamespace:
     )
 
 
-def test_list_agent_model_deployments_normalizes_legacy_env_source_label(monkeypatch):
-    config = _make_config(llm_models_source="legacy_env")
+def test_list_agent_model_deployments_uses_managed_env_source_label(monkeypatch):
+    config = _make_config(llm_models_source="managed_env")
 
     monkeypatch.setattr(
         "src.services.agent_model_service.get_effective_agent_primary_model",

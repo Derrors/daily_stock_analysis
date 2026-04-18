@@ -166,7 +166,7 @@ class LLMToolAdapter:
     def _has_channel_config(self) -> bool:
         """Check if channel/YAML routing is active instead of managed placeholders."""
         return bool(self._config.llm_model_list) and not all(
-            e.get('model_name', '').startswith('__legacy_') for e in self._config.llm_model_list
+            e.get('model_name', '').startswith('__managed_env_') for e in self._config.llm_model_list
         )
 
     def _init_litellm(self) -> None:

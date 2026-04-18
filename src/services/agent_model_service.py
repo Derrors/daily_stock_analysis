@@ -13,10 +13,10 @@ from src.config import get_effective_agent_models_to_try, get_effective_agent_pr
 
 
 _PLACEHOLDER_TO_PROVIDER = {
-    "__legacy_gemini__": "gemini",
-    "__legacy_anthropic__": "anthropic",
-    "__legacy_openai__": "openai",
-    "__legacy_deepseek__": "deepseek",
+    "__managed_env_gemini__": "gemini",
+    "__managed_env_anthropic__": "anthropic",
+    "__managed_env_openai__": "openai",
+    "__managed_env_deepseek__": "deepseek",
 }
 _MANAGED_ENV_PLACEHOLDER_PROVIDERS = set(_PLACEHOLDER_TO_PROVIDER.values())
 
@@ -25,8 +25,8 @@ def _normalize_models_source(source: Any) -> str:
     normalized = str(source or "").strip()
     if normalized in {"litellm_config", "llm_channels", "managed_env"}:
         return normalized
-    # `legacy_env` was the old name for the env-managed path; any unknown value
-    # also falls back to the only remaining env-managed source label.
+    # Any unknown source label falls back to the only remaining
+    # env-managed source label.
     return "managed_env"
 
 
@@ -51,7 +51,7 @@ def _build_declared_router_deployments(config) -> List[Dict[str, Any]]:
     for index, entry in enumerate(getattr(config, "llm_model_list", []) or []):
         params = entry.get("litellm_params", {}) or {}
         model_name = str(params.get("model") or "").strip()
-        if not model_name or model_name.startswith("__legacy_"):
+        if not model_name or model_name.startswith("__managed_env_"):
             continue
 
         api_base = params.get("api_base")
