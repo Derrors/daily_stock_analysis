@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def has_channel_config(config: Config) -> bool:
-    """Check if multi-channel config (channels / YAML / non-legacy model_list) is active."""
+    """Check if multi-channel config (channels / YAML / non-placeholder model_list) is active."""
     return bool(config.llm_model_list) and not all(
         entry.get("model_name", "").startswith("__legacy_")
         for entry in config.llm_model_list

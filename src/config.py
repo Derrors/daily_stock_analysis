@@ -443,7 +443,7 @@ class Config:
     litellm_model: str = ""  # Primary model; must include provider prefix when set explicitly
     litellm_fallback_models: List[str] = field(default_factory=list)  # Cross-model fallback list
 
-    # Unified temperature for all LLM calls (LLM_TEMPERATURE); legacy per-provider temps are fallback only
+    # Unified temperature for all LLM calls (LLM_TEMPERATURE); provider-specific temps are fallback only
     llm_temperature: float = 0.7
 
     # --- Multi-channel LLM config (new) ---
@@ -462,7 +462,7 @@ class Config:
     openai_api_keys: List[str] = field(default_factory=list)
     deepseek_api_keys: List[str] = field(default_factory=list)
 
-    # Legacy single-key fields (kept for backward compatibility; gemini_api_keys[0] when set)
+    # Single-key convenience fields mirror the first parsed key for each provider
     gemini_api_key: Optional[str] = None
     gemini_model: str = "gemini-3-flash-preview"  # 主模型
     gemini_model_fallback: str = "gemini-2.5-flash"  # 备选模型
@@ -515,7 +515,7 @@ class Config:
     agent_max_steps: int = AGENT_MAX_STEPS_DEFAULT
     agent_skills: List[str] = field(default_factory=list)
     agent_skill_dir: Optional[str] = None
-    agent_arch: str = "single"     # Agent architecture: 'single' (legacy) or 'multi' (orchestrator)
+    agent_arch: str = "single"     # Agent architecture: 'single' (single-agent executor) or 'multi' (orchestrator)
     agent_orchestrator_mode: str = "standard"  # Orchestrator mode: quick/standard/full/specialist
     agent_orchestrator_timeout_s: int = 600  # Cooperative timeout budget for the whole multi-agent pipeline
     agent_risk_override: bool = True  # Allow risk agent to veto buy signals
@@ -719,7 +719,7 @@ class Config:
 
     @classmethod
     def _resolve_gemini_model_fallback(cls) -> str:
-        """Resolve Gemini default fallback model for managed-env compatibility.
+        """Resolve Gemini default fallback model for env-managed runtime.
 
         Canonical fallback configuration is LITELLM_FALLBACK_MODELS.
         GEMINI_MODEL_FALLBACK is now ignored during runtime resolution.
@@ -888,7 +888,7 @@ class Config:
         if _fallback_str.strip():
             litellm_fallback_models = [m.strip() for m in _fallback_str.split(',') if m.strip()]
         else:
-            # Backward compat: use gemini_model_fallback when primary is gemini
+            # Env-managed default: use gemini_model_fallback when primary is gemini
             if litellm_model.startswith('gemini/') and gemini_model_fallback:
                 _fb = f'gemini/{gemini_model_fallback}' if '/' not in gemini_model_fallback else gemini_model_fallback
                 litellm_fallback_models = [_fb]
@@ -916,7 +916,7 @@ class Config:
                 if llm_model_list:
                     llm_models_source = "llm_channels"
 
-        # Priority 3: managed env keys → auto-build model_list (compat-preserving path)
+        # Priority 3: managed env keys → auto-build model_list (env-managed path)
         if not llm_model_list:
             llm_model_list = cls._managed_env_keys_to_model_list(
                 gemini_api_keys,
@@ -1364,8 +1364,8 @@ class Config:
     ) -> List[Dict[str, Any]]:
         """Build Router model_list from env-managed provider keys.
 
-        This remains the compatibility-preserving path for users who still rely
-        on per-provider environment variables instead of channel/YAML routing.
+        This remains the env-managed path for users who still rely on
+        per-provider environment variables instead of channel/YAML routing.
         Returns a model_list where each provider's keys are expanded into
         deployments, keyed by placeholder model_name tokens. The analyzer
         resolves actual model names at call time from LITELLM_MODEL /
@@ -1944,7 +1944,7 @@ def get_config() -> Config:
 def get_managed_api_keys_for_model(model: str, config: Config) -> List[str]:
     """Return explicitly managed API keys for a LiteLLM model.
 
-    This is the env-managed compatibility path used when channel/YAML Router
+    This is the env-managed path used when channel/YAML Router
     deployments are unavailable and a direct litellm.completion() call is still
     needed.
     """
@@ -1962,7 +1962,7 @@ def get_managed_api_keys_for_model(model: str, config: Config) -> List[str]:
 
 
 def get_managed_litellm_params(model: str, config: Config) -> Dict[str, Any]:
-    """Build direct-call LiteLLM params for the env-managed compatibility path.
+    """Build direct-call LiteLLM params for the env-managed path.
 
     When llm_model_list is populated, the Router already carries api_base and
     headers per-deployment, so this helper is skipped.

@@ -69,7 +69,7 @@ following default risk controls as the shared baseline:
 
 
 def get_default_trading_skill_policy(*, explicit_skill_selection: bool) -> str:
-    """Return the legacy default trading baseline only for implicit/default runs.
+    """Return the built-in default trading baseline only for implicit/default runs.
 
     When a caller explicitly chooses a skill (via request payload or config),
     analysis should follow that selected skill alone instead of silently

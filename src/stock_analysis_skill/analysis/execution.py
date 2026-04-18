@@ -33,7 +33,7 @@ def execute_stock_analysis(
     apply_placeholder_fill: Callable[[AnalysisResult, list[str]], None],
     persist_usage: Callable[..., Any],
 ) -> AnalysisResult:
-    """Run the analyzer main workflow with injected hooks for compatibility."""
+    """Run the analyzer main workflow with injected hooks from the analyzer facade."""
 
     def _emit_progress(progress: int, message: str) -> None:
         if progress_callback is None:

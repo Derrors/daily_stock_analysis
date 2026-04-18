@@ -184,7 +184,7 @@ class StockAnalysisBatchRuntimeMixin:
         results: List[AnalysisResult],
         report_type: ReportType,
     ) -> str:
-        """Generate aggregate report via the report-output service, with compatibility fallbacks."""
+        """Generate aggregate report via the report-output service, with method-name fallbacks."""
         report_output_service = self._get_report_output_service()
         generator = getattr(report_output_service, "generate_aggregate_report", None)
         if callable(generator):

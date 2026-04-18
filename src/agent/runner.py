@@ -368,7 +368,7 @@ def run_agent_loop(
     """Execute the ReAct LLM ↔ tool loop.
 
     This is the *single shared implementation* of the agent execution loop.
-    Both the legacy ``AgentExecutor`` and any future multi-agent runner
+    Both the single-agent ``AgentExecutor`` and any future multi-agent runner
     should delegate here.
 
     Args:

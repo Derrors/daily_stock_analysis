@@ -5,7 +5,7 @@ AgentMemory — persistent structured memory for agent learning.
 Provides:
 1. **Analysis memory** — stores past analysis results for context reuse.
 2. **Confidence calibration** — adjusts agent confidence when enough historical evidence exists.
-3. **Skill performance hooks** — kept as a compatibility surface for future weighting, but currently neutral.
+3. **Skill performance hooks** — reserved for future weighting, but currently neutral.
 
 Storage uses the existing SQLAlchemy database layer for analysis history only.
 
@@ -147,9 +147,9 @@ class AgentMemory:
         if not self.enabled:
             return result
 
-        # Backtest-driven calibration stats were removed with the legacy strategy
-        # subsystem. Keep a neutral calibration result until a new evidence source
-        # is introduced in the skill-first runtime.
+        # Backtest-driven calibration stats were removed with the earlier
+        # strategy subsystem. Keep a neutral calibration result until a new
+        # evidence source is introduced in the skill-first runtime.
         _ = (agent_name, stock_code, skill_id)
         return result
 
@@ -175,7 +175,7 @@ class AgentMemory:
     ) -> Dict[str, float]:
         """Return neutral weights for all skills.
 
-        Keep the interface for compatibility, but disable backtest-driven
+        Keep the public method stable, but disable backtest-driven
         auto-weighting in the skill-first rewrite.
         """
         _ = use_backtest

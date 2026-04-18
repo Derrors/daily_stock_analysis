@@ -164,7 +164,7 @@ class LLMToolAdapter:
                 logger.debug(f"Model {model_name} may already be registered or pricing error: {e}")
 
     def _has_channel_config(self) -> bool:
-        """Check if multi-channel config (channels / YAML) is active."""
+        """Check if channel/YAML routing is active instead of managed placeholders."""
         return bool(self._config.llm_model_list) and not all(
             e.get('model_name', '').startswith('__legacy_') for e in self._config.llm_model_list
         )

@@ -275,7 +275,7 @@ def load_skill_from_markdown(filepath: Union[str, Path]) -> Skill:
 def load_skills_from_directory(directory: Union[str, Path]) -> List[Skill]:
     """Load all skills from YAML files in a directory.
 
-    Scans for top-level ``*.yaml`` / ``*.yml`` compatibility files and
+    Scans for top-level ``*.yaml`` / ``*.yml`` skill definition files and
     nested ``SKILL.md`` bundles, sorted alphabetically.
     Skips files that fail to parse (logs a warning).
 
@@ -319,7 +319,7 @@ class SkillManager:
     Supports loading skills from:
     1. YAML files in the built-in ``strategies/`` directory
     2. YAML files in a user-specified custom directory
-    3. Programmatic ``Skill`` instances (backward compatible)
+    3. Programmatic ``Skill`` instances
 
     Usage::
 
@@ -343,7 +343,7 @@ class SkillManager:
         logger.debug(f"Registered skill: {skill.name} ({skill.display_name})")
 
     def load_builtin_skills(self) -> int:
-        """Load all built-in skills from the compatibility `strategies/` directory.
+        """Load all built-in skills from the canonical `strategies/` resource directory.
 
         Returns:
             Number of skills loaded.
