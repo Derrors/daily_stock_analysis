@@ -172,3 +172,38 @@ When renaming imported symbols, grep the full file for all symbol references (in
 - **Notes**: Updated class base to `StockAnalysisPipeline` and reran focused regression with 55 passed.
 
 ---
+
+---
+
+## [ERR-20260418-001] git-add-pathspec-stale-after-directory-move
+
+**Logged**: 2026-04-18T12:41:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: git
+
+### Summary
+After moving `patch/`, `templates/`, `sources/`, and `reports/` into `assets/` / `support/`, an attempted `git add` still referenced the old `patch` path and failed with a pathspec error.
+
+### Error
+```
+fatal: pathspec 'patch' did not match any files
+```
+
+### Context
+- Operation attempted: stage the full Phase H repository-purification change set for commit
+- Command: `git add ... patch ... && git commit ...`
+- Trigger case: the staging command was composed before re-checking the moved directory paths
+
+### Suggested Fix
+After large directory moves, prefer `git status --short --untracked-files=all` or `git add -A` from repo root instead of hand-maintaining stale path lists.
+
+### Metadata
+- Reproducible: yes
+- Related Files: assets/, support/, .gitignore
+- See Also: ERR-20260417-003
+
+### Resolution
+- **Resolved**: 2026-04-18T12:42:00+08:00
+- **Commit/PR**: pending
+- **Notes**: Re-ran staging with `git add -A`, then committed the Phase H repository-shape change successfully.
