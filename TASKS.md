@@ -37,6 +37,10 @@
 - [x] Phase F.3 异步主链对齐：把 `AnalysisTaskQueue -> AnalysisService -> StockAnalysisPipeline` 的调用关系对齐到新的 skill runtime 主链
 - [x] Phase F.4 Analyzer 内核拆分：逐步拆 `src/analyzer.py`，优先迁出纯函数/结果归一化/后处理逻辑，避免与 F.2/F.3 混成一次高风险爆破
 - [x] Phase F.5 回归与契约校验：按同步/异步/agent/script 四条链重跑回归，确认不存在双真相源
+- [x] Phase E.9.A 提交当前文档对齐改动，清理工作区基线
+- [x] Phase E.9.B 收口 `use_legacy_default_prompt` 命名为更准确的默认 bull-trend prompt 语义
+- [x] Phase E.9.C 收口 agent/analyzer 的 env-managed LiteLLM Router 变量名与日志文案
+- [x] Phase E.9.D 收薄 OrchestratorStageRuntime 委托层，避免重复创建 runtime helper
 
 ## Proposed Phases
 
@@ -86,7 +90,7 @@
 - 这是一次高风险、大范围改造，按当前 `AGENTS.md` 规则，必须先由 User 确认任务拆解与边界，再进入编码阶段。
 - Phase A 蓝图已产出：`reports/plan/2026-04-16-daily-stock-analysis-skill-first-rewrite-blueprint.md`
 - Phase B 已建立初版 skill-first 骨架：`SKILL.md`、`references/`、`src/stock_analysis_skill/`、`scripts/doctor.py`
-- 合同层 canonical path 已迁到 `src.stock_analysis_skill.contracts`，旧 `src.schemas.analysis_contract` 保留兼容 re-export
+- 合同层 canonical path 已迁到 `src.stock_analysis_skill.contracts`；当前 `src.schemas` 只保留 `AnalysisReportSchema` 导出，分析合同模型要求直接从 canonical path 导入
 - `scripts/run_stock_analysis.py` 已切到 `StockAnalysisSkillService` 新服务入口；dry-run 与 doctor smoke 已通过
 - 已按 `requirements-ci.txt` 在项目 `.venv` 中补装最小测试依赖：`pytest`；当前最小测试已正式通过 `pytest`
 - 最小验证结果：`tests/test_stock_analysis_skill_contracts.py` + `tests/test_run_stock_analysis_entry.py` 共 5 项通过
@@ -101,6 +105,7 @@
 - Phase D 深层收口已完成：`AgentMemory` / `SkillAggregator` 中遗留的 backtest 自动加权逻辑已改为 neutral fallback；当前 skill + agent 侧回归扩大到 73 项 pytest，全部通过
 - CHANGELOG 已补充 skill-first rewrite、主链迁移、产品壳删除、文档重写与测试覆盖条目
 - 当前主线已经进入“结构完成、语义收口”的阶段；后续价值最高的工作不再是继续大删目录，而是统一命名、压缩兼容层、降低维护噪音
+- Phase E.9 已完成一轮低风险收尾：先提交当前文档状态对齐，再把默认 bull-trend prompt 开关命名、env-managed LiteLLM Router 变量/日志，以及 OrchestratorStageRuntime 的重复委托层同步收口；定点回归为 `152 passed`（agent executor / analyzer prompt / agent pipeline / orchestrator runtime / registry / run script / agent model service）。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

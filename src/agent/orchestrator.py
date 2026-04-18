@@ -25,7 +25,6 @@ can be a drop-in replacement via the factory.
 from __future__ import annotations
 
 import json
-import inspect
 import logging
 import re
 import time
@@ -105,6 +104,7 @@ class AgentOrchestrator:
         self.mode = normalized_mode if normalized_mode in VALID_MODES else "standard"
         self.skill_manager = skill_manager
         self.config = config
+        self._stage_runtime = OrchestratorStageRuntime(max_steps=self.max_steps)
 
     def _get_timeout_seconds(self) -> int:
         """Return the pipeline timeout in seconds.
@@ -207,34 +207,8 @@ class AgentOrchestrator:
 
     def _prepare_agent(self, agent: Any) -> Any:
         """Apply orchestrator-level runtime settings to a child agent."""
-        runtime = OrchestratorStageRuntime(max_steps=self.max_steps)
-        return runtime.prepare_agent(agent)
-
-    def _callable_accepts_timeout_kwarg(self, func: Any) -> Optional[bool]:
-        """Return whether a callable accepts ``timeout_seconds`` when inspectable."""
-        runtime = OrchestratorStageRuntime(max_steps=self.max_steps)
-        return runtime.callable_accepts_timeout_kwarg(func)
-
-    def _agent_run_accepts_timeout(self, run_callable: Any) -> bool:
-        """Best-effort compatibility check for legacy test doubles / custom agents."""
-        runtime = OrchestratorStageRuntime(max_steps=self.max_steps)
-        return runtime.agent_run_accepts_timeout(run_callable)
-
-    def _run_stage_agent(
-        self,
-        agent: Any,
-        ctx: AgentContext,
-        progress_callback: Optional[Callable] = None,
-        timeout_seconds: Optional[float] = None,
-    ) -> StageResult:
-        """Run a stage agent while preserving compatibility with older call signatures."""
-        runtime = OrchestratorStageRuntime(max_steps=self.max_steps)
-        return runtime.run_stage_agent(
-            agent,
-            ctx,
-            progress_callback=progress_callback,
-            timeout_seconds=timeout_seconds,
-        )
+        self._stage_runtime.max_steps = self.max_steps
+        return self._stage_runtime.prepare_agent(agent)
 
     # -----------------------------------------------------------------
     # Public interface (mirrors AgentExecutor)
@@ -438,7 +412,8 @@ class AgentOrchestrator:
                 if timeout_s
                 else None
             )
-            result: StageResult = self._run_stage_agent(
+            self._stage_runtime.max_steps = self.max_steps
+            result: StageResult = self._stage_runtime.run_stage_agent(
                 agent,
                 ctx,
                 progress_callback=progress_callback,
