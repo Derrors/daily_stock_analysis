@@ -260,3 +260,29 @@ Use `.venv/bin/python` (or `python3`) consistently for repo-local automation scr
 ### Resolution
 - **Resolved**: 2026-04-18T13:08:00+08:00
 - **Notes**: Re-ran the rewrite script with `.venv/bin/python`; replacement pass completed successfully.
+
+---
+
+## [ERR-20260418-004] compat-bridge-relative-import-breaks-top-level-legacy-module-load
+
+**Logged**: 2026-04-18T13:17:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: compatibility
+
+### Summary
+Thin bridge modules used `from ._compat import alias_module`, which fails when a legacy module is imported as a top-level module file (without package context), e.g. via `sys.path`-based `from us_index_mapping import ...`.
+
+### Error
+```
+ImportError: attempted relative import with no known parent package
+```
+
+### Suggested Fix
+In shim modules, add fallback import path:
+- first try relative (`from ._compat import ...`)
+- fallback to absolute (`from data_provider._compat import ...`)
+
+### Resolution
+- **Resolved**: 2026-04-18T13:18:00+08:00
+- **Notes**: Added fallback import in all `data_provider/*` shim modules and re-ran targeted + full regression.
