@@ -62,6 +62,10 @@
 - [x] Phase I.6 仓内引用收口：将 `src/` 与 `tests/` 中剩余 `data_provider.*` 迁移到 `src.stock_analysis_skill.providers.*` canonical import
 - [x] Phase I.7 兼容桥压薄：`data_provider/*` 收敛为最小 alias bridge，并补一组兼容导入测试
 - [x] Phase I.8 兼容层治理收尾：补充 compat-only 目录说明、deprecation 窗口与告警开关口径（不改变运行时行为）
+- [x] Phase J.1 退役草案冻结：形成 `data_provider` compat bridge 下线前的分阶段门禁与回滚策略草案
+- [x] Phase J.2 防回退守门：新增测试，禁止仓内重新引入 `data_provider.*` internal import
+- [ ] Phase J.3 外部调用方审计：盘点仓库外脚本/自动化对 legacy import 的依赖面
+- [ ] Phase J.4 退役窗口执行：按窗口推进告警启用、迁移公告与最终删除门禁
 
 ## Proposed Phases
 
@@ -116,6 +120,11 @@
 - 允许短期保留 `data_provider/*` 作为兼容导入桥（shim），但不再承载业务真相源
 - 目标是进一步提高 skill 包内聚度，同时避免一次性爆破历史导入路径
 
+### Phase J - Compatibility Bridge 退役治理（需单独确认，高风险）
+- 在不破坏外部调用方的前提下，逐步退役 `data_provider/*` 兼容导入桥
+- 通过分阶段门禁（内部零遗留导入、外部调用审计、告警窗口、回滚预案）控制风险
+- 这是治理/迁移阶段，不是业务行为重构阶段
+
 ## Key Design Decisions（已确认）
 - [x] 新仓库**完全放弃** FastAPI / Web / Docker 服务形态，只保留 skill + library + scripts
 - [x] 新 skill **只服务 Agent**，不再把通用产品壳作为主目标
@@ -154,6 +163,7 @@
 - Phase I 已完成第二刀仓内引用收口：`src/` 与 `tests/` 内部调用已统一切到 `src.stock_analysis_skill.providers.*`，`data_provider/*` 仅保留外部兼容桥；定点矩阵为 `130 passed`，随后全量 `pytest` 为 **802 passed**。
 - Phase I 已完成第三刀兼容桥压薄：`data_provider/*` 现改为最小 alias bridge（统一走 `data_provider/_compat.py`），并新增 `tests/test_data_provider_compat_bridge.py` 验证 legacy import 仍可解析到 canonical provider 模块；兼容桥定点为 `39 passed`，随后全量 `pytest` 为 **805 passed**。
 - Phase I 已完成收官治理：新增 `data_provider/README.md` 明确 compat-only 定位、`DSA_WARN_LEGACY_IMPORTS` 告警开关与 deprecation 时间窗；README / SKILL / references / docs / `.env.example` 已同步口径。
+- Phase J 草案已落地：新增 `support/reports/plan/2026-04-18-daily-stock-analysis-phase-j-compat-bridge-retirement-draft.md`，并新增 `tests/test_no_internal_data_provider_imports.py` 作为内部导入防回退守门测试。
 - Phase E 规划口径：优先做低风险高收益项（报告输出语义 / 测试清洁 / strategy-vs-skill 统一），高风险项（把 `src/analyzer.py` / `src/core/pipeline.py` 真正内迁到 `src/stock_analysis_skill/*`）暂不纳入这一轮默认范围
 - Phase E 第一批已完成：新增 `src/report_output.py` 作为首选报告输出入口，`NotificationService` 降为兼容名；`SkillResolver` 成为内部优先命名，`StrategyResolver` 作为兼容别名保留；`setup.cfg` 改为只从 `tests/` 收集 pytest，并补充 `benchmark` marker；全量回归结果为 **808 passed + 96 subtests passed**
 - Phase E 第二批第一刀已完成：删除 `Config.has_searxng_enabled()` 这类无调用 compat helper；`SearchService` 默认不再隐式开启已下线的 SearXNG compat 开关；搜索能力缺失提示已收口为当前保留源（Bocha/Tavily/Brave/SerpAPI）；`src.agent.strategies.__init__` 改为直接桥接到 `src.agent.skills.*`，减少一层 legacy wrapper 跳转；本轮后全量回归仍为 **808 passed + 96 subtests passed**

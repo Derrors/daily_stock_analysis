@@ -310,3 +310,27 @@ When searching literals containing backticks, avoid unescaped backticks in doubl
 ### Resolution
 - **Resolved**: 2026-04-18T13:33:00+08:00
 - **Notes**: Switched to safer grep patterns without backticks and continued verification.
+
+---
+
+## [ERR-20260418-006] anti-legacy-import-guard-self-matched-its-own-pattern
+
+**Logged**: 2026-04-18T13:47:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tests
+
+### Summary
+The new guard test for banning internal `data_provider` imports scanned itself and falsely failed.
+
+### Error
+```
+AssertionError: Found internal legacy imports ... tests/test_no_internal_data_provider_imports.py
+```
+
+### Suggested Fix
+When implementing static-scan guard tests, explicitly allowlist the guard file itself (and explicit compat tests) to avoid self-referential false positives.
+
+### Resolution
+- **Resolved**: 2026-04-18T13:48:00+08:00
+- **Notes**: Added `tests/test_no_internal_data_provider_imports.py` to allowlist and re-ran targeted + full regression.
