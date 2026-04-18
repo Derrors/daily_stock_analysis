@@ -6,9 +6,7 @@ Use:
 
 - `src.stock_analysis_skill.contracts`
 
-Legacy compatibility import still exists at:
-
-- `src.schemas.analysis_contract`
+`src.schemas` no longer re-exports the unified analysis contract. Import analysis request/response models directly from the canonical module.
 
 ## Core request
 

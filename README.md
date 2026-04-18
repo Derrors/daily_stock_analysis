@@ -30,8 +30,8 @@
 - 组合管理、回测、历史页面等产品外围能力
 
 ### 兼容但不推荐作为当前入口的残留面
-- 少量 legacy facade / re-export 仍保留，用于避免旧调用方或过渡期 import 直接炸掉
-- 这些兼容层不代表仓库当前推荐用法；新接入应优先走 `scripts/*` 与 `src.stock_analysis_skill.*`
+- 少量历史字段 / 兼容语义仍保留，用于避免旧调用方或过渡期结果解析直接炸掉
+- 这些兼容面不代表仓库当前推荐用法；新接入应优先走 `scripts/*` 与 `src.stock_analysis_skill.*`
 
 ---
 
@@ -60,7 +60,7 @@ daily_stock_analysis/
 - 策略解析：`src.stock_analysis_skill.analyzers.strategy`
 - Markdown 输出：`src.stock_analysis_skill.renderers.markdown`
 
-> 旧 `src.schemas.analysis_contract` 目前仍保留兼容 re-export，用于过渡。
+`src.schemas` 只保留报告 schema；分析请求 / 响应合同请直接从 `src.stock_analysis_skill.contracts` 导入。
 
 ---
 
@@ -169,17 +169,18 @@ python scripts/resolve_strategy.py --list
 
 ## 迁移状态
 
-当前已进入 **Phase E：语义收口与兼容层减脂**：
+当前迁移主线已经完成 **Phase F：主链真相源内迁与契约回归**，后续工作进入低风险收尾：
 - Phase A：已完成
 - Phase B：已完成
 - Phase C：已完成最小主链
 - Phase D：已完成主结构瘦身
-- Phase E：进行中（统一命名、压缩兼容层、降低维护噪音）
+- Phase E：已完成多轮语义收口与兼容层减脂
+- Phase F：已完成主链内迁与同步 / 异步 / agent / script 契约回归
 
 当前主方向不再是继续大拆目录，而是：
-- 统一报告输出语义
-- 统一 strategy / skill 对内外口径
-- 压缩 Agent / config / search 的 compatibility surface
+- 清理文档里的过时迁移口径
+- 压缩剩余 compatibility surface
+- 保持 skill-first 主链回归稳定
 
 ---
 

@@ -2,7 +2,7 @@
 
 Agent-first **stock-analysis skill repository**.
 
-This repository is being rewritten from a legacy multi-entry stock-analysis system into a skill-first codebase that only serves agents.
+This repository has been rewritten from a legacy multi-entry stock-analysis system into a skill-first codebase that only serves agents.
 
 ## Core capabilities
 - single-stock analysis
@@ -57,15 +57,15 @@ The current minimal skill test suite is:
 - Phase B: done
 - Phase C: minimal mainline done
 - Phase D: structural slimming done
-- Phase E: semantic alignment + compatibility-surface reduction in progress
+- Phase E: semantic alignment + compatibility-surface reduction completed across multiple cleanup passes
 - Phase F: mainline internalization and contract regression completed
 
 This repository no longer treats FastAPI/Web/Docker as its primary product shape.
-Current work is focused on naming alignment, report-output semantics, and shrinking compatibility-only runtime surfaces.
+Current work is focused on stale-document cleanup, remaining compatibility-surface reduction, and keeping the skill-first regression matrix stable.
 
 ## Compatibility-only remnants
 
-A small number of legacy facades / re-exports still exist to avoid breaking old imports during migration. They are not the recommended integration surface for new work.
+A small number of compatibility-only fields and historical runtime shims still exist to avoid breaking old consumers during migration. They are not the recommended integration surface for new work.
 
 For new integrations, prefer:
 - scripts under `scripts/*`

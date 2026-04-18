@@ -64,7 +64,7 @@ Prefer structured response first, then Markdown/summary rendering as a secondary
 
 ## Migration note
 
-This repository is being rewritten toward a skill-first shape.
+This repository has been rewritten toward a skill-first shape.
 
 Prefer new code under `src/stock_analysis_skill/`.
-Treat legacy `api/`, `server.py`, and product-shell modules as migration debt unless the current task explicitly requires them.
+Treat legacy `api/`, `server.py`, and product-shell modules as removed migration debt unless the current task explicitly requires historical context.
